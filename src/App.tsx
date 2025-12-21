@@ -12,6 +12,7 @@ import BoardPage from "./pages/BoardPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import BacklogPage from "./pages/BacklogPage";
 import IssuesPage from "./pages/IssuesPage";
+import WorkflowsPage from "./pages/WorkflowsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -157,6 +158,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Workflows */}
+      <Route
+        path="/workflows"
+        element={
+          <ProtectedRoute>
+            <WorkflowsPage />
           </ProtectedRoute>
         }
       />
