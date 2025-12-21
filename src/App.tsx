@@ -93,6 +93,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/projects/create"
+        element={
+          <ProtectedRoute>
+            <ProjectsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/projects/:projectKey/board"
         element={
           <ProtectedRoute>
@@ -105,6 +113,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <BacklogPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:projectKey/issues"
+        element={
+          <ProtectedRoute>
+            <IssuesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:projectKey/reports"
+        element={
+          <ProtectedRoute>
+            <ReportsPage />
           </ProtectedRoute>
         }
       />

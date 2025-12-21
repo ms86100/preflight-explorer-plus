@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { useCreateIssue, useIssueTypes, usePriorities, useStatuses } from '@/features/issues';
 import { Loader2, Bug, CheckSquare, Bookmark, Zap, Layers } from 'lucide-react';
+import { toast } from 'sonner';
 import type { ClassificationLevel } from '@/types/jira';
 
 const issueSchema = z.object({
@@ -80,6 +81,16 @@ export function CreateIssueModal({
   const { register, handleSubmit, setValue, watch, formState: { errors }, reset } = form;
 
   const onFormSubmit = async (data: IssueFormData) => {
+    if (!projectId) {
+      toast.error('No project selected.');
+      return;
+    }
+
+    if (!defaultStatusId) {
+      toast.error('Issue statuses are still loading. Please try again in a moment.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const result = await createIssue.mutateAsync({
@@ -95,8 +106,6 @@ export function CreateIssueModal({
       onSuccess?.(result.issue_key);
       onOpenChange(false);
       reset();
-    } catch (error) {
-      console.error('Failed to create issue:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -112,7 +121,7 @@ export function CreateIssueModal({
   const TypeIcon = selectedType ? ISSUE_TYPE_ICONS[selectedType.name] || CheckSquare : CheckSquare;
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Create Issue</DialogTitle>
@@ -204,7 +213,9 @@ export function CreateIssueModal({
                 min={0}
                 max={100}
                 placeholder="0"
-                {...register('story_points', { valueAsNumber: true })}
+                {...register('story_points', {
+                  setValueAs: (v) => (v === '' || v === null || typeof v === 'undefined' ? undefined : Number(v)),
+                })}
               />
             </div>
           </div>
@@ -213,7 +224,7 @@ export function CreateIssueModal({
             <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || !projectId || !defaultStatusId || !selectedTypeId}>
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Create Issue
             </Button>

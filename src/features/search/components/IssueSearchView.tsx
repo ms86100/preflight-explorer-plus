@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -48,9 +48,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AppLayout } from '@/components/layout';
 import { ClassificationBadge } from '@/components/compliance/ClassificationBanner';
-import { IssueDetailModal } from '@/features/issues';
+import { CreateIssueModal, IssueDetailModal } from '@/features/issues';
 import { useProjects } from '@/features/projects';
 import { useIssuesByProject, useIssueTypes, usePriorities, useStatuses } from '@/features/issues';
+import { toast } from 'sonner';
 import type { ClassificationLevel } from '@/types/jira';
 
 const ISSUE_TYPE_ICONS: Record<string, typeof Bug> = {
@@ -73,12 +74,14 @@ interface JQLFilter {
 export function IssueSearchView() {
   const { projectKey } = useParams<{ projectKey?: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [jqlQuery, setJqlQuery] = useState('');
   const [filters, setFilters] = useState<JQLFilter>({
     project: projectKey,
   });
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [isCreateIssueOpen, setIsCreateIssueOpen] = useState(false);
   const [sortColumn, setSortColumn] = useState<string>('created_at');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
@@ -90,6 +93,25 @@ export function IssueSearchView() {
   // Get issues from selected project or all projects
   const selectedProject = projects?.find(p => p.pkey === filters.project);
   const { data: issues, isLoading } = useIssuesByProject(selectedProject?.id || '');
+
+  const createRequested = new URLSearchParams(location.search).get('create') === '1';
+
+  useEffect(() => {
+    if (!createRequested || isCreateIssueOpen) return;
+
+    if (selectedProject?.id) {
+      setIsCreateIssueOpen(true);
+      return;
+    }
+
+    if (projects?.length === 1) {
+      setFilters((prev) => ({ ...prev, project: projects[0].pkey }));
+      setIsCreateIssueOpen(true);
+      return;
+    }
+
+    toast.message('Select a project to create an issue.');
+  }, [createRequested, isCreateIssueOpen, projects, selectedProject?.id]);
 
   // Apply filters
   const filteredIssues = useMemo(() => {
@@ -159,6 +181,12 @@ export function IssueSearchView() {
 
   return (
     <>
+      <CreateIssueModal
+        projectId={selectedProject?.id || ''}
+        open={isCreateIssueOpen}
+        onOpenChange={setIsCreateIssueOpen}
+      />
+
       <IssueDetailModal
         issueId={selectedIssueId}
         open={!!selectedIssueId}
@@ -176,7 +204,16 @@ export function IssueSearchView() {
                   <Save className="h-4 w-4 mr-2" />
                   Save Filter
                 </Button>
-                <Button size="sm">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (!selectedProject?.id) {
+                      toast.error('Select a project first to create an issue.');
+                      return;
+                    }
+                    setIsCreateIssueOpen(true);
+                  }}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Issue
                 </Button>
