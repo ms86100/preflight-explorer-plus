@@ -58,13 +58,14 @@ export const issueService = {
     const { data, error } = await supabase
       .from('issues')
       .select(`
-        *,
+        id, issue_key, issue_number, summary, description, story_points, classification,
+        status_id, priority_id, issue_type_id, assignee_id, reporter_id, project_id,
+        due_date, original_estimate, remaining_estimate, time_spent, created_at, updated_at,
         issue_type:issue_types(id, name, color, category),
         status:issue_statuses(id, name, color, category),
         priority:priorities(id, name, color),
         reporter:profiles!issues_reporter_id_fkey(id, display_name, avatar_url),
-        assignee:profiles!issues_assignee_id_fkey(id, display_name, avatar_url),
-        epic:issues!issues_epic_id_fkey(id, issue_key, summary)
+        assignee:profiles!issues_assignee_id_fkey(id, display_name, avatar_url)
       `)
       .eq('project_id', projectId)
       .order('created_at', { ascending: false });
@@ -77,16 +78,17 @@ export const issueService = {
     const { data, error } = await supabase
       .from('issues')
       .select(`
-        *,
+        id, issue_key, issue_number, summary, description, story_points, classification,
+        status_id, priority_id, issue_type_id, assignee_id, reporter_id, project_id,
+        due_date, original_estimate, remaining_estimate, time_spent, created_at, updated_at,
         issue_type:issue_types(id, name, color, category),
         status:issue_statuses(id, name, color, category),
         priority:priorities(id, name, color),
         reporter:profiles!issues_reporter_id_fkey(id, display_name, avatar_url),
-        assignee:profiles!issues_assignee_id_fkey(id, display_name, avatar_url),
-        epic:issues!issues_epic_id_fkey(id, issue_key, summary)
+        assignee:profiles!issues_assignee_id_fkey(id, display_name, avatar_url)
       `)
       .eq('issue_key', issueKey)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data as unknown as IssueWithRelations;
@@ -96,16 +98,17 @@ export const issueService = {
     const { data, error } = await supabase
       .from('issues')
       .select(`
-        *,
+        id, issue_key, issue_number, summary, description, story_points, classification,
+        status_id, priority_id, issue_type_id, assignee_id, reporter_id, project_id,
+        due_date, original_estimate, remaining_estimate, time_spent, created_at, updated_at,
         issue_type:issue_types(id, name, color, category),
         status:issue_statuses(id, name, color, category),
         priority:priorities(id, name, color),
         reporter:profiles!issues_reporter_id_fkey(id, display_name, avatar_url),
-        assignee:profiles!issues_assignee_id_fkey(id, display_name, avatar_url),
-        epic:issues!issues_epic_id_fkey(id, issue_key, summary)
+        assignee:profiles!issues_assignee_id_fkey(id, display_name, avatar_url)
       `)
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data as unknown as IssueWithRelations;

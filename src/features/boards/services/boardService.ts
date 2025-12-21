@@ -136,9 +136,9 @@ export const sprintService = {
       .select('*')
       .eq('board_id', boardId)
       .eq('state', 'active')
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error) throw error;
     return data as SprintRow | null;
   },
 
@@ -196,15 +196,17 @@ export const sprintService = {
   },
 
   async getIssues(sprintId: string) {
+    if (!sprintId) return [];
+    
     const { data, error } = await supabase
       .from('sprint_issues')
       .select(`
         issue:issues(
-          *,
+          id, issue_key, summary, story_points, classification, status_id,
           issue_type:issue_types(id, name, color, category),
           status:issue_statuses(id, name, color, category),
           priority:priorities(id, name, color),
-          assignee:profiles!issues_assignee_id_fkey(id, display_name, avatar_url)
+          assignee:profiles(id, display_name, avatar_url)
         )
       `)
       .eq('sprint_id', sprintId);
