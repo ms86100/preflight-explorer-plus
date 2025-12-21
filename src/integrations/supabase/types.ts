@@ -1045,6 +1045,144 @@ export type Database = {
           },
         ]
       }
+      workflow_steps: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_initial: boolean | null
+          position_x: number | null
+          position_y: number | null
+          status_id: string
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_initial?: boolean | null
+          position_x?: number | null
+          position_y?: number | null
+          status_id: string
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_initial?: boolean | null
+          position_x?: number | null
+          position_y?: number | null
+          status_id?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_steps_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "issue_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_steps_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_transitions: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          from_step_id: string
+          id: string
+          name: string
+          to_step_id: string
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          from_step_id: string
+          id?: string
+          name: string
+          to_step_id: string
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          from_step_id?: string
+          id?: string
+          name?: string
+          to_step_id?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_transitions_from_step_id_fkey"
+            columns: ["from_step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_transitions_to_step_id_fkey"
+            columns: ["to_step_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_transitions_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflows: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          name: string
+          project_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name: string
+          project_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          project_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflows_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       worklogs: {
         Row: {
           author_id: string
