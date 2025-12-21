@@ -1,20 +1,539 @@
-# Jira Data Center Database Architecture
+# Jira Data Center Complete Technical Study
 
-## Technical Documentation & Complete Schema Analysis
+## Database Architecture, UI/UX Patterns & Feature Analysis
 
 ---
 
 ## Table of Contents
-1. [Executive Summary](#executive-summary)
-2. [Database Statistics](#database-statistics)
-3. [Schema Architecture Overview](#schema-architecture-overview)
-4. [Core Domain Tables](#core-domain-tables)
-5. [Plugin Tables (AO_* Prefix)](#plugin-tables-ao_-prefix)
-6. [Entity Relationship Diagrams](#entity-relationship-diagrams)
-7. [Index Analysis](#index-analysis)
-8. [Foreign Key Relationships](#foreign-key-relationships)
-9. [Views, Functions & Stored Procedures](#views-functions--stored-procedures)
-10. [Migration Considerations](#migration-considerations)
+
+### Part 1: Features & UI/UX Analysis
+1. [Feature Overview](#feature-overview)
+2. [UI Screens & Layouts](#ui-screens--layouts)
+3. [Core UI Components](#core-ui-components)
+4. [Interaction Patterns](#interaction-patterns)
+5. [Enterprise Features](#enterprise-features)
+
+### Part 2: Database Architecture
+6. [Executive Summary](#executive-summary)
+7. [Database Statistics](#database-statistics)
+8. [Schema Architecture Overview](#schema-architecture-overview)
+9. [Core Domain Tables](#core-domain-tables)
+10. [Plugin Tables (AO_* Prefix)](#plugin-tables-ao_-prefix)
+11. [Entity Relationship Diagrams](#entity-relationship-diagrams)
+12. [Index Analysis](#index-analysis)
+13. [Foreign Key Relationships](#foreign-key-relationships)
+14. [Views, Functions & Stored Procedures](#views-functions--stored-procedures)
+15. [Migration Considerations](#migration-considerations)
+
+---
+
+# PART 1: FEATURES & UI/UX ANALYSIS
+
+---
+
+## Feature Overview
+
+Jira Data Center is an enterprise-grade project management and issue tracking platform. Key feature categories:
+
+### 1. Project Management
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| Projects | Container for issues, organized by key (e.g., "PROJ") | `project` |
+| Components | Sub-divisions within projects | `component` |
+| Versions/Releases | Track release cycles | `projectversion` |
+| Project Categories | Group related projects | `projectcategory` |
+| Project Archival | Archive inactive projects | `project.archived` |
+
+### 2. Issue Tracking
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| Issues | Core work items (bugs, stories, tasks) | `jiraissue` |
+| Issue Types | Categorize issues (Bug, Story, Epic, Task, Sub-task) | `issuetype` |
+| Priorities | Urgency levels (Highest → Lowest) | `priority` |
+| Statuses | Workflow states (To Do, In Progress, Done) | `issuestatus` |
+| Resolutions | How issues were closed | `resolution` |
+| Labels | Freeform tagging | `label` |
+| Watchers | Subscribe to issue updates | `userassociation` |
+| Voting | Users can vote on issues | `jiraissue.votes` |
+
+### 3. Agile/Scrum/Kanban (Jira Software)
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| Boards | Visual workflow (Kanban/Scrum) | `AO_60DB71_RAPIDVIEW` |
+| Sprints | Time-boxed iterations | `AO_60DB71_SPRINT` |
+| Columns | Workflow stages on board | `AO_60DB71_COLUMN` |
+| Swimlanes | Horizontal grouping (by assignee, priority) | `AO_60DB71_SWIMLANE` |
+| Quick Filters | JQL-based board filters | `AO_60DB71_QUICKFILTER` |
+| Backlog | Prioritized list of work | `AO_60DB71_LEXORANK` |
+| Estimation | Story points, time estimates | `AO_60DB71_ESTIMATION_STATISTICS` |
+| Velocity Charts | Sprint velocity tracking | Calculated from sprint data |
+| Burndown/Burnup | Sprint progress visualization | Calculated from sprint data |
+
+### 4. Workflow Engine
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| Workflows | State machine definitions | `jiraworkflows` |
+| Workflow Schemes | Map workflows to projects | `workflowscheme`, `workflowschemeentity` |
+| Transitions | Move between statuses | Stored in `jiraworkflows.descriptor` (XML) |
+| Conditions | Rules for transitions | Embedded in workflow XML |
+| Validators | Input validation on transitions | Embedded in workflow XML |
+| Post Functions | Actions after transitions | Embedded in workflow XML |
+| Screens | Forms shown during transitions | `fieldscreen`, `fieldscreentab`, `fieldscreenlayoutitem` |
+
+### 5. User Management & Authentication
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| Users | User accounts | `app_user`, `cwd_user` |
+| Groups | User groupings | `cwd_group` |
+| Memberships | User-group associations | `cwd_membership` |
+| Directories | Identity providers (internal, LDAP, SAML) | `cwd_directory` |
+| Personal Access Tokens | API authentication | `AO_81F455_PERSONAL_TOKEN` |
+| OAuth2 | Third-party app auth | `AO_FE1BC5_*` tables |
+| JIT Provisioning | Auto-create users on first login | Via SAML/OIDC |
+
+### 6. Permissions & Security
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| Global Permissions | System-wide access | `globalpermissionentry` |
+| Permission Schemes | Project-level access rules | `permissionscheme`, `schemepermissions` |
+| Project Roles | Role-based access (Administrators, Developers, Users) | `projectrole`, `projectroleactor` |
+| Issue Security | Restrict issue visibility | `issuesecurityscheme`, `schemeissuesecurities` |
+| Secure Attachments | Control file access | Linked to issue security |
+
+### 7. Custom Fields
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| Field Definitions | Custom data fields | `customfield` |
+| Field Values | Stored values per issue | `customfieldvalue` |
+| Field Options | Dropdown/select options | `customfieldoption` |
+| Field Configurations | Display settings | `fieldconfiguration`, `fieldconfigscheme` |
+| Field Contexts | Scope fields to projects/issue types | `fieldconfigschemeissuetype` |
+
+### 8. Time Tracking
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| Original Estimate | Initial time estimate | `jiraissue.timeoriginalestimate` |
+| Remaining Estimate | Time left | `jiraissue.timeestimate` |
+| Time Spent | Logged work | `jiraissue.timespent` |
+| Work Logs | Detailed time entries | `worklog` |
+
+### 9. Issue Relationships
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| Issue Links | Relationships between issues | `issuelink`, `issuelinktype` |
+| Sub-tasks | Parent-child hierarchy | `jiraissue` (self-referencing) |
+| Epics | Container for stories | Via custom field or parent link |
+| Clone/Duplicate | Copy issues | Creates new `jiraissue` record |
+
+### 10. Attachments & Files
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| File Attachments | Upload files to issues | `fileattachment` |
+| Thumbnails | Image previews | `fileattachment.thumbnailable` |
+
+### 11. Search & Filters
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| JQL (Jira Query Language) | Powerful search syntax | Queries against all tables |
+| Saved Filters | Reusable searches | `searchrequest` |
+| Filter Subscriptions | Email notifications | `filtersubscription` |
+| Quick Search | Global search bar | N/A (UI feature) |
+
+### 12. Notifications
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| Notification Schemes | Email triggers | `notificationscheme`, `notification` |
+| @Mentions | Notify specific users | Parsed from comment text |
+| Watchers | Automatic notifications | `userassociation` |
+
+### 13. Automation
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| Automation Rules | Trigger-condition-action | `AO_589059_RULE_CONFIG` |
+| Rule Components | Building blocks | `AO_589059_RULE_CFG_COMPONENT` |
+| Audit Logs | Execution history | `AO_589059_AUDIT_ITEM` |
+
+### 14. Integrations
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| Git/DVCS | Link commits, branches, PRs | `AO_E8B6CC_*` tables |
+| Webhooks | Push notifications | `AO_4AEACD_WEBHOOK_DAO` |
+| REST API | Programmatic access | N/A (API layer) |
+| App Marketplace | Third-party plugins | `AO_*` plugin tables |
+
+### 15. Reporting & Dashboards
+| Feature | Description | Database Tables |
+|---------|-------------|-----------------|
+| Dashboards | Configurable home pages | `portalpage` |
+| Gadgets | Dashboard widgets | `portletconfiguration` |
+| Reports | Built-in analytics | Calculated views |
+
+---
+
+## UI Screens & Layouts
+
+### 1. Project Navigation (Sidebar)
+The project-centric view uses a collapsible sidebar:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ [Project Logo] PROJECT NAME              [⚙️ Settings]  │
+├─────────────────────────────────────────────────────────┤
+│ 📊 Summary                                              │
+│ 📋 Backlog                                              │
+│ 🎯 Active Sprints / Board                               │
+│ 📈 Reports                                              │
+│ ├── Velocity Chart                                      │
+│ ├── Burndown Chart                                      │
+│ └── Control Chart                                       │
+│ 📦 Releases                                             │
+│ ⚡ Issues                                                │
+│ 🔧 Components                                           │
+│ ───────────────────                                     │
+│ 📱 Apps (Plugin Extensions)                             │
+│ ⚙️ Project Settings                                     │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 2. Issue Detail View (Full Page)
+Two-column layout when opening issue directly:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ [◀ Back] PROJ-123                           [👁 Watch] [⋮ More Actions] │
+├─────────────────────────────────────────────────┬───────────────────────┤
+│ MAIN CONTENT (70%)                              │ SIDEBAR (30%)         │
+│                                                 │                       │
+│ ┌─────────────────────────────────────────────┐ │ Status: [🔵 In Prog] │
+│ │ [Epic] Parent Epic Name                     │ │ Assignee: [👤 User]  │
+│ │                                             │ │ Reporter: [👤 User]  │
+│ │ ## Issue Summary Title                      │ │ Labels: [tag1] [tag2]│
+│ │ (click to edit inline)                      │ │ Sprint: Sprint 23    │
+│ └─────────────────────────────────────────────┘ │ Story Points: 5      │
+│                                                 │ Priority: 🔴 High    │
+│ ┌─────────────────────────────────────────────┐ │ Components: [API]    │
+│ │ Description                                 │ │ Fix Version: v2.0    │
+│ │ (Rich text editor with markdown)            │ │ Due Date: Dec 25     │
+│ │                                             │ │                       │
+│ └─────────────────────────────────────────────┘ │ ─────────────────────│
+│                                                 │ Time Tracking         │
+│ ┌─────────────────────────────────────────────┐ │ ⏱ 4h logged / 8h est │
+│ │ 📎 Attachments (3)                          │ │ [▓▓▓▓░░░░] 50%       │
+│ │ [file.pdf] [screenshot.png] [doc.xlsx]      │ │                       │
+│ └─────────────────────────────────────────────┘ │ ─────────────────────│
+│                                                 │ Development           │
+│ ┌─────────────────────────────────────────────┐ │ 🔗 2 commits          │
+│ │ 🔗 Linked Issues                            │ │ 🔀 1 pull request     │
+│ │ blocks: PROJ-120                            │ │ 🌿 feature/PROJ-123   │
+│ │ is blocked by: PROJ-118                     │ │                       │
+│ └─────────────────────────────────────────────┘ │                       │
+│                                                 │                       │
+│ ┌─────────────────────────────────────────────┐ │                       │
+│ │ 💬 Activity                                 │ │                       │
+│ │ [All] [Comments] [History] [Work log]       │ │                       │
+│ │                                             │ │                       │
+│ │ 👤 John Doe - 2 hours ago                   │ │                       │
+│ │ "Updated the API endpoint..."               │ │                       │
+│ │                                             │ │                       │
+│ │ 🔄 System - 3 hours ago                     │ │                       │
+│ │ Status changed: To Do → In Progress         │ │                       │
+│ └─────────────────────────────────────────────┘ │                       │
+└─────────────────────────────────────────────────┴───────────────────────┘
+```
+
+### 3. Board View (Kanban/Scrum)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ [Board Name ▼]    [🔍 Search] [Quick Filters: My Issues | Recently Updated]     │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  TO DO (5)           IN PROGRESS (3)      CODE REVIEW (2)      DONE (12)       │
+│  ────────────────    ─────────────────    ─────────────────    ──────────────  │
+│  ┌──────────────┐    ┌──────────────┐     ┌──────────────┐     ┌────────────┐  │
+│  │ PROJ-101     │    │ PROJ-98      │     │ PROJ-95      │     │ PROJ-89    │  │
+│  │ Fix login    │    │ Add export   │     │ Refactor DB  │     │ Update UI  │  │
+│  │ 🔴 [5]  👤JD │    │ 🟡 [3]  👤AB │     │ 🟢 [8]  👤CD │     │ ✓ 👤EF    │  │
+│  │ 📎 2   💬 3  │    │ 📎 1   💬 5  │     │ 📎 0   💬 2  │     │            │  │
+│  └──────────────┘    └──────────────┘     └──────────────┘     └────────────┘  │
+│  ┌──────────────┐    ┌──────────────┐     ┌──────────────┐                      │
+│  │ PROJ-102     │    │ PROJ-99      │     │ PROJ-96      │                      │
+│  │ Add sorting  │    │ Fix crash    │     │ API tests    │                      │
+│  │ 🟡 [2]  👤GH │    │ 🔴 [1]  👤IJ │     │ 🟢 [3]  👤KL │                      │
+│  └──────────────┘    └──────────────┘     └──────────────┘                      │
+│                                                                                 │
+│  ═══════════════════════════════════════════════════════════════════════════   │
+│  SWIMLANE: Expedite (1)                                                         │
+│  ────────────────────────────────────────────────────────────────────────────   │
+│  ┌──────────────┐                                                               │
+│  │ PROJ-105     │                                                               │
+│  │ 🚨 URGENT    │                                                               │
+│  │ 🔴 [13] 👤MN │                                                               │
+│  └──────────────┘                                                               │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 4. Backlog View
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ [🔍 Filter] [📊 View: List ▼]                      [Create Sprint] [Start]     │
+├──────────────────────────────────────┬──────────────────────────────────────────┤
+│ EPICS PANEL                          │ BACKLOG                                  │
+│                                      │                                          │
+│ ┌────────────────────────────────┐   │ ┌──────────────────────────────────────┐│
+│ │ 🟣 User Authentication         │   │ │ SPRINT 24 (Dec 15 - Dec 29)          ││
+│ │    12 issues | 45 points       │   │ │ 8 issues | 34 points | 2 weeks       ││
+│ └────────────────────────────────┘   │ │ ──────────────────────────────────── ││
+│ ┌────────────────────────────────┐   │ │ ☐ PROJ-201 Implement SSO      [5] 👤 ││
+│ │ 🟢 Payment Integration         │   │ │ ☐ PROJ-202 Add 2FA            [8] 👤 ││
+│ │    8 issues | 32 points        │   │ │ ☐ PROJ-203 Fix session bug    [3] 👤 ││
+│ └────────────────────────────────┘   │ └──────────────────────────────────────┘│
+│ ┌────────────────────────────────┐   │                                          │
+│ │ 🔵 Mobile App                  │   │ ┌──────────────────────────────────────┐│
+│ │    25 issues | 89 points       │   │ │ SPRINT 25 (Dec 30 - Jan 12)          ││
+│ └────────────────────────────────┘   │ │ 5 issues | 21 points                 ││
+│                                      │ └──────────────────────────────────────┘│
+│ [+ Create Epic]                      │                                          │
+│                                      │ ┌──────────────────────────────────────┐│
+│ ─────────────────────────────────    │ │ 📋 BACKLOG (47 issues)               ││
+│                                      │ │ ──────────────────────────────────── ││
+│ VERSIONS                             │ │ ☐ PROJ-250 New feature        [?]    ││
+│ ┌────────────────────────────────┐   │ │ ☐ PROJ-251 Bug fix            [2]    ││
+│ │ 🏷 v2.0 (Released)             │   │ │ ☐ PROJ-252 Documentation      [1]    ││
+│ │ 🏷 v2.1 (In Progress)          │   │ │ ... (drag to sprint to plan)         ││
+│ │ 🏷 v3.0 (Planned)              │   │ └──────────────────────────────────────┘│
+│ └────────────────────────────────┘   │                                          │
+└──────────────────────────────────────┴──────────────────────────────────────────┘
+```
+
+### 5. Dashboard
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ [Dashboard Name ▼]                              [+ Add Gadget] [⚙️ Edit Layout] │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  ┌────────────────────────────────┐  ┌────────────────────────────────────────┐│
+│  │ 📊 Assigned to Me              │  │ 📈 Sprint Burndown                     ││
+│  │ ─────────────────────────────  │  │                                        ││
+│  │ PROJ-123 Fix login bug    🔴   │  │     ╲                                  ││
+│  │ PROJ-124 Add export       🟡   │  │       ╲    Ideal                       ││
+│  │ PROJ-125 Update docs      🟢   │  │         ╲  ─────                       ││
+│  │ PROJ-126 Review PR        🟢   │  │           ╲       ╲ Actual             ││
+│  │                                │  │             ╲       ╲                  ││
+│  │ [View all 12 issues →]         │  │ Day 1  2  3  4  5  6  7  8  9  10     ││
+│  └────────────────────────────────┘  └────────────────────────────────────────┘│
+│                                                                                 │
+│  ┌────────────────────────────────┐  ┌────────────────────────────────────────┐│
+│  │ 🎯 Filter Results              │  │ 🥧 Issues by Priority                  ││
+│  │ ─────────────────────────────  │  │                                        ││
+│  │ Filter: "Open Bugs"            │  │      ┌─────┐                           ││
+│  │                                │  │   ┌──┤ 23% │ High                      ││
+│  │ 47 issues found                │  │   │  └─────┤                           ││
+│  │ Created: 12 | Resolved: 8      │  │   │ 45%   │ Medium                     ││
+│  │ Avg Age: 4.2 days              │  │   └───────┤                            ││
+│  │                                │  │     32%   │ Low                        ││
+│  │ [Open Filter →]                │  │           └─────                       ││
+│  └────────────────────────────────┘  └────────────────────────────────────────┘│
+│                                                                                 │
+│  ┌──────────────────────────────────────────────────────────────────────────┐  │
+│  │ 📋 Activity Stream                                                        │  │
+│  │ ──────────────────────────────────────────────────────────────────────── │  │
+│  │ 👤 John created PROJ-127 "New feature request"           2 minutes ago   │  │
+│  │ 👤 Jane commented on PROJ-123 "Fixed in latest build"   15 minutes ago   │  │
+│  │ 🔄 PROJ-124 status changed to "In Review"                1 hour ago      │  │
+│  └──────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Core UI Components
+
+Following the **Atlassian Design System (ADS)**:
+
+### 1. Lozenges (Status Indicators)
+```
+[🔵 IN PROGRESS]  [🟢 DONE]  [⚪ TO DO]  [🟡 IN REVIEW]  [🔴 BLOCKED]
+```
+- Blue: In Progress
+- Green: Done/Resolved
+- Gray: To Do/Open
+- Yellow: Pending/Review
+- Red: Blocked/Critical
+
+### 2. Badges (Numeric Indicators)
+```
+Comments (5)   Attachments (3)   Subtasks 2/5   Watchers (12)
+         ↑                 ↑              ↑              ↑
+      [badge]          [badge]        [badge]        [badge]
+```
+
+### 3. Avatars
+```
+[👤] Single user          [👤👤👤+3] Stacked avatars     [🏢] Team/Project
+```
+
+### 4. Cards (Issue Cards on Boards)
+```
+┌──────────────────────────┐
+│ 🟣 Epic Label            │  ← Epic indicator
+│ PROJ-123                 │  ← Issue key
+│ Summary text here...     │  ← Issue summary
+│ ─────────────────────    │
+│ 🔴 High  [5]  👤 JD      │  ← Priority, Points, Assignee
+│ 📎 2  💬 3  ⏱ 4h         │  ← Attachments, Comments, Time
+└──────────────────────────┘
+```
+
+### 5. Inline Edit Pattern
+```
+READ MODE:                    EDIT MODE:
+┌─────────────────────────┐   ┌─────────────────────────┐
+│ Issue summary text    ✏️│ → │ [Issue summary text   ]│
+└─────────────────────────┘   │ [✓ Save] [✗ Cancel]    │
+                              └─────────────────────────┘
+```
+
+### 6. Dropdown Menus
+```
+┌─────────────────────┐
+│ Assignee: [John ▼] │
+└─────────────────────┘
+         ↓
+┌─────────────────────┐
+│ 🔍 Search users...  │
+├─────────────────────┤
+│ 👤 John Doe         │
+│ 👤 Jane Smith       │
+│ 👤 Bob Wilson       │
+│ ─────────────────── │
+│ 🚫 Unassigned       │
+└─────────────────────┘
+```
+
+### 7. Modal Dialogs
+```
+┌─────────────────────────────────────────────────┐
+│ Create Issue                              [✕]  │
+├─────────────────────────────────────────────────┤
+│ Project*:     [Select Project ▼]               │
+│ Issue Type*:  [🐛 Bug ▼]                        │
+│ Summary*:     [                              ]  │
+│ Description:  [                              ]  │
+│               [                              ]  │
+│ Assignee:     [Automatic ▼]                    │
+│ Priority:     [🟡 Medium ▼]                    │
+├─────────────────────────────────────────────────┤
+│                        [Cancel] [Create Issue]  │
+└─────────────────────────────────────────────────┘
+```
+
+---
+
+## Interaction Patterns
+
+### 1. Drag & Drop
+- **Board columns**: Drag issues between status columns
+- **Backlog**: Drag issues to/from sprints
+- **Ranking**: Drag to reorder priority within column
+- **Attachments**: Drag files onto issue
+
+### 2. Keyboard Shortcuts
+| Action | Shortcut |
+|--------|----------|
+| Global Search | `/` |
+| Create Issue | `c` |
+| Quick Search | `g` then `g` |
+| Go to Board | `g` then `b` |
+| Assign to Me | `i` |
+| Watch Issue | `w` |
+| Edit Issue | `e` |
+| Add Comment | `m` |
+
+### 3. JQL (Jira Query Language)
+```sql
+-- Examples:
+project = PROJ AND status = "In Progress"
+assignee = currentUser() AND resolution = Unresolved
+created >= -7d AND priority = High
+labels in (urgent, critical) ORDER BY created DESC
+sprint in openSprints() AND type = Bug
+```
+
+### 4. Quick Filters
+Toggle buttons above boards that apply JQL filters:
+```
+[My Issues] [Only Bugs] [Recently Updated] [Blocked]
+    ↓
+Applies: assignee = currentUser()
+```
+
+### 5. Bulk Operations
+```
+┌─────────────────────────────────────────────────┐
+│ Bulk Change: 15 issues selected                │
+├─────────────────────────────────────────────────┤
+│ ☐ Change Status                                │
+│ ☐ Change Assignee                              │
+│ ☐ Change Priority                              │
+│ ☐ Add Labels                                   │
+│ ☐ Move to Sprint                               │
+│ ☐ Change Fix Version                           │
+│ ☐ Delete Issues                                │
+├─────────────────────────────────────────────────┤
+│                              [Next →]           │
+└─────────────────────────────────────────────────┘
+```
+
+---
+
+## Enterprise Features (Data Center Specific)
+
+### 1. High Availability
+- **Clustering**: Multiple app nodes behind load balancer
+- **Shared Database**: All nodes use same PostgreSQL
+- **Shared File System**: NFS/EFS for attachments
+- **Session Affinity**: Sticky sessions for consistency
+
+### 2. Zero-Downtime Upgrades
+- Rolling upgrades across cluster nodes
+- No user disruption during maintenance
+
+### 3. CDN Support
+- Geo-distributed static asset caching
+- Improved performance for global teams
+
+### 4. Advanced Auditing
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ Audit Log                                                           │
+├─────────────────────────────────────────────────────────────────────┤
+│ TIMESTAMP        │ USER      │ ACTION              │ DETAILS        │
+├──────────────────┼───────────┼─────────────────────┼────────────────┤
+│ 2024-01-15 14:32 │ admin     │ Permission changed  │ Added user to  │
+│                  │           │                     │ Administrators │
+│ 2024-01-15 14:30 │ john.doe  │ Issue created       │ PROJ-500       │
+│ 2024-01-15 14:28 │ system    │ Workflow activated  │ New workflow   │
+└──────────────────┴───────────┴─────────────────────┴────────────────┘
+```
+
+### 5. Rate Limiting
+- REST API rate limits per user/token
+- Protection against abuse
+- Configurable thresholds
+
+### 6. Project/Issue Archival
+- Move inactive projects to archive
+- Maintain queryable history
+- Improve active database performance
+
+---
+
+# PART 2: DATABASE ARCHITECTURE
+
+---
 
 ---
 
