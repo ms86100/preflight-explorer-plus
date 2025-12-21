@@ -112,6 +112,103 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_logs: {
+        Row: {
+          completed_at: string | null
+          error_message: string | null
+          id: string
+          result: Json | null
+          rule_id: string
+          started_at: string
+          status: string
+          trigger_event: Json | null
+        }
+        Insert: {
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          result?: Json | null
+          rule_id: string
+          started_at?: string
+          status?: string
+          trigger_event?: Json | null
+        }
+        Update: {
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          result?: Json | null
+          rule_id?: string
+          started_at?: string
+          status?: string
+          trigger_event?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_logs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automation_rules: {
+        Row: {
+          actions: Json
+          conditions: Json
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_enabled: boolean
+          name: string
+          project_id: string | null
+          run_as_user: string | null
+          trigger_config: Json
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          name: string
+          project_id?: string | null
+          run_as_user?: string | null
+          trigger_config?: Json
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          name?: string
+          project_id?: string | null
+          run_as_user?: string | null
+          trigger_config?: Json
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_rules_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       board_column_statuses: {
         Row: {
           column_id: string
@@ -971,6 +1068,111 @@ export type Database = {
           is_default?: boolean | null
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      plugin_installations: {
+        Row: {
+          config: Json | null
+          id: string
+          installed_at: string
+          installed_by: string
+          is_enabled: boolean
+          plugin_id: string
+          project_id: string | null
+        }
+        Insert: {
+          config?: Json | null
+          id?: string
+          installed_at?: string
+          installed_by: string
+          is_enabled?: boolean
+          plugin_id: string
+          project_id?: string | null
+        }
+        Update: {
+          config?: Json | null
+          id?: string
+          installed_at?: string
+          installed_by?: string
+          is_enabled?: boolean
+          plugin_id?: string
+          project_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plugin_installations_plugin_id_fkey"
+            columns: ["plugin_id"]
+            isOneToOne: false
+            referencedRelation: "plugins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plugin_installations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plugins: {
+        Row: {
+          category: string
+          config: Json | null
+          created_at: string
+          description: string | null
+          documentation_url: string | null
+          hooks: Json | null
+          icon_url: string | null
+          id: string
+          is_enabled: boolean
+          is_system: boolean
+          key: string
+          name: string
+          permissions: Json | null
+          updated_at: string
+          vendor: string | null
+          vendor_url: string | null
+          version: string
+        }
+        Insert: {
+          category?: string
+          config?: Json | null
+          created_at?: string
+          description?: string | null
+          documentation_url?: string | null
+          hooks?: Json | null
+          icon_url?: string | null
+          id?: string
+          is_enabled?: boolean
+          is_system?: boolean
+          key: string
+          name: string
+          permissions?: Json | null
+          updated_at?: string
+          vendor?: string | null
+          vendor_url?: string | null
+          version?: string
+        }
+        Update: {
+          category?: string
+          config?: Json | null
+          created_at?: string
+          description?: string | null
+          documentation_url?: string | null
+          hooks?: Json | null
+          icon_url?: string | null
+          id?: string
+          is_enabled?: boolean
+          is_system?: boolean
+          key?: string
+          name?: string
+          permissions?: Json | null
+          updated_at?: string
+          vendor?: string | null
+          vendor_url?: string | null
+          version?: string
         }
         Relationships: []
       }
