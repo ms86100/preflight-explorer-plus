@@ -14,6 +14,8 @@ import BacklogPage from "./pages/BacklogPage";
 import IssuesPage from "./pages/IssuesPage";
 import WorkflowsPage from "./pages/WorkflowsPage";
 import CustomFieldsPage from "./pages/CustomFieldsPage";
+import ReportsPage from "./pages/ReportsPage";
+import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -179,6 +181,26 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <CustomFieldsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Reports */}
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute>
+            <ReportsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Admin */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminPage />
           </ProtectedRoute>
         }
       />
