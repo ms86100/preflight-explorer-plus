@@ -13,17 +13,28 @@
 4. [Interaction Patterns](#interaction-patterns)
 5. [Enterprise Features](#enterprise-features)
 
-### Part 2: Database Architecture
-6. [Executive Summary](#executive-summary)
-7. [Database Statistics](#database-statistics)
-8. [Schema Architecture Overview](#schema-architecture-overview)
-9. [Core Domain Tables](#core-domain-tables)
-10. [Plugin Tables (AO_* Prefix)](#plugin-tables-ao_-prefix)
-11. [Entity Relationship Diagrams](#entity-relationship-diagrams)
-12. [Index Analysis](#index-analysis)
-13. [Foreign Key Relationships](#foreign-key-relationships)
-14. [Views, Functions & Stored Procedures](#views-functions--stored-procedures)
-15. [Migration Considerations](#migration-considerations)
+### Part 2: Plugin Ecosystem
+6. [Built-in System Plugins](#built-in-system-plugins)
+7. [ScriptRunner (Most Critical)](#scriptrunner-most-critical)
+8. [Automation for Jira](#automation-for-jira)
+9. [Advanced Roadmaps (Portfolio)](#advanced-roadmaps-portfolio)
+10. [eazyBI Reporting](#eazybi-reporting)
+11. [Structure & BigPicture](#structure--bigpicture)
+12. [DevOps & CI/CD Plugins](#devops--cicd-plugins)
+13. [Security & Compliance Plugins](#security--compliance-plugins)
+14. [Plugin Architecture](#plugin-architecture)
+
+### Part 3: Database Architecture
+15. [Executive Summary](#executive-summary)
+16. [Database Statistics](#database-statistics)
+17. [Schema Architecture Overview](#schema-architecture-overview)
+18. [Core Domain Tables](#core-domain-tables)
+19. [Plugin Tables (AO_* Prefix)](#plugin-tables-ao_-prefix)
+20. [Entity Relationship Diagrams](#entity-relationship-diagrams)
+21. [Index Analysis](#index-analysis)
+22. [Foreign Key Relationships](#foreign-key-relationships)
+23. [Views, Functions & Stored Procedures](#views-functions--stored-procedures)
+24. [Migration Considerations](#migration-considerations)
 
 ---
 
@@ -531,9 +542,305 @@ Applies: assignee = currentUser()
 
 ---
 
-# PART 2: DATABASE ARCHITECTURE
+# PART 2: PLUGIN ECOSYSTEM
 
 ---
+
+## Built-in System Plugins
+
+These are mandatory core apps installed with Jira Data Center (visible under ⚙️ Manage apps → System):
+
+| Plugin | Function | Database Tables | Enterprise Usage |
+|--------|----------|-----------------|------------------|
+| **Jira Core** | Issues, projects, workflows | `jiraissue`, `project`, `jiraworkflows` | Base platform |
+| **Agile (Boards)** | Scrum & Kanban boards | `AO_60DB71_*` | Sprint & delivery tracking |
+| **Issue Navigator** | JQL search & filters | `searchrequest` | Reporting, dashboards |
+| **Workflow Engine** | States & transitions | `jiraworkflows`, `workflowscheme` | Business process modeling |
+| **Permission Schemes** | Role-based access | `permissionscheme`, `schemepermissions` | SOX / audit compliance |
+| **Notification Schemes** | Email triggers | `notificationscheme`, `notification` | SLA & approvals |
+| **REST API** | `/rest/api/2` endpoints | N/A | Integrations, automation |
+
+---
+
+## ScriptRunner (Most Critical)
+
+**The #1 most-used plugin in enterprises** - transforms Jira from a tracker into a programmable business platform.
+
+### Capabilities
+
+| Feature | Description | Use Case |
+|---------|-------------|----------|
+| **Workflow Conditions** | Groovy scripts to control transition visibility | Hide "Close" unless all subtasks done |
+| **Workflow Validators** | Validate input before transition completes | Require "Environment" field for Bugs |
+| **Post Functions** | Execute actions after transition | Create linked issues, update parent epic |
+| **Script Listeners** | Event-driven background triggers | Sync data to external systems on issue create |
+| **REST Endpoints** | Custom APIs within Jira | `/rest/scriptrunner/latest/custom/myEndpoint` |
+| **Script Fragments** | Modify UI dynamically | Add custom buttons, menus, web panels |
+| **Script Console** | Interactive admin sandbox | Bulk updates, diagnostics, data cleanup |
+
+### Technical Implementation (Groovy)
+
+```groovy
+// Example: Post Function to update custom field
+import com.atlassian.jira.component.ComponentAccessor
+
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+def cf = customFieldManager.getCustomFieldObjectByName("My Custom Field")
+
+// Set custom field value
+issue.setCustomFieldValue(cf, "New Value")
+```
+
+### Common Enterprise Patterns
+
+1. **Automated Escalation**: Listener detects issue stalled 48+ hours → auto-notify or move to "Blocked"
+2. **Complex Validation**: If `Issue Type = Bug`, require `Environment` field with specific format
+3. **External Integration**: Post function sends data to ERP/SQL/SAP on "Resolve" transition
+4. **Bulk Cleanup**: Console script to close 1000+ stale issues via custom JQL
+
+---
+
+## Automation for Jira
+
+Built-in DC app (since v9.0) for no-code automation rules.
+
+### Rule Components
+
+| Component | Description | Example |
+|-----------|-------------|---------|
+| **Triggers** | What starts the rule | Issue created, Status changed, Scheduled |
+| **Conditions** | Filters when to run | Only if Priority = High |
+| **Actions** | What happens | Assign to user, Add comment, Transition issue |
+
+### Database Tables
+
+| Table | Content |
+|-------|---------|
+| `AO_589059_RULE_CONFIG` | Rule definitions (name, state, author) |
+| `AO_589059_RULE_CFG_COMPONENT` | Components (trigger/condition/action) with JSON config |
+| `AO_589059_AUDIT_ITEM` | Execution audit log |
+
+### Common Automation Rules
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ WHEN: Issue created                                             │
+│ IF: Priority = "Highest"                                        │
+│ THEN: Assign to → Project Lead                                  │
+│       Add comment → "High priority issue - immediate attention" │
+│       Send Slack notification                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ WHEN: Issue status = "In Progress" for > 5 days                 │
+│ THEN: Add label → "stalled"                                     │
+│       Notify assignee via email                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Advanced Roadmaps (Portfolio)
+
+Cross-project planning and program management for enterprise.
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **Plans** | Aggregate work from multiple projects/boards into timeline view |
+| **Sandbox Mode** | Changes don't affect real issues until explicitly saved |
+| **Dependencies** | Visualize blockers across projects on timeline |
+| **Capacity Planning** | Define team velocity, calculate over/under capacity |
+| **Hierarchy Levels** | Support levels above Epic (Initiative, Theme) |
+| **Release Forecasting** | Predict dates based on velocity and dependencies |
+
+### Database Architecture
+
+| Feature | Tables | Notes |
+|---------|--------|-------|
+| Plan Definitions | `AO_D9132D_PLAN`, `AO_D9132D_ISSUE_SOURCE` | Plan names, access, sources |
+| Team Management | `AO_82B313_TEAM`, `AO_D9132D_PLANTEAM` | Private or shared teams |
+| Hierarchy Links | `entity_property` (key: `jpo-issue-properties`) | Parent ID, Team ID as JSON |
+| Dependencies | `issuelink` | Standard Jira links for timeline deps |
+
+### Important Note
+
+Plan content is **computed at runtime** from issue sources. Database stores configuration, not issue snapshots.
+
+```sql
+-- Get issue sources for a plan
+SELECT plan."TITLE", plansrc."SOURCE_TYPE", plansrc."SOURCE_VALUE"
+FROM "AO_D9132D_ISSUE_SOURCE" plansrc, "AO_D9132D_PLAN" plan
+WHERE plansrc."PLAN_ID" = plan."ID";
+```
+
+---
+
+## eazyBI Reporting
+
+OLAP-based business intelligence for Jira.
+
+### Architecture
+
+| Component | Description |
+|-----------|-------------|
+| **OLAP Cubes** | Multidimensional data structures (Issues, Time, Projects) |
+| **Measures** | Quantitative data (Issues created, Hours spent) |
+| **Dimensions** | Qualitative attributes (Project, Status, Assignee) |
+| **MDX Engine** | Query language for calculated members/measures |
+| **ETL Import** | Incremental imports (10min/hourly/daily) |
+
+### Visualization Types
+
+- Pivot tables
+- Bar/Line/Pie charts
+- Scatter/Bubble charts
+- Gantt charts
+- Agile charts (Velocity, Burndown, Burnup)
+
+### MDX Examples
+
+```mdx
+-- Lead Time calculation
+DateDiffDays([Measures].[Issue status updated date], Now())
+
+-- Filter releases by date range
+Aggregate(
+  Filter(
+    [Fix Version].[Version].Members,
+    DateBetween(
+      [Fix Version].CurrentMember.Get('Release date'),
+      "1 year ago", "3 month from now"
+    )
+  )
+)
+
+-- Closed sprints ordered by start date
+Aggregate(
+  Order(
+    Filter([Sprint].[Sprint].Members,
+      [Sprint].CurrentMember.GetBoolean('Closed')
+    ),
+    [Sprint].CurrentMember.Get('Start date'),
+    BASC
+  )
+)
+```
+
+---
+
+## Structure & BigPicture
+
+### Structure by Tempo
+
+Spreadsheet-like hierarchical views with unlimited levels.
+
+| Feature | Description |
+|---------|-------------|
+| **Generators** | Dynamic hierarchy builders (Insert, Filter, Sort, Group) |
+| **Formulas** | Excel-like calculations across hierarchy |
+| **Structured JQL** | Search based on hierarchy position |
+| **Gadgets** | Dashboard/Confluence integration |
+
+**Database Tables**: `AO_8BAD1B_FOREST` (hierarchy JSON), `AO_8BAD1B_ROW` (issue mapping)
+
+### BigPicture (PPM Suite)
+
+Full Project Portfolio Management with Gantt, SAFe, and resource management.
+
+| Module | Function |
+|--------|----------|
+| **Gantt** | Timeline with dependencies, critical path |
+| **Scope** | Work Breakdown Structure (WBS) |
+| **Board** | Agile/SAFe program board |
+| **Roadmap** | Objectives and key results |
+| **Risks** | Risk heatmap and tracking |
+
+**SAFe Support**: Native PI Planning, ARTs, cross-team dependencies
+
+---
+
+## DevOps & CI/CD Plugins
+
+| Plugin | Function | Database Tables |
+|--------|----------|-----------------|
+| **Bitbucket DC** | Commit → issue linking | `AO_E8B6CC_CHANGESET_MAPPING` |
+| **Jenkins Integration** | Build status on issues | `AO_E8B6CC_*` |
+| **Git Integration** | Multi-repo mapping, PRs | `AO_E8B6CC_REPOSITORY_MAPPING`, `AO_E8B6CC_PULL_REQUEST` |
+
+### Smart Commits
+
+```
+PROJ-123 #comment Fixed the login bug #time 2h #done
+         ↓              ↓            ↓       ↓
+     Issue Key    Add Comment   Log Time  Transition
+```
+
+---
+
+## Security & Compliance Plugins
+
+| Plugin | Function | Database Tables |
+|--------|----------|-----------------|
+| **SAML SSO** | Corporate identity provider | `cwd_directory` config |
+| **LDAP Connector** | User/group sync | `cwd_directory`, `cwd_synchronisation_*` |
+| **Audit Log** | Compliance tracking | Built-in + `AO_*` for extended |
+| **Data Masking** | GDPR compliance | Plugin-specific |
+| **OAuth 2.0** | Secure integrations | `AO_FE1BC5_*` |
+
+---
+
+## Plugin Architecture
+
+### How Plugins Work
+
+1. **OSGi Bundles**: Installed under `<jira-home>/plugins/installed-plugins`
+2. **Active Objects (AO)**: Each plugin creates `AO_XXXXXX_*` prefixed tables
+3. **REST APIs**: Plugins extend `/rest/` namespace
+4. **UI Hooks**: Web panels, screens, workflows, navigation items
+
+### Common AO Table Prefixes
+
+| Prefix | Plugin |
+|--------|--------|
+| `AO_60DB71_*` | Jira Software (Agile) |
+| `AO_589059_*` | Automation for Jira |
+| `AO_E8B6CC_*` | DVCS/Git Integration |
+| `AO_D9132D_*` | Advanced Roadmaps |
+| `AO_82B313_*` | Team Management |
+| `AO_A415DF_*` | Portfolio Plans |
+| `AO_FE1BC5_*` | OAuth2 |
+| `AO_4AEACD_*` | Webhooks |
+| `AO_81F455_*` | Personal Access Tokens |
+| `AO_8BAD1B_*` | Structure |
+
+### Plugin Governance Best Practices
+
+| ❌ Avoid | ✅ Instead |
+|----------|-----------|
+| Too many plugins | Consolidate with ScriptRunner |
+| No DC compatibility check | Verify Data Center certification |
+| No staging environment | Always test in non-prod first |
+| No governance process | Maintain plugin inventory and owners |
+
+---
+
+## Most-Used Plugins in Enterprise (Ranked)
+
+| Rank | Plugin | Purpose |
+|------|--------|---------|
+| 1️⃣ | ScriptRunner | Custom logic, automation, bulk ops |
+| 2️⃣ | Automation for Jira | No-code rules |
+| 3️⃣ | eazyBI | Executive reporting, BI |
+| 4️⃣ | Advanced Roadmaps | Cross-project planning |
+| 5️⃣ | Structure / BigPicture | Hierarchy, PPM, SAFe |
+| 6️⃣ | SAML SSO | Enterprise authentication |
+| 7️⃣ | Configuration Manager | Dev→Prod promotion |
+
+---
+
+# PART 3: DATABASE ARCHITECTURE
 
 ---
 
