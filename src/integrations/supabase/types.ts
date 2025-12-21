@@ -445,6 +445,51 @@ export type Database = {
           },
         ]
       }
+      export_audit_logs: {
+        Row: {
+          approved_at: string | null
+          approver_id: string | null
+          classification_level: string
+          completed_at: string | null
+          created_at: string | null
+          export_type: string
+          file_format: string | null
+          id: string
+          record_count: number | null
+          rejection_reason: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approver_id?: string | null
+          classification_level: string
+          completed_at?: string | null
+          created_at?: string | null
+          export_type: string
+          file_format?: string | null
+          id?: string
+          record_count?: number | null
+          rejection_reason?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approver_id?: string | null
+          classification_level?: string
+          completed_at?: string | null
+          created_at?: string | null
+          export_type?: string
+          file_format?: string | null
+          id?: string
+          record_count?: number | null
+          rejection_reason?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       group_memberships: {
         Row: {
           created_at: string | null
@@ -769,6 +814,88 @@ export type Database = {
           },
         ]
       }
+      permission_scheme_grants: {
+        Row: {
+          created_at: string | null
+          grant_type: string
+          group_id: string | null
+          id: string
+          permission_key: string
+          role_id: string | null
+          scheme_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          grant_type: string
+          group_id?: string | null
+          id?: string
+          permission_key: string
+          role_id?: string | null
+          scheme_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          grant_type?: string
+          group_id?: string | null
+          id?: string
+          permission_key?: string
+          role_id?: string | null
+          scheme_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_scheme_grants_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_scheme_grants_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "project_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_scheme_grants_scheme_id_fkey"
+            columns: ["scheme_id"]
+            isOneToOne: false
+            referencedRelation: "permission_schemes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permission_schemes: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       priorities: {
         Row: {
           color: string | null
@@ -873,6 +1000,42 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      project_permission_schemes: {
+        Row: {
+          created_at: string | null
+          id: string
+          project_id: string
+          scheme_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          project_id: string
+          scheme_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          scheme_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_permission_schemes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_permission_schemes_scheme_id_fkey"
+            columns: ["scheme_id"]
+            isOneToOne: false
+            referencedRelation: "permission_schemes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_role_actors: {
         Row: {
