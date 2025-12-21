@@ -16,6 +16,8 @@ import WorkflowsPage from "./pages/WorkflowsPage";
 import CustomFieldsPage from "./pages/CustomFieldsPage";
 import ReportsPage from "./pages/ReportsPage";
 import AdminPage from "./pages/AdminPage";
+import ProfilePage from "./pages/ProfilePage";
+import ProjectSettingsPage from "./pages/ProjectSettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -103,6 +105,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <BacklogPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:projectKey/settings"
+        element={
+          <ProtectedRoute>
+            <ProjectSettingsPage />
           </ProtectedRoute>
         }
       />
@@ -210,7 +220,7 @@ function AppRoutes() {
         path="/profile"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <ProfilePage />
           </ProtectedRoute>
         }
       />

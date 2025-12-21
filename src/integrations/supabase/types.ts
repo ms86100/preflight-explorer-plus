@@ -579,6 +579,48 @@ export type Database = {
           },
         ]
       }
+      issue_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          link_type: string
+          source_issue_id: string
+          target_issue_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          link_type: string
+          source_issue_id: string
+          target_issue_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          link_type?: string
+          source_issue_id?: string
+          target_issue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issue_links_source_issue_id_fkey"
+            columns: ["source_issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issue_links_target_issue_id_fkey"
+            columns: ["target_issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       issue_statuses: {
         Row: {
           category: Database["public"]["Enums"]["status_category"] | null
@@ -813,6 +855,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          is_read: boolean
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          is_read?: boolean
+          message: string
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       permission_scheme_grants: {
         Row: {
