@@ -40,8 +40,7 @@ export function useCreateIssue() {
       queryClient.invalidateQueries({ queryKey: ['issues'] });
       toast.success(`Issue ${data.issue_key} created!`);
     },
-    onError: (error) => {
-      console.error('Failed to create issue:', error);
+    onError: () => {
       toast.error('Failed to create issue. Please try again.');
     },
   });

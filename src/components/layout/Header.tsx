@@ -78,6 +78,16 @@ export function Header() {
   const { user, profile, signOut, isAuthenticated } = useAuth();
   const location = useLocation();
 
+  const projectKeyFromPath = (() => {
+    const parts = location.pathname.split('/').filter(Boolean);
+    if (parts[0] !== 'projects' || !parts[1]) return undefined;
+    return parts[1];
+  })();
+
+  const createHref = projectKeyFromPath
+    ? `/projects/${projectKeyFromPath}/issues?create=1`
+    : '/issues?create=1';
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -125,10 +135,11 @@ export function Header() {
 
         {/* Create Button */}
         <Button
+          asChild
           size="sm"
           className="bg-white/20 hover:bg-white/30 text-header-foreground ml-2"
         >
-          Create
+          <Link to={createHref}>Create</Link>
         </Button>
       </nav>
 
