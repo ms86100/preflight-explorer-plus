@@ -1,5 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { ClassificationLevel, ProjectTemplate, ProjectType } from '@/types/jira';
+import {
+  type PaginationParams,
+  type PaginatedResult,
+  getPaginationRange,
+  buildPaginatedResult,
+  DEFAULT_PAGE_SIZE,
+} from '@/lib/pagination';
 
 export interface ProjectInsert {
   pkey: string;
@@ -32,16 +39,43 @@ export interface ProjectRow {
   updated_at: string;
 }
 
+export interface ProjectFilters {
+  search?: string;
+  projectType?: ProjectType;
+  classification?: ClassificationLevel;
+}
+
 export const projectService = {
-  async getAll() {
-    const { data, error } = await supabase
+  // Paginated query for large datasets
+  async getAllPaginated(
+    pagination: PaginationParams = {},
+    filters: ProjectFilters = {}
+  ): Promise<PaginatedResult<ProjectRow>> {
+    const { page = 1, pageSize = DEFAULT_PAGE_SIZE } = pagination;
+    const { from, to } = getPaginationRange(page, pageSize);
+
+    let query = supabase
       .from('projects')
-      .select('*')
-      .eq('is_archived', false)
-      .order('updated_at', { ascending: false });
+      .select('*', { count: 'exact' })
+      .eq('is_archived', false);
+
+    // Apply filters
+    if (filters.search) query = query.ilike('name', `%${filters.search}%`);
+    if (filters.projectType) query = query.eq('project_type', filters.projectType);
+    if (filters.classification) query = query.eq('classification', filters.classification);
+
+    const { data, error, count } = await query
+      .order('updated_at', { ascending: false })
+      .range(from, to);
 
     if (error) throw error;
-    return data as ProjectRow[];
+    return buildPaginatedResult(data as ProjectRow[], count || 0, page, pageSize);
+  },
+
+  // Keep non-paginated for backward compatibility (limited to 100)
+  async getAll() {
+    const result = await this.getAllPaginated({ page: 1, pageSize: 100 });
+    return result.data;
   },
 
   async getByKey(pkey: string) {

@@ -1,5 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { ClassificationLevel } from '@/types/jira';
+import {
+  type PaginationParams,
+  type PaginatedResult,
+  getPaginationRange,
+  buildPaginatedResult,
+  DEFAULT_PAGE_SIZE,
+} from '@/lib/pagination';
 
 export interface IssueInsert {
   project_id: string;
@@ -53,10 +60,26 @@ export interface IssueWithRelations extends IssueRow {
   epic: { id: string; issue_key: string; summary: string } | null;
 }
 
+export interface IssueFilters {
+  statusId?: string;
+  priorityId?: string;
+  assigneeId?: string;
+  issueTypeId?: string;
+  search?: string;
+}
+
 export const issueService = {
-  async getByProject(projectId: string) {
-    // Fetch issues with reference data (no profile FK hints - profiles are linked by id match)
-    const { data: issues, error } = await supabase
+  // Paginated query for large datasets
+  async getByProjectPaginated(
+    projectId: string,
+    pagination: PaginationParams = {},
+    filters: IssueFilters = {}
+  ): Promise<PaginatedResult<IssueWithRelations>> {
+    const { page = 1, pageSize = DEFAULT_PAGE_SIZE } = pagination;
+    const { from, to } = getPaginationRange(page, pageSize);
+
+    // Build query with filters
+    let query = supabase
       .from('issues')
       .select(`
         id, issue_key, issue_number, summary, description, story_points, classification,
@@ -65,12 +88,22 @@ export const issueService = {
         issue_type:issue_types(id, name, color, category),
         status:issue_statuses(id, name, color, category),
         priority:priorities(id, name, color)
-      `)
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: false });
+      `, { count: 'exact' })
+      .eq('project_id', projectId);
+
+    // Apply filters
+    if (filters.statusId) query = query.eq('status_id', filters.statusId);
+    if (filters.priorityId) query = query.eq('priority_id', filters.priorityId);
+    if (filters.assigneeId) query = query.eq('assignee_id', filters.assigneeId);
+    if (filters.issueTypeId) query = query.eq('issue_type_id', filters.issueTypeId);
+    if (filters.search) query = query.ilike('summary', `%${filters.search}%`);
+
+    const { data: issues, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
     if (error) throw error;
-    
+
     // Fetch profiles for reporter and assignee
     const userIds = [...new Set(issues?.flatMap(i => [i.reporter_id, i.assignee_id].filter(Boolean)) || [])];
     const { data: profiles } = await supabase
@@ -79,13 +112,21 @@ export const issueService = {
       .in('id', userIds.length > 0 ? userIds : ['00000000-0000-0000-0000-000000000000']);
 
     const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-    
-    return (issues || []).map(issue => ({
+
+    const issuesWithRelations = (issues || []).map(issue => ({
       ...issue,
       reporter: issue.reporter_id ? profileMap.get(issue.reporter_id) || null : null,
       assignee: issue.assignee_id ? profileMap.get(issue.assignee_id) || null : null,
       epic: null,
     })) as IssueWithRelations[];
+
+    return buildPaginatedResult(issuesWithRelations, count || 0, page, pageSize);
+  },
+
+  // Keep non-paginated for backward compatibility (limited to 100)
+  async getByProject(projectId: string) {
+    const result = await this.getByProjectPaginated(projectId, { page: 1, pageSize: 100 });
+    return result.data;
   },
 
   async getByKey(issueKey: string) {
