@@ -122,7 +122,7 @@ export function SchemaEditor({ schemas, onSchemaCreated, onSchemaUpdated, onSche
       id: editingSchema?.id || Date.now().toString(),
       name: formData.name,
       description: formData.description,
-      version: editingSchema ? incrementVersion(editingSchema.version) : '1.0',
+      version: editingSchema ? (editingSchema.version + 1) : 1,
       columns: formData.columns,
       created_at: editingSchema?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),

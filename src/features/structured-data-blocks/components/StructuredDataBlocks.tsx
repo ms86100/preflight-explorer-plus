@@ -14,7 +14,7 @@ export function StructuredDataBlocks() {
       id: '1',
       name: 'Parts List',
       description: 'Track parts and quantities for manufacturing',
-      version: '1.0',
+      version: 1,
       columns: [
         { key: 'partId', label: 'Part ID', type: 'string', required: true },
         { key: 'partName', label: 'Part Name', type: 'string', required: true },
@@ -30,7 +30,7 @@ export function StructuredDataBlocks() {
       id: '2',
       name: 'Test Cases',
       description: 'Test case tracking with results',
-      version: '1.0',
+      version: 1,
       columns: [
         { key: 'testId', label: 'Test ID', type: 'string', required: true },
         { key: 'description', label: 'Description', type: 'string' },

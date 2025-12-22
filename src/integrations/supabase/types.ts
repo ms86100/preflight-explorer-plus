@@ -542,6 +542,207 @@ export type Database = {
           },
         ]
       }
+      data_block_instances: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          issue_id: string | null
+          name: string | null
+          project_id: string | null
+          rows: Json
+          schema_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          issue_id?: string | null
+          name?: string | null
+          project_id?: string | null
+          rows?: Json
+          schema_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          issue_id?: string | null
+          name?: string | null
+          project_id?: string | null
+          rows?: Json
+          schema_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_block_instances_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_block_instances_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_block_instances_schema_id_fkey"
+            columns: ["schema_id"]
+            isOneToOne: false
+            referencedRelation: "data_block_schemas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_block_schemas: {
+        Row: {
+          columns: Json
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+          validation_rules: Json | null
+          version: number | null
+        }
+        Insert: {
+          columns?: Json
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+          validation_rules?: Json | null
+          version?: number | null
+        }
+        Update: {
+          columns?: Json
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+          validation_rules?: Json | null
+          version?: number | null
+        }
+        Relationships: []
+      }
+      document_exports: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          created_by: string
+          error_message: string | null
+          file_path: string | null
+          file_size: number | null
+          format: string
+          id: string
+          issue_ids: Json | null
+          name: string
+          options: Json | null
+          status: string
+          template_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by: string
+          error_message?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          format: string
+          id?: string
+          issue_ids?: Json | null
+          name: string
+          options?: Json | null
+          status?: string
+          template_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string
+          error_message?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          format?: string
+          id?: string
+          issue_ids?: Json | null
+          name?: string
+          options?: Json | null
+          status?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_exports_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_templates: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          footer_config: Json | null
+          format: string
+          header_config: Json | null
+          id: string
+          is_default: boolean | null
+          name: string
+          sections: Json | null
+          styling: Json | null
+          updated_at: string | null
+          watermark_config: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          footer_config?: Json | null
+          format?: string
+          header_config?: Json | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          sections?: Json | null
+          styling?: Json | null
+          updated_at?: string | null
+          watermark_config?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          footer_config?: Json | null
+          format?: string
+          header_config?: Json | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          sections?: Json | null
+          styling?: Json | null
+          updated_at?: string | null
+          watermark_config?: Json | null
+        }
+        Relationships: []
+      }
       export_audit_logs: {
         Row: {
           approved_at: string | null
@@ -639,6 +840,89 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      guided_operation_executions: {
+        Row: {
+          completed_at: string | null
+          current_step: number | null
+          id: string
+          operation_id: string
+          result: Json | null
+          started_at: string | null
+          started_by: string
+          status: string
+          step_data: Json | null
+        }
+        Insert: {
+          completed_at?: string | null
+          current_step?: number | null
+          id?: string
+          operation_id: string
+          result?: Json | null
+          started_at?: string | null
+          started_by: string
+          status?: string
+          step_data?: Json | null
+        }
+        Update: {
+          completed_at?: string | null
+          current_step?: number | null
+          id?: string
+          operation_id?: string
+          result?: Json | null
+          started_at?: string | null
+          started_by?: string
+          status?: string
+          step_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guided_operation_executions_operation_id_fkey"
+            columns: ["operation_id"]
+            isOneToOne: false
+            referencedRelation: "guided_operations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guided_operations: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          requires_approval: boolean | null
+          steps: Json
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          requires_approval?: boolean | null
+          steps?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          requires_approval?: boolean | null
+          steps?: Json
           updated_at?: string | null
         }
         Relationships: []

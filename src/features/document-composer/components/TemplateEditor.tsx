@@ -80,10 +80,11 @@ export function TemplateEditor() {
     showPageNumbers: true,
   });
 
-  const formatIcons: Record<ExportFormat, React.ReactNode> = {
+  const formatIcons: Record<string, React.ReactNode> = {
     pdf: <FileText className="h-4 w-4 text-red-500" />,
     xlsx: <Table className="h-4 w-4 text-green-500" />,
     docx: <FileType className="h-4 w-4 text-blue-500" />,
+    html: <FileText className="h-4 w-4 text-orange-500" />,
   };
 
   const handleOpenDialog = (template?: DocumentTemplate) => {

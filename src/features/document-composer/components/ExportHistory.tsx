@@ -57,10 +57,11 @@ export function ExportHistory() {
     },
   ]);
 
-  const formatIcons: Record<ExportFormat, React.ReactNode> = {
+  const formatIcons: Record<string, React.ReactNode> = {
     pdf: <FileText className="h-4 w-4 text-red-500" />,
     xlsx: <TableIcon className="h-4 w-4 text-green-500" />,
     docx: <FileType className="h-4 w-4 text-blue-500" />,
+    html: <FileText className="h-4 w-4 text-orange-500" />,
   };
 
   const statusConfig: Record<ExportJob['status'], { icon: React.ReactNode; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
