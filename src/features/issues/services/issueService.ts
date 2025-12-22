@@ -1,3 +1,22 @@
+/**
+ * @fileoverview Issue service for database operations.
+ * @module features/issues/services/issueService
+ * 
+ * @description
+ * Provides all database operations for issues including CRUD operations,
+ * pagination, filtering, and reference data management.
+ * All operations respect Row-Level Security (RLS) policies.
+ * 
+ * @example
+ * ```typescript
+ * // Fetch paginated issues
+ * const result = await issueService.getByProjectPaginated('project-id', { page: 1, pageSize: 20 });
+ * 
+ * // Create a new issue
+ * const issue = await issueService.create({ summary: 'New task', ... }, userId);
+ * ```
+ */
+
 import { supabase } from '@/integrations/supabase/client';
 import type { ClassificationLevel } from '@/types/jira';
 import {
@@ -8,6 +27,23 @@ import {
   DEFAULT_PAGE_SIZE,
 } from '@/lib/pagination';
 
+/**
+ * Data required to create a new issue.
+ * 
+ * @interface IssueInsert
+ * @property {string} project_id - UUID of the parent project
+ * @property {string} summary - Issue title (required)
+ * @property {string} [description] - Detailed description (markdown supported)
+ * @property {string} issue_type_id - UUID of the issue type
+ * @property {string} status_id - UUID of the initial status
+ * @property {string} [priority_id] - UUID of the priority level
+ * @property {string} [assignee_id] - UUID of the assigned user
+ * @property {string} [parent_id] - UUID of parent issue (for subtasks)
+ * @property {string} [epic_id] - UUID of the epic this issue belongs to
+ * @property {string} [due_date] - ISO date string for due date
+ * @property {number} [story_points] - Agile story points estimate
+ * @property {ClassificationLevel} [classification] - Security classification level
+ */
 export interface IssueInsert {
   project_id: string;
   summary: string;
@@ -23,6 +59,11 @@ export interface IssueInsert {
   classification?: ClassificationLevel;
 }
 
+/**
+ * Raw issue data from the database.
+ * 
+ * @interface IssueRow
+ */
 export interface IssueRow {
   id: string;
   project_id: string;
@@ -51,15 +92,37 @@ export interface IssueRow {
   updated_at: string;
 }
 
+/**
+ * Issue data with related entities populated.
+ * 
+ * @interface IssueWithRelations
+ * @extends IssueRow
+ */
 export interface IssueWithRelations extends IssueRow {
+  /** Populated issue type data */
   issue_type: { id: string; name: string; color: string; category: string } | null;
+  /** Populated status data */
   status: { id: string; name: string; color: string; category: string } | null;
+  /** Populated priority data */
   priority: { id: string; name: string; color: string } | null;
+  /** Populated reporter user data */
   reporter: { id: string; display_name: string; avatar_url: string | null } | null;
+  /** Populated assignee user data */
   assignee: { id: string; display_name: string; avatar_url: string | null } | null;
+  /** Populated epic data (if linked) */
   epic: { id: string; issue_key: string; summary: string } | null;
 }
 
+/**
+ * Filter options for querying issues.
+ * 
+ * @interface IssueFilters
+ * @property {string} [statusId] - Filter by status UUID
+ * @property {string} [priorityId] - Filter by priority UUID
+ * @property {string} [assigneeId] - Filter by assignee UUID
+ * @property {string} [issueTypeId] - Filter by issue type UUID
+ * @property {string} [search] - Search in summary (case-insensitive)
+ */
 export interface IssueFilters {
   statusId?: string;
   priorityId?: string;
@@ -68,8 +131,43 @@ export interface IssueFilters {
   search?: string;
 }
 
+/**
+ * Issue service providing all database operations for issues.
+ * 
+ * @namespace issueService
+ * 
+ * @example
+ * ```typescript
+ * import { issueService } from '@/features/issues/services/issueService';
+ * 
+ * // Get issues with pagination
+ * const { data, totalCount, hasNextPage } = await issueService.getByProjectPaginated(
+ *   projectId,
+ *   { page: 1, pageSize: 25 },
+ *   { statusId: 'active-status-id' }
+ * );
+ * ```
+ */
 export const issueService = {
-  // Paginated query for large datasets
+  /**
+   * Fetches issues for a project with pagination and optional filters.
+   * 
+   * @param projectId - UUID of the project
+   * @param pagination - Pagination parameters (page, pageSize)
+   * @param filters - Optional filter criteria
+   * @returns Paginated result with issues and metadata
+   * @throws {Error} If database query fails
+   * 
+   * @example
+   * ```typescript
+   * const result = await issueService.getByProjectPaginated(
+   *   'project-uuid',
+   *   { page: 1, pageSize: 20 },
+   *   { search: 'bug', priorityId: 'high-priority-id' }
+   * );
+   * console.log(`Found ${result.totalCount} issues, showing page ${result.page}`);
+   * ```
+   */
   async getByProjectPaginated(
     projectId: string,
     pagination: PaginationParams = {},
@@ -123,13 +221,27 @@ export const issueService = {
     return buildPaginatedResult(issuesWithRelations, count || 0, page, pageSize);
   },
 
-  // Keep non-paginated for backward compatibility (limited to 100)
-  async getByProject(projectId: string) {
+  /**
+   * Fetches issues for a project without pagination (limited to 100).
+   * Kept for backward compatibility with existing code.
+   * 
+   * @param projectId - UUID of the project
+   * @returns Array of issues with relations
+   * @deprecated Use getByProjectPaginated for new code
+   */
+  async getByProject(projectId: string): Promise<IssueWithRelations[]> {
     const result = await this.getByProjectPaginated(projectId, { page: 1, pageSize: 100 });
     return result.data;
   },
 
-  async getByKey(issueKey: string) {
+  /**
+   * Fetches a single issue by its human-readable key.
+   * 
+   * @param issueKey - Issue key in format "PROJECT-NUMBER" (e.g., "PROJ-123")
+   * @returns The issue with relations, or null if not found
+   * @throws {Error} If database query fails
+   */
+  async getByKey(issueKey: string): Promise<IssueWithRelations | null> {
     const { data: issue, error } = await supabase
       .from('issues')
       .select(`
@@ -163,7 +275,14 @@ export const issueService = {
     } as IssueWithRelations;
   },
 
-  async getById(id: string) {
+  /**
+   * Fetches a single issue by its UUID.
+   * 
+   * @param id - UUID of the issue
+   * @returns The issue with relations, or null if not found
+   * @throws {Error} If database query fails
+   */
+  async getById(id: string): Promise<IssueWithRelations | null> {
     const { data: issue, error } = await supabase
       .from('issues')
       .select(`
@@ -197,7 +316,28 @@ export const issueService = {
     } as IssueWithRelations;
   },
 
-  async create(issue: IssueInsert, reporterId: string) {
+  /**
+   * Creates a new issue in the database.
+   * The issue_key and issue_number are auto-generated by a database trigger.
+   * 
+   * @param issue - Issue data to create
+   * @param reporterId - UUID of the user creating the issue
+   * @returns The created issue row
+   * @throws {Error} If database insert fails
+   * 
+   * @example
+   * ```typescript
+   * const newIssue = await issueService.create({
+   *   project_id: 'project-uuid',
+   *   summary: 'Fix login bug',
+   *   description: 'Users cannot login with special characters',
+   *   issue_type_id: 'bug-type-id',
+   *   status_id: 'todo-status-id',
+   *   priority_id: 'high-priority-id'
+   * }, currentUserId);
+   * ```
+   */
+  async create(issue: IssueInsert, reporterId: string): Promise<IssueRow> {
     // Note: issue_key and issue_number are auto-generated by database trigger
     const insertData = {
       project_id: issue.project_id,
@@ -227,7 +367,15 @@ export const issueService = {
     return data as IssueRow;
   },
 
-  async update(id: string, updates: Partial<IssueInsert>) {
+  /**
+   * Updates an existing issue.
+   * 
+   * @param id - UUID of the issue to update
+   * @param updates - Partial issue data to update
+   * @returns The updated issue row
+   * @throws {Error} If database update fails
+   */
+  async update(id: string, updates: Partial<IssueInsert>): Promise<IssueRow> {
     const { data, error } = await supabase
       .from('issues')
       .update(updates)
@@ -239,7 +387,16 @@ export const issueService = {
     return data as IssueRow;
   },
 
-  async updateStatus(id: string, statusId: string) {
+  /**
+   * Updates only the status of an issue.
+   * Optimized for board drag-and-drop operations.
+   * 
+   * @param id - UUID of the issue
+   * @param statusId - UUID of the new status
+   * @returns The updated issue row
+   * @throws {Error} If database update fails
+   */
+  async updateStatus(id: string, statusId: string): Promise<IssueRow> {
     const { data, error } = await supabase
       .from('issues')
       .update({ status_id: statusId })
@@ -251,14 +408,39 @@ export const issueService = {
     return data as IssueRow;
   },
 
-  async delete(id: string) {
+  /**
+   * Permanently deletes an issue.
+   * 
+   * @param id - UUID of the issue to delete
+   * @throws {Error} If database delete fails
+   * 
+   * @remarks
+   * This operation is irreversible. Consider implementing soft delete
+   * for production use if data recovery is important.
+   */
+  async delete(id: string): Promise<void> {
     const { error } = await supabase.from('issues').delete().eq('id', id);
     if (error) throw error;
   },
 };
 
-// Reference data services
+// ============================================================================
+// Reference Data Services
+// ============================================================================
+
+/**
+ * Service for fetching and managing reference data (issue types, priorities, statuses).
+ * Reference data is typically cached with long stale times as it rarely changes.
+ * 
+ * @namespace referenceDataService
+ */
 export const referenceDataService = {
+  /**
+   * Fetches all issue types ordered by position.
+   * 
+   * @returns Array of issue types
+   * @throws {Error} If database query fails
+   */
   async getIssueTypes() {
     const { data, error } = await supabase
       .from('issue_types')
@@ -268,6 +450,13 @@ export const referenceDataService = {
     return data;
   },
 
+  /**
+   * Fetches all priority levels ordered by position.
+   * Lower position indicates higher priority.
+   * 
+   * @returns Array of priorities
+   * @throws {Error} If database query fails
+   */
   async getPriorities() {
     const { data, error } = await supabase
       .from('priorities')
@@ -277,6 +466,12 @@ export const referenceDataService = {
     return data;
   },
 
+  /**
+   * Fetches all issue statuses ordered by position.
+   * 
+   * @returns Array of statuses
+   * @throws {Error} If database query fails
+   */
   async getStatuses() {
     const { data, error } = await supabase
       .from('issue_statuses')
@@ -286,6 +481,24 @@ export const referenceDataService = {
     return data;
   },
 
+  /**
+   * Creates a new issue status.
+   * Position is automatically set to the next available value.
+   * 
+   * @param status - Status data to create
+   * @returns The created status
+   * @throws {Error} If database insert fails
+   * 
+   * @example
+   * ```typescript
+   * const newStatus = await referenceDataService.createStatus({
+   *   name: 'Code Review',
+   *   category: 'in_progress',
+   *   color: '#9333ea',
+   *   description: 'Issue is being reviewed'
+   * });
+   * ```
+   */
   async createStatus(status: {
     name: string;
     category: 'todo' | 'in_progress' | 'done';
@@ -317,6 +530,12 @@ export const referenceDataService = {
     return data;
   },
 
+  /**
+   * Fetches all resolution types ordered by position.
+   * 
+   * @returns Array of resolutions
+   * @throws {Error} If database query fails
+   */
   async getResolutions() {
     const { data, error } = await supabase
       .from('resolutions')

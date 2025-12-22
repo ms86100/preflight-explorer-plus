@@ -1,9 +1,46 @@
+/**
+ * @fileoverview React hooks for issue management operations.
+ * @module features/issues/hooks/useIssues
+ * 
+ * @description
+ * Provides React Query-based hooks for all issue-related data fetching and mutations.
+ * Includes hooks for CRUD operations, reference data, and issue cloning.
+ * 
+ * @example
+ * ```tsx
+ * // Fetching issues for a project
+ * const { data: issues, isLoading } = useIssuesByProject(projectId);
+ * 
+ * // Creating a new issue
+ * const createIssue = useCreateIssue();
+ * createIssue.mutate({ summary: 'New task', project_id: projectId, ... });
+ * ```
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { issueService, referenceDataService, type IssueInsert } from '../services/issueService';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import type { ClassificationLevel } from '@/types/jira';
 
+/**
+ * Fetches all issues for a specific project.
+ * 
+ * @param projectId - The UUID of the project to fetch issues for
+ * @returns React Query result with issues array, loading state, and error
+ * 
+ * @example
+ * ```tsx
+ * function IssueList({ projectId }: { projectId: string }) {
+ *   const { data: issues, isLoading, error } = useIssuesByProject(projectId);
+ *   
+ *   if (isLoading) return <Spinner />;
+ *   if (error) return <ErrorMessage error={error} />;
+ *   
+ *   return <ul>{issues?.map(issue => <IssueItem key={issue.id} issue={issue} />)}</ul>;
+ * }
+ * ```
+ */
 export function useIssuesByProject(projectId: string) {
   return useQuery({
     queryKey: ['issues', 'project', projectId],
@@ -12,6 +49,17 @@ export function useIssuesByProject(projectId: string) {
   });
 }
 
+/**
+ * Fetches a single issue by its human-readable key (e.g., "PROJ-123").
+ * 
+ * @param issueKey - The issue key in format "PROJECT-NUMBER"
+ * @returns React Query result with issue data, loading state, and error
+ * 
+ * @example
+ * ```tsx
+ * const { data: issue } = useIssue('PROJ-123');
+ * ```
+ */
 export function useIssue(issueKey: string) {
   return useQuery({
     queryKey: ['issue', issueKey],
@@ -20,6 +68,17 @@ export function useIssue(issueKey: string) {
   });
 }
 
+/**
+ * Fetches a single issue by its UUID.
+ * 
+ * @param id - The UUID of the issue
+ * @returns React Query result with issue data, loading state, and error
+ * 
+ * @example
+ * ```tsx
+ * const { data: issue } = useIssueById('550e8400-e29b-41d4-a716-446655440000');
+ * ```
+ */
 export function useIssueById(id: string) {
   return useQuery({
     queryKey: ['issue', 'id', id],
@@ -28,6 +87,29 @@ export function useIssueById(id: string) {
   });
 }
 
+/**
+ * Creates a new issue mutation hook.
+ * Automatically invalidates issue queries on success and shows toast notifications.
+ * 
+ * @returns React Query mutation for creating issues
+ * 
+ * @example
+ * ```tsx
+ * function CreateIssueForm() {
+ *   const createIssue = useCreateIssue();
+ *   
+ *   const handleSubmit = (data: IssueInsert) => {
+ *     createIssue.mutate(data, {
+ *       onSuccess: (issue) => {
+ *         navigate(`/issue/${issue.issue_key}`);
+ *       }
+ *     });
+ *   };
+ *   
+ *   return <form onSubmit={handleSubmit}>...</form>;
+ * }
+ * ```
+ */
 export function useCreateIssue() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -47,6 +129,22 @@ export function useCreateIssue() {
   });
 }
 
+/**
+ * Updates an existing issue mutation hook.
+ * Automatically invalidates relevant queries on success.
+ * 
+ * @returns React Query mutation for updating issues
+ * 
+ * @example
+ * ```tsx
+ * const updateIssue = useUpdateIssue();
+ * 
+ * updateIssue.mutate({
+ *   id: issueId,
+ *   updates: { summary: 'Updated title', priority_id: newPriorityId }
+ * });
+ * ```
+ */
 export function useUpdateIssue() {
   const queryClient = useQueryClient();
 
@@ -65,6 +163,21 @@ export function useUpdateIssue() {
   });
 }
 
+/**
+ * Updates only the status of an issue.
+ * Optimized for drag-and-drop board operations.
+ * Does not show toast on success for smoother UX.
+ * 
+ * @returns React Query mutation for status updates
+ * 
+ * @example
+ * ```tsx
+ * const updateStatus = useUpdateIssueStatus();
+ * 
+ * // Called when dropping issue on a new column
+ * updateStatus.mutate({ id: issueId, statusId: newStatusId });
+ * ```
+ */
 export function useUpdateIssueStatus() {
   const queryClient = useQueryClient();
 
@@ -81,6 +194,23 @@ export function useUpdateIssueStatus() {
   });
 }
 
+/**
+ * Deletes an issue permanently.
+ * Shows confirmation toast on success.
+ * 
+ * @returns React Query mutation for deleting issues
+ * 
+ * @example
+ * ```tsx
+ * const deleteIssue = useDeleteIssue();
+ * 
+ * const handleDelete = () => {
+ *   if (confirm('Are you sure?')) {
+ *     deleteIssue.mutate(issueId);
+ *   }
+ * };
+ * ```
+ */
 export function useDeleteIssue() {
   const queryClient = useQueryClient();
 
@@ -97,6 +227,25 @@ export function useDeleteIssue() {
   });
 }
 
+/**
+ * Creates a copy of an existing issue with "[CLONE]" prefix.
+ * Copies most fields except for time tracking and resolution.
+ * 
+ * @returns React Query mutation for cloning issues
+ * 
+ * @example
+ * ```tsx
+ * const cloneIssue = useCloneIssue();
+ * 
+ * const handleClone = () => {
+ *   cloneIssue.mutate(sourceIssueId, {
+ *     onSuccess: (clonedIssue) => {
+ *       navigate(`/issue/${clonedIssue.issue_key}`);
+ *     }
+ *   });
+ * };
+ * ```
+ */
 export function useCloneIssue() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -135,7 +284,29 @@ export function useCloneIssue() {
   });
 }
 
-// Reference data hooks
+// ============================================================================
+// Reference Data Hooks
+// ============================================================================
+
+/**
+ * Fetches all available issue types.
+ * Uses infinite stale time as reference data rarely changes.
+ * 
+ * @returns React Query result with issue types array
+ * 
+ * @example
+ * ```tsx
+ * const { data: issueTypes } = useIssueTypes();
+ * 
+ * return (
+ *   <Select>
+ *     {issueTypes?.map(type => (
+ *       <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+ *     ))}
+ *   </Select>
+ * );
+ * ```
+ */
 export function useIssueTypes() {
   return useQuery({
     queryKey: ['issueTypes'],
@@ -144,6 +315,12 @@ export function useIssueTypes() {
   });
 }
 
+/**
+ * Fetches all available priority levels.
+ * Uses infinite stale time as reference data rarely changes.
+ * 
+ * @returns React Query result with priorities array
+ */
 export function usePriorities() {
   return useQuery({
     queryKey: ['priorities'],
@@ -152,6 +329,12 @@ export function usePriorities() {
   });
 }
 
+/**
+ * Fetches all available issue statuses.
+ * Uses infinite stale time as reference data rarely changes.
+ * 
+ * @returns React Query result with statuses array
+ */
 export function useStatuses() {
   return useQuery({
     queryKey: ['statuses'],
@@ -160,6 +343,23 @@ export function useStatuses() {
   });
 }
 
+/**
+ * Creates a new issue status.
+ * Automatically invalidates statuses query on success.
+ * 
+ * @returns React Query mutation for creating statuses
+ * 
+ * @example
+ * ```tsx
+ * const createStatus = useCreateStatus();
+ * 
+ * createStatus.mutate({
+ *   name: 'Code Review',
+ *   category: 'in_progress',
+ *   color: '#9333ea'
+ * });
+ * ```
+ */
 export function useCreateStatus() {
   const queryClient = useQueryClient();
 
@@ -181,6 +381,12 @@ export function useCreateStatus() {
   });
 }
 
+/**
+ * Fetches all available resolution types.
+ * Uses infinite stale time as reference data rarely changes.
+ * 
+ * @returns React Query result with resolutions array
+ */
 export function useResolutions() {
   return useQuery({
     queryKey: ['resolutions'],

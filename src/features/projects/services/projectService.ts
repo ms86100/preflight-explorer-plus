@@ -1,3 +1,27 @@
+/**
+ * @fileoverview Project service for database operations.
+ * @module features/projects/services/projectService
+ * 
+ * @description
+ * Provides all database operations for projects including CRUD operations,
+ * pagination, filtering, and automatic board creation.
+ * All operations respect Row-Level Security (RLS) policies.
+ * 
+ * @example
+ * ```typescript
+ * import { projectService } from '@/features/projects/services/projectService';
+ * 
+ * // Fetch all projects
+ * const projects = await projectService.getAll();
+ * 
+ * // Create a new project
+ * const project = await projectService.create({
+ *   pkey: 'NEW',
+ *   name: 'New Project'
+ * }, userId);
+ * ```
+ */
+
 import { supabase } from '@/integrations/supabase/client';
 import type { ClassificationLevel, ProjectTemplate, ProjectType } from '@/types/jira';
 import {
@@ -8,6 +32,19 @@ import {
   DEFAULT_PAGE_SIZE,
 } from '@/lib/pagination';
 
+/**
+ * Data required to create a new project.
+ * 
+ * @interface ProjectInsert
+ * @property {string} pkey - Unique project key (2-10 uppercase letters)
+ * @property {string} name - Human-readable project name
+ * @property {string} [description] - Project description
+ * @property {ProjectType} [project_type] - Type of project (default: 'software')
+ * @property {ProjectTemplate} [template] - Methodology template (default: 'scrum')
+ * @property {ClassificationLevel} [classification] - Security classification
+ * @property {string} [program_id] - UUID of parent program
+ * @property {string} [lead_id] - UUID of project lead
+ */
 export interface ProjectInsert {
   pkey: string;
   name: string;
@@ -19,6 +56,11 @@ export interface ProjectInsert {
   lead_id?: string;
 }
 
+/**
+ * Raw project data from the database.
+ * 
+ * @interface ProjectRow
+ */
 export interface ProjectRow {
   id: string;
   pkey: string;
@@ -39,14 +81,54 @@ export interface ProjectRow {
   updated_at: string;
 }
 
+/**
+ * Filter options for querying projects.
+ * 
+ * @interface ProjectFilters
+ * @property {string} [search] - Search in project name (case-insensitive)
+ * @property {ProjectType} [projectType] - Filter by project type
+ * @property {ClassificationLevel} [classification] - Filter by classification level
+ */
 export interface ProjectFilters {
   search?: string;
   projectType?: ProjectType;
   classification?: ClassificationLevel;
 }
 
+/**
+ * Project service providing all database operations for projects.
+ * 
+ * @namespace projectService
+ * 
+ * @example
+ * ```typescript
+ * import { projectService } from '@/features/projects/services/projectService';
+ * 
+ * // Get projects with pagination
+ * const { data, totalCount } = await projectService.getAllPaginated(
+ *   { page: 1, pageSize: 10 },
+ *   { search: 'Mobile' }
+ * );
+ * ```
+ */
 export const projectService = {
-  // Paginated query for large datasets
+  /**
+   * Fetches projects with pagination and optional filters.
+   * Only returns non-archived projects.
+   * 
+   * @param pagination - Pagination parameters (page, pageSize)
+   * @param filters - Optional filter criteria
+   * @returns Paginated result with projects and metadata
+   * @throws {Error} If database query fails
+   * 
+   * @example
+   * ```typescript
+   * const result = await projectService.getAllPaginated(
+   *   { page: 1, pageSize: 20 },
+   *   { projectType: 'software', search: 'API' }
+   * );
+   * ```
+   */
   async getAllPaginated(
     pagination: PaginationParams = {},
     filters: ProjectFilters = {}
@@ -72,13 +154,26 @@ export const projectService = {
     return buildPaginatedResult(data as ProjectRow[], count || 0, page, pageSize);
   },
 
-  // Keep non-paginated for backward compatibility (limited to 100)
-  async getAll() {
+  /**
+   * Fetches all projects without pagination (limited to 100).
+   * Kept for backward compatibility with existing code.
+   * 
+   * @returns Array of projects
+   * @deprecated Use getAllPaginated for new code
+   */
+  async getAll(): Promise<ProjectRow[]> {
     const result = await projectService.getAllPaginated({ page: 1, pageSize: 100 });
     return result.data;
   },
 
-  async getByKey(pkey: string) {
+  /**
+   * Fetches a single project by its key (e.g., "PROJ").
+   * 
+   * @param pkey - The project key
+   * @returns The project row
+   * @throws {Error} If project not found or database query fails
+   */
+  async getByKey(pkey: string): Promise<ProjectRow> {
     const { data, error } = await supabase
       .from('projects')
       .select('*')
@@ -89,7 +184,14 @@ export const projectService = {
     return data as ProjectRow;
   },
 
-  async getById(id: string) {
+  /**
+   * Fetches a single project by its UUID.
+   * 
+   * @param id - UUID of the project
+   * @returns The project row
+   * @throws {Error} If project not found or database query fails
+   */
+  async getById(id: string): Promise<ProjectRow> {
     const { data, error } = await supabase
       .from('projects')
       .select('*')
@@ -100,7 +202,32 @@ export const projectService = {
     return data as ProjectRow;
   },
 
-  async create(project: ProjectInsert, userId: string) {
+  /**
+   * Creates a new project with automatic board creation.
+   * 
+   * @param project - Project data to create
+   * @param userId - UUID of the user creating the project
+   * @returns The created project row
+   * @throws {Error} If database operations fail
+   * 
+   * @remarks
+   * This method performs several operations:
+   * 1. Creates the project record
+   * 2. Adds the creator as a project administrator
+   * 3. Creates a default board based on the project template
+   * 
+   * @example
+   * ```typescript
+   * const project = await projectService.create({
+   *   pkey: 'MOBILE',
+   *   name: 'Mobile App',
+   *   description: 'iOS and Android mobile application',
+   *   template: 'scrum',
+   *   classification: 'restricted'
+   * }, currentUserId);
+   * ```
+   */
+  async create(project: ProjectInsert, userId: string): Promise<ProjectRow> {
     // First create the project
     const { data: projectData, error: projectError } = await supabase
       .from('projects')
@@ -145,7 +272,23 @@ export const projectService = {
     return projectData as ProjectRow;
   },
 
-  async update(id: string, updates: Partial<ProjectInsert>) {
+  /**
+   * Updates an existing project.
+   * 
+   * @param id - UUID of the project to update
+   * @param updates - Partial project data to update
+   * @returns The updated project row
+   * @throws {Error} If database update fails
+   * 
+   * @example
+   * ```typescript
+   * const updated = await projectService.update(projectId, {
+   *   name: 'Updated Project Name',
+   *   description: 'New description'
+   * });
+   * ```
+   */
+  async update(id: string, updates: Partial<ProjectInsert>): Promise<ProjectRow> {
     const { data, error } = await supabase
       .from('projects')
       .update(updates)
@@ -157,7 +300,20 @@ export const projectService = {
     return data as ProjectRow;
   },
 
-  async archive(id: string) {
+  /**
+   * Archives a project (soft delete).
+   * Archived projects are excluded from normal queries but data is preserved.
+   * 
+   * @param id - UUID of the project to archive
+   * @throws {Error} If database update fails
+   * 
+   * @example
+   * ```typescript
+   * await projectService.archive(projectId);
+   * // Project is now hidden from getAll() and getAllPaginated()
+   * ```
+   */
+  async archive(id: string): Promise<void> {
     const { error } = await supabase
       .from('projects')
       .update({ is_archived: true })
