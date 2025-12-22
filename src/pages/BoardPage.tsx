@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/layout';
 import { ScrumBoard, KanbanBoard, BasicBoard } from '@/features/boards';
 import { useProjects } from '@/features/projects/hooks/useProjects';
 import { useBoardsByProject, useBoardColumns, useActiveSprint, useSprintIssues } from '@/features/boards/hooks/useBoards';
+import { boardService } from '@/features/boards/services/boardService';
 import { CreateIssueModal } from '@/features/issues/components/CreateIssueModal';
 import { IssueDetailModal } from '@/features/issues/components/IssueDetailModal';
 import { useExecuteTransition } from '@/features/workflows';
@@ -17,6 +18,8 @@ export default function BoardPage() {
   const [createIssueOpen, setCreateIssueOpen] = useState(false);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [isInitializingColumns, setIsInitializingColumns] = useState(false);
+  const [didAttemptInitColumns, setDidAttemptInitColumns] = useState(false);
 
   // Get project
   const { data: projects, isLoading: projectsLoading } = useProjects();
@@ -27,7 +30,7 @@ export default function BoardPage() {
   const board = boards?.[0]; // Use first board
 
   // Get columns for board
-  const { data: columns, isLoading: columnsLoading } = useBoardColumns(board?.id || '');
+  const { data: columns, isLoading: columnsLoading, refetch: refetchColumns } = useBoardColumns(board?.id || '');
 
   // Get active sprint (for Scrum only)
   const { data: activeSprint, isLoading: sprintLoading } = useActiveSprint(board?.id || '');
@@ -51,7 +54,38 @@ export default function BoardPage() {
   const refetchIssues = isScrum ? refetchSprintIssues : refetchProjectIssues;
 
   const isLoading = projectsLoading || boardsLoading || columnsLoading || 
-    (isScrum && sprintLoading) || issuesLoading;
+    (isScrum && sprintLoading) || issuesLoading || isInitializingColumns;
+
+  // Ensure the board has default columns (required for issues to show up in columns)
+  useEffect(() => {
+    if (!board?.id) return;
+    if (columnsLoading) return;
+    if (didAttemptInitColumns) return;
+
+    const colCount = columns?.length ?? 0;
+    if (colCount > 0) return;
+
+    setDidAttemptInitColumns(true);
+
+    let cancelled = false;
+    const init = async () => {
+      setIsInitializingColumns(true);
+      try {
+        await boardService.createDefaultColumns(board.id);
+        await refetchColumns();
+      } catch (error) {
+        console.error('Failed to initialize board columns:', error);
+        toast.error('Failed to initialize board columns');
+      } finally {
+        if (!cancelled) setIsInitializingColumns(false);
+      }
+    };
+
+    init();
+    return () => {
+      cancelled = true;
+    };
+  }, [board?.id, columnsLoading, columns?.length, didAttemptInitColumns, refetchColumns]);
 
   // Real-time subscription for issues - refetch when issues change
   useEffect(() => {
@@ -240,7 +274,13 @@ export default function BoardPage() {
           projectId={project.id}
           open={createIssueOpen}
           onOpenChange={setCreateIssueOpen}
-          onSuccess={() => refetchIssues()}
+          onSuccess={(issueKey) => {
+            if (isScrum) {
+              addCreatedIssueToActiveSprint(issueKey);
+              return;
+            }
+            refetchIssues();
+          }}
         />
       )}
 

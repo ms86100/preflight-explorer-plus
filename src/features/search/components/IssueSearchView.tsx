@@ -96,8 +96,20 @@ export function IssueSearchView() {
 
   const createRequested = new URLSearchParams(location.search).get('create') === '1';
 
+  const clearCreateQueryParam = () => {
+    const params = new URLSearchParams(location.search);
+    if (!params.has('create')) return;
+
+    params.delete('create');
+    const nextSearch = params.toString();
+    navigate(`${location.pathname}${nextSearch ? `?${nextSearch}` : ''}`, { replace: true });
+  };
+
   useEffect(() => {
     if (!createRequested || isCreateIssueOpen) return;
+
+    // Prevent repeated re-opening from a persistent ?create=1 in the URL
+    clearCreateQueryParam();
 
     if (selectedProject?.id) {
       setIsCreateIssueOpen(true);
@@ -111,7 +123,15 @@ export function IssueSearchView() {
     }
 
     toast.message('Select a project to create an issue.');
-  }, [createRequested, isCreateIssueOpen, projects, selectedProject?.id]);
+  }, [
+    createRequested,
+    isCreateIssueOpen,
+    projects,
+    selectedProject?.id,
+    location.pathname,
+    location.search,
+    navigate,
+  ]);
 
   // Apply filters
   const filteredIssues = useMemo(() => {
