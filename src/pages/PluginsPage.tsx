@@ -64,7 +64,8 @@ export default function PluginsPage() {
   });
 
   const systemPlugins = filteredPlugins.filter((p) => p.is_system);
-  const installedPlugins = filteredPlugins.filter((p) => p.is_enabled);
+  const nonSystemPlugins = filteredPlugins.filter((p) => !p.is_system);
+  const enabledPlugins = filteredPlugins.filter((p) => p.is_enabled && !p.is_system);
 
   const categories = [...new Set(plugins.map((p) => p.category))];
 
@@ -123,18 +124,21 @@ export default function PluginsPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="installed" className="space-y-4">
+        <Tabs defaultValue="all" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="installed">
-              Installed ({installedPlugins.length})
+            <TabsTrigger value="all">
+              All Plugins ({nonSystemPlugins.length})
+            </TabsTrigger>
+            <TabsTrigger value="enabled">
+              Enabled ({enabledPlugins.length})
             </TabsTrigger>
             <TabsTrigger value="system">System ({systemPlugins.length})</TabsTrigger>
             <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="installed" className="space-y-4">
+          <TabsContent value="all" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              {installedPlugins.map((plugin) => (
+              {nonSystemPlugins.map((plugin) => (
                 <PluginCard
                   key={plugin.id}
                   plugin={plugin}
@@ -143,10 +147,29 @@ export default function PluginsPage() {
                 />
               ))}
             </div>
-            {installedPlugins.length === 0 && (
+            {nonSystemPlugins.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <Puzzle className="h-12 w-12 mx-auto mb-4 opacity-20" />
                 <p>No plugins match your search</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="enabled" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              {enabledPlugins.map((plugin) => (
+                <PluginCard
+                  key={plugin.id}
+                  plugin={plugin}
+                  onToggle={() => handleTogglePlugin(plugin)}
+                  isToggling={togglePlugin.isPending}
+                />
+              ))}
+            </div>
+            {enabledPlugins.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <Puzzle className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                <p>No enabled plugins</p>
               </div>
             )}
           </TabsContent>
