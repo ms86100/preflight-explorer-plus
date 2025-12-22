@@ -17,7 +17,8 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import {
   Zap, Plus, Play, Pause, Trash2, Edit, Copy, CheckCircle,
-  XCircle, Clock, AlertCircle, Loader2, Settings
+  XCircle, Clock, AlertCircle, Loader2, Settings, GitBranch,
+  GitCommit, GitPullRequest, Rocket, AlertTriangle
 } from 'lucide-react';
 
 interface AutomationRule {
@@ -45,13 +46,22 @@ interface AutomationLog {
 }
 
 const TRIGGER_TYPES = [
-  { value: 'issue_created', label: 'Issue Created' },
-  { value: 'issue_updated', label: 'Issue Updated' },
-  { value: 'status_changed', label: 'Status Changed' },
-  { value: 'assignee_changed', label: 'Assignee Changed' },
-  { value: 'comment_added', label: 'Comment Added' },
-  { value: 'scheduled', label: 'Scheduled' },
-  { value: 'manual', label: 'Manual Trigger' },
+  // Issue triggers
+  { value: 'issue_created', label: 'Issue Created', category: 'issue' },
+  { value: 'issue_updated', label: 'Issue Updated', category: 'issue' },
+  { value: 'status_changed', label: 'Status Changed', category: 'issue' },
+  { value: 'assignee_changed', label: 'Assignee Changed', category: 'issue' },
+  { value: 'comment_added', label: 'Comment Added', category: 'issue' },
+  // Git/CI triggers
+  { value: 'commit_pushed', label: 'Commit Pushed', category: 'git' },
+  { value: 'pull_request_opened', label: 'Pull Request Opened', category: 'git' },
+  { value: 'pull_request_merged', label: 'Pull Request Merged', category: 'git' },
+  { value: 'build_completed', label: 'Build Completed', category: 'git' },
+  { value: 'build_failed', label: 'Build Failed', category: 'git' },
+  { value: 'deployment_completed', label: 'Deployment Completed', category: 'git' },
+  // Other triggers
+  { value: 'scheduled', label: 'Scheduled', category: 'other' },
+  { value: 'manual', label: 'Manual Trigger', category: 'other' },
 ];
 
 const ACTION_TYPES = [
@@ -277,7 +287,26 @@ export default function AutomationPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {TRIGGER_TYPES.map((trigger) => (
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Issue Events</div>
+                      {TRIGGER_TYPES.filter(t => t.category === 'issue').map((trigger) => (
+                        <SelectItem key={trigger.value} value={trigger.value}>
+                          {trigger.label}
+                        </SelectItem>
+                      ))}
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Git & CI/CD Events</div>
+                      {TRIGGER_TYPES.filter(t => t.category === 'git').map((trigger) => (
+                        <SelectItem key={trigger.value} value={trigger.value}>
+                          <span className="flex items-center gap-2">
+                            {trigger.value.includes('commit') && <GitCommit className="h-3.5 w-3.5" />}
+                            {trigger.value.includes('pull_request') && <GitPullRequest className="h-3.5 w-3.5" />}
+                            {trigger.value.includes('build') && <Settings className="h-3.5 w-3.5" />}
+                            {trigger.value.includes('deployment') && <Rocket className="h-3.5 w-3.5" />}
+                            {trigger.label}
+                          </span>
+                        </SelectItem>
+                      ))}
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Other</div>
+                      {TRIGGER_TYPES.filter(t => t.category === 'other').map((trigger) => (
                         <SelectItem key={trigger.value} value={trigger.value}>
                           {trigger.label}
                         </SelectItem>
@@ -330,13 +359,31 @@ export default function AutomationPage() {
                     <CardContent className="py-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="p-2 rounded-lg bg-primary/10">
-                            <Zap className="h-5 w-5 text-primary" />
+                          <div className={`p-2 rounded-lg ${
+                            TRIGGER_TYPES.find((t) => t.value === rule.trigger_type)?.category === 'git'
+                              ? 'bg-orange-500/10'
+                              : 'bg-primary/10'
+                          }`}>
+                            {(() => {
+                              const triggerType = rule.trigger_type;
+                              if (triggerType.includes('commit')) return <GitCommit className="h-5 w-5 text-orange-500" />;
+                              if (triggerType.includes('pull_request')) return <GitPullRequest className="h-5 w-5 text-orange-500" />;
+                              if (triggerType.includes('build')) return <Settings className="h-5 w-5 text-orange-500" />;
+                              if (triggerType.includes('deployment')) return <Rocket className="h-5 w-5 text-orange-500" />;
+                              return <Zap className="h-5 w-5 text-primary" />;
+                            })()}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
                               <h3 className="font-medium">{rule.name}</h3>
-                              <Badge variant="outline" className="text-xs">
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs ${
+                                  TRIGGER_TYPES.find((t) => t.value === rule.trigger_type)?.category === 'git'
+                                    ? 'border-orange-500/50 text-orange-600'
+                                    : ''
+                                }`}
+                              >
                                 {TRIGGER_TYPES.find((t) => t.value === rule.trigger_type)?.label || rule.trigger_type}
                               </Badge>
                               {rule.project_id ? (

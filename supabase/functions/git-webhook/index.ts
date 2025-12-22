@@ -61,6 +61,188 @@ function extractIssueKeys(text: string): string[] {
   return [...new Set(matches)];
 }
 
+// Trigger automation rules for Git events
+async function triggerAutomationRules(
+  supabase: any,
+  triggerType: string,
+  eventData: {
+    repositoryId?: string;
+    projectId?: string;
+    issueIds?: string[];
+    commitHash?: string;
+    prId?: string;
+    buildStatus?: string;
+    environment?: string;
+    provider?: string;
+  }
+) {
+  try {
+    console.log(`Looking for automation rules with trigger: ${triggerType}`);
+    
+    // Find matching automation rules
+    const { data: rules, error } = await supabase
+      .from('automation_rules')
+      .select('*')
+      .eq('trigger_type', triggerType)
+      .eq('is_enabled', true);
+
+    if (error) {
+      console.error('Error fetching automation rules:', error);
+      return;
+    }
+
+    if (!rules || rules.length === 0) {
+      console.log(`No automation rules found for trigger: ${triggerType}`);
+      return;
+    }
+
+    console.log(`Found ${rules.length} automation rules for trigger: ${triggerType}`);
+
+    for (const rule of rules) {
+      // Check if rule is for specific project
+      if (rule.project_id && rule.project_id !== eventData.projectId) {
+        console.log(`Skipping rule ${rule.id} - project mismatch`);
+        continue;
+      }
+
+      // Log the automation execution start
+      const { data: logEntry, error: logError } = await supabase
+        .from('automation_logs')
+        .insert({
+          rule_id: rule.id,
+          status: 'running',
+          trigger_event: {
+            trigger_type: triggerType,
+            ...eventData,
+          },
+        })
+        .select('id')
+        .single();
+
+      if (logError) {
+        console.error('Error creating automation log:', logError);
+        continue;
+      }
+
+      try {
+        // Execute actions for each linked issue
+        const issueIds = eventData.issueIds || [];
+        let actionsExecuted = 0;
+
+        for (const issueId of issueIds) {
+          for (const action of rule.actions || []) {
+            await executeAutomationAction(supabase, action, issueId, eventData);
+            actionsExecuted++;
+          }
+        }
+
+        // Update log with success
+        await supabase
+          .from('automation_logs')
+          .update({
+            status: 'success',
+            completed_at: new Date().toISOString(),
+            result: {
+              issues_processed: issueIds.length,
+              actions_executed: actionsExecuted,
+            },
+          })
+          .eq('id', logEntry.id);
+
+        console.log(`Rule ${rule.id} executed successfully: ${actionsExecuted} actions on ${issueIds.length} issues`);
+      } catch (actionError) {
+        // Update log with failure
+        const errorMessage = actionError instanceof Error ? actionError.message : 'Unknown error';
+        await supabase
+          .from('automation_logs')
+          .update({
+            status: 'failed',
+            completed_at: new Date().toISOString(),
+            error_message: errorMessage,
+          })
+          .eq('id', logEntry.id);
+
+        console.error(`Rule ${rule.id} failed:`, errorMessage);
+      }
+    }
+  } catch (error) {
+    console.error('Error triggering automation rules:', error);
+  }
+}
+
+// Execute a single automation action
+async function executeAutomationAction(
+  supabase: any,
+  action: any,
+  issueId: string,
+  eventData: any
+) {
+  console.log(`Executing action ${action.type} on issue ${issueId}`);
+
+  switch (action.type) {
+    case 'transition_issue':
+      if (action.status_id) {
+        await supabase
+          .from('issues')
+          .update({ status_id: action.status_id })
+          .eq('id', issueId);
+      } else if (action.status_category) {
+        // Find status by category
+        const { data: status } = await supabase
+          .from('issue_statuses')
+          .select('id')
+          .eq('category', action.status_category)
+          .limit(1)
+          .single();
+
+        if (status) {
+          await supabase
+            .from('issues')
+            .update({ status_id: status.id })
+            .eq('id', issueId);
+        }
+      }
+      break;
+
+    case 'add_comment':
+      if (action.comment) {
+        // Replace placeholders in comment
+        let commentBody = action.comment;
+        commentBody = commentBody.replace('{{commit_hash}}', eventData.commitHash || 'N/A');
+        commentBody = commentBody.replace('{{pr_id}}', eventData.prId || 'N/A');
+        commentBody = commentBody.replace('{{build_status}}', eventData.buildStatus || 'N/A');
+        commentBody = commentBody.replace('{{environment}}', eventData.environment || 'N/A');
+
+        await supabase.from('comments').insert({
+          issue_id: issueId,
+          author_id: action.author_id || null,
+          body: commentBody,
+        });
+      }
+      break;
+
+    case 'assign_issue':
+      if (action.assignee_id) {
+        await supabase
+          .from('issues')
+          .update({ assignee_id: action.assignee_id })
+          .eq('id', issueId);
+      }
+      break;
+
+    case 'set_field':
+      if (action.field_name && action.field_value !== undefined) {
+        const updateData: Record<string, any> = {};
+        updateData[action.field_name] = action.field_value;
+        await supabase.from('issues').update(updateData).eq('id', issueId);
+      }
+      break;
+
+    default:
+      console.log(`Unknown action type: ${action.type}`);
+  }
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -382,6 +564,27 @@ async function handlePushEvent(supabase: any, orgId: string, provider: string, p
     .update({ last_commit_at: new Date().toISOString() })
     .eq('id', repo.id);
 
+  // Collect issue IDs for automation
+  const linkedIssueIds: string[] = [];
+  for (const issueKey of [...new Set(linkedIssues)]) {
+    const { data: issue } = await supabase
+      .from('issues')
+      .select('id')
+      .eq('issue_key', issueKey)
+      .single();
+    if (issue) linkedIssueIds.push(issue.id);
+  }
+
+  // Trigger automation rules for commit_pushed
+  if (linkedIssueIds.length > 0) {
+    await triggerAutomationRules(supabase, 'commit_pushed', {
+      repositoryId: repo.id,
+      projectId: repo.project_id,
+      issueIds: linkedIssueIds,
+      provider,
+    });
+  }
+
   return { 
     processed: true, 
     message: `Processed ${processedCount} commits, linked to issues: ${[...new Set(linkedIssues)].join(', ') || 'none'}` 
@@ -459,6 +662,29 @@ async function handleMergeRequestEvent(supabase: any, orgId: string, provider: s
           issue_key: issueKey,
         }, { onConflict: 'pull_request_id,issue_id' });
     }
+  }
+
+  // Collect issue IDs for automation
+  const linkedIssueIds: string[] = [];
+  for (const issueKey of issueKeys) {
+    const { data: issue } = await supabase
+      .from('issues')
+      .select('id')
+      .eq('issue_key', issueKey)
+      .single();
+    if (issue) linkedIssueIds.push(issue.id);
+  }
+
+  // Trigger automation rules based on MR state
+  if (linkedIssueIds.length > 0) {
+    const triggerType = status === 'merged' ? 'pull_request_merged' : 'pull_request_opened';
+    await triggerAutomationRules(supabase, triggerType, {
+      repositoryId: repo.id,
+      projectId: undefined, // GitLab MR doesn't have direct project link here
+      issueIds: linkedIssueIds,
+      prId: String(mr.iid),
+      provider: 'gitlab',
+    });
   }
 
   return { processed: true, message: `Processed MR !${mr.iid}, linked issues: ${issueKeys.join(', ') || 'none'}` };
@@ -575,6 +801,28 @@ async function handlePullRequestEvent(supabase: any, orgId: string, provider: st
     }
   }
 
+  // Collect issue IDs for automation
+  const linkedIssueIds: string[] = [];
+  for (const issueKey of issueKeys) {
+    const { data: issue } = await supabase
+      .from('issues')
+      .select('id')
+      .eq('issue_key', issueKey)
+      .single();
+    if (issue) linkedIssueIds.push(issue.id);
+  }
+
+  // Trigger automation rules based on PR state
+  if (linkedIssueIds.length > 0) {
+    const triggerType = status === 'merged' ? 'pull_request_merged' : 'pull_request_opened';
+    await triggerAutomationRules(supabase, triggerType, {
+      repositoryId: repo.id,
+      issueIds: linkedIssueIds,
+      prId: remoteId,
+      provider,
+    });
+  }
+
   return { processed: true, message: `Processed PR #${remoteId}, linked issues: ${issueKeys.join(', ') || 'none'}` };
 }
 
@@ -627,6 +875,27 @@ async function handlePipelineEvent(supabase: any, orgId: string, provider: strin
       finished_at: pipeline.finished_at,
       duration_seconds: pipeline.duration,
     }, { onConflict: 'repository_id,remote_id' });
+
+  // Trigger automation rules for build events
+  if (commit && (status === 'success' || status === 'failed')) {
+    // Get issues linked to this commit
+    const { data: commitIssues } = await supabase
+      .from('git_commit_issues')
+      .select('issue_id')
+      .eq('commit_id', commit.id);
+
+    const issueIds = (commitIssues || []).map((ci: any) => ci.issue_id);
+    
+    if (issueIds.length > 0) {
+      const triggerType = status === 'failed' ? 'build_failed' : 'build_completed';
+      await triggerAutomationRules(supabase, triggerType, {
+        repositoryId: repo.id,
+        issueIds,
+        buildStatus: status,
+        provider: 'gitlab',
+      });
+    }
+  }
 
   return { processed: true, message: `Processed pipeline #${pipeline.id} with status ${status}` };
 }
@@ -681,6 +950,27 @@ async function handleBuildEvent(supabase: any, orgId: string, provider: string, 
       started_at: run.started_at || run.created_at,
       finished_at: run.completed_at,
     }, { onConflict: 'repository_id,remote_id' });
+
+  // Trigger automation rules for build events
+  if (commit && (status === 'success' || status === 'failed')) {
+    // Get issues linked to this commit
+    const { data: commitIssues } = await supabase
+      .from('git_commit_issues')
+      .select('issue_id')
+      .eq('commit_id', commit.id);
+
+    const issueIds = (commitIssues || []).map((ci: any) => ci.issue_id);
+    
+    if (issueIds.length > 0) {
+      const triggerType = status === 'failed' ? 'build_failed' : 'build_completed';
+      await triggerAutomationRules(supabase, triggerType, {
+        repositoryId: repo.id,
+        issueIds,
+        buildStatus: status,
+        provider,
+      });
+    }
+  }
 
   return { processed: true, message: `Processed build #${run.id} with status ${status}` };
 }
@@ -755,7 +1045,8 @@ async function handleDeploymentEvent(supabase: any, orgId: string, provider: str
     return { processed: false, message: 'Failed to save deployment' };
   }
 
-  // Link to issues via commit
+  // Link to issues via commit and trigger automation
+  const linkedIssueIds: string[] = [];
   if (commit) {
     const { data: commitIssues } = await supabase
       .from('git_commit_issues')
@@ -770,7 +1061,18 @@ async function handleDeploymentEvent(supabase: any, orgId: string, provider: str
           issue_id: ci.issue_id,
           issue_key: ci.issue_key,
         }, { onConflict: 'deployment_id,issue_id' });
+      linkedIssueIds.push(ci.issue_id);
     }
+  }
+
+  // Trigger automation rules for deployment_completed
+  if (linkedIssueIds.length > 0 && status === 'success') {
+    await triggerAutomationRules(supabase, 'deployment_completed', {
+      repositoryId: repo.id,
+      issueIds: linkedIssueIds,
+      environment,
+      provider,
+    });
   }
 
   return { processed: true, message: `Processed deployment to ${environment} with status ${status}` };
