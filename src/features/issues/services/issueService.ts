@@ -202,14 +202,17 @@ export const issueService = {
 
     if (error) throw error;
 
-    // Fetch profiles for reporter and assignee
-    const userIds = [...new Set(issues?.flatMap(i => [i.reporter_id, i.assignee_id].filter(Boolean)) || [])];
+    // Fetch profiles using secure RPC (non-sensitive fields only)
+    const userIds = [...new Set(issues?.flatMap(i => [i.reporter_id, i.assignee_id].filter(Boolean)) || [])] as string[];
     const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, display_name, avatar_url')
-      .in('id', userIds.length > 0 ? userIds : ['00000000-0000-0000-0000-000000000000']);
+      .rpc('get_public_profiles', { _user_ids: userIds.length > 0 ? userIds : ['00000000-0000-0000-0000-000000000000'] });
 
-    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    // Map to expected shape (id, display_name, avatar_url)
+    const profileMap = new Map(profiles?.map(p => [p.id, {
+      id: p.id,
+      display_name: p.display_name,
+      avatar_url: p.avatar_url,
+    }]) || []);
 
     const issuesWithRelations = (issues || []).map(issue => ({
       ...issue,

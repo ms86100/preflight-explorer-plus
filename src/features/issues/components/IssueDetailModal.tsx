@@ -104,11 +104,15 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
   // Fetch team members for assignee selection
   useEffect(() => {
     if (open) {
+      // Use secure RPC to fetch public profiles (non-sensitive fields only)
       supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url')
+        .rpc('search_public_profiles', { _search_term: null, _limit: 100 })
         .then(({ data }) => {
-          setTeamMembers(data || []);
+          setTeamMembers((data || []).map(p => ({
+            id: p.id,
+            display_name: p.display_name,
+            avatar_url: p.avatar_url,
+          })));
         });
     }
   }, [open]);
@@ -140,10 +144,9 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
 
     let profileMap = new Map<string, { display_name: string | null; avatar_url: string | null }>();
     if (authorIds.length > 0) {
+      // Use secure RPC to fetch public profiles (non-sensitive fields only)
       const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url')
-        .in('id', authorIds);
+        .rpc('get_public_profiles', { _user_ids: authorIds });
 
       if (profilesError) {
         console.error('Failed to fetch comment authors:', profilesError);

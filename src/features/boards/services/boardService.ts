@@ -250,15 +250,18 @@ export const sprintService = {
     
     const issues = data?.map(d => d.issue).filter(Boolean) || [];
     
-    // Fetch profiles for assignees
-    const assigneeIds = [...new Set(issues.map(i => i?.assignee_id).filter(Boolean))];
+    // Fetch profiles using secure RPC (non-sensitive fields only)
+    const assigneeIds = [...new Set(issues.map(i => i?.assignee_id).filter(Boolean))] as string[];
     if (assigneeIds.length > 0) {
       const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url')
-        .in('id', assigneeIds);
+        .rpc('get_public_profiles', { _user_ids: assigneeIds });
       
-      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      // Map to expected shape (id, display_name, avatar_url)
+      const profileMap = new Map(profiles?.map(p => [p.id, {
+        id: p.id,
+        display_name: p.display_name,
+        avatar_url: p.avatar_url,
+      }]) || []);
       return issues.map(issue => ({
         ...issue,
         assignee: issue?.assignee_id ? profileMap.get(issue.assignee_id) || null : null,
