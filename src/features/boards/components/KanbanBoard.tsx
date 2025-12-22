@@ -1,0 +1,281 @@
+import { useState, useCallback } from 'react';
+import { Filter, Search, MoreHorizontal, Maximize2, Clock, BarChart2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { BoardColumn } from './BoardColumn';
+import type { ClassificationLevel } from '@/types/jira';
+
+interface BoardIssue {
+  id: string;
+  issue_key: string;
+  summary: string;
+  issue_type: 'Epic' | 'Story' | 'Task' | 'Bug' | 'Subtask';
+  priority: 'Highest' | 'High' | 'Medium' | 'Low' | 'Lowest';
+  status: string;
+  assignee?: {
+    display_name: string;
+    avatar_url?: string;
+  };
+  story_points?: number;
+  classification?: ClassificationLevel;
+  labels?: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface KanbanBoardProps {
+  projectKey: string;
+  projectName: string;
+  columns: {
+    id: string;
+    name: string;
+    statusCategory: 'todo' | 'in_progress' | 'done';
+    maxIssues?: number;
+    minIssues?: number;
+  }[];
+  issues: BoardIssue[];
+  teamMembers?: {
+    id: string;
+    display_name: string;
+    avatar_url?: string;
+  }[];
+  onIssueMove?: (issueId: string, newStatus: string) => void;
+  onIssueSelect?: (issueId: string) => void;
+  onCreateIssue?: (status?: string) => void;
+}
+
+// Default Kanban columns with WIP limits
+const DEFAULT_KANBAN_COLUMNS = [
+  { id: 'backlog', name: 'Backlog', statusCategory: 'todo' as const },
+  { id: 'selected', name: 'Selected for Development', statusCategory: 'todo' as const, maxIssues: 10 },
+  { id: 'in_progress', name: 'In Progress', statusCategory: 'in_progress' as const, maxIssues: 5 },
+  { id: 'review', name: 'In Review', statusCategory: 'in_progress' as const, maxIssues: 3 },
+  { id: 'done', name: 'Done', statusCategory: 'done' as const },
+];
+
+export function KanbanBoard({
+  projectKey = '',
+  projectName = 'Project',
+  columns = DEFAULT_KANBAN_COLUMNS,
+  issues: initialIssues = [],
+  teamMembers = [],
+  onIssueMove,
+  onIssueSelect,
+  onCreateIssue,
+}: Partial<KanbanBoardProps>) {
+  const [issues, setIssues] = useState(initialIssues);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Calculate Kanban metrics
+  const metrics = {
+    totalIssues: issues.length,
+    wipIssues: issues.filter(i => 
+      columns.find(c => c.id === i.status)?.statusCategory === 'in_progress'
+    ).length,
+    completedThisWeek: issues.filter(i => {
+      const col = columns.find(c => c.id === i.status);
+      if (col?.statusCategory !== 'done' || !i.updated_at) return false;
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return new Date(i.updated_at) >= weekAgo;
+    }).length,
+    avgCycleTime: 0, // Would calculate from historical data
+  };
+
+  // Check WIP limit violations
+  const getWipStatus = (column: typeof columns[0]) => {
+    const count = issues.filter(i => i.status === column.id).length;
+    if (!column.maxIssues) return 'normal';
+    if (count >= column.maxIssues) return 'exceeded';
+    if (count >= column.maxIssues * 0.8) return 'warning';
+    return 'normal';
+  };
+
+  // Filter issues
+  const filteredIssues = issues.filter((issue) => {
+    const matchesSearch =
+      !searchQuery ||
+      issue.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      issue.issue_key.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesAssignee =
+      selectedAssignees.length === 0 ||
+      (issue.assignee && selectedAssignees.includes(issue.assignee.display_name));
+
+    return matchesSearch && matchesAssignee;
+  });
+
+  // Get issues by column
+  const getColumnIssues = useCallback(
+    (columnId: string) => filteredIssues.filter((issue) => issue.status === columnId),
+    [filteredIssues]
+  );
+
+  // Handle drag and drop
+  const handleIssueDrop = (issueId: string, columnId: string) => {
+    setIssues((prev) =>
+      prev.map((issue) => (issue.id === issueId ? { ...issue, status: columnId } : issue))
+    );
+    onIssueMove?.(issueId, columnId);
+  };
+
+  // Toggle assignee filter
+  const toggleAssignee = (name: string) => {
+    setSelectedAssignees((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
+    );
+  };
+
+  return (
+    <div className={`flex flex-col h-full ${isFullscreen ? 'fixed inset-0 z-50 bg-background' : ''}`}>
+      {/* Kanban Header with Metrics */}
+      <div className="p-4 border-b border-border bg-muted/30">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-lg font-semibold">{projectName} Kanban Board</h2>
+            <p className="text-sm text-muted-foreground">Continuous flow with WIP limits</p>
+          </div>
+          <div className="flex items-center gap-4">
+            {/* Kanban Metrics */}
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="font-normal">
+                  <BarChart2 className="h-3 w-3 mr-1" />
+                  WIP: {metrics.wipIssues}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="font-normal">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Completed this week: {metrics.completedThisWeek}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Board Toolbar */}
+      <div className="flex items-center justify-between p-4 border-b border-border bg-background">
+        <div className="flex items-center gap-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search issues..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 w-64"
+            />
+          </div>
+
+          {/* Team Avatars Filter */}
+          <div className="flex items-center gap-1">
+            {teamMembers?.map((member) => {
+              const isSelected = selectedAssignees.includes(member.display_name);
+              const initials = member.display_name
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .toUpperCase();
+
+              return (
+                <button
+                  key={member.id}
+                  onClick={() => toggleAssignee(member.display_name)}
+                  className={`rounded-full transition-all ${
+                    isSelected ? 'ring-2 ring-primary ring-offset-2' : 'opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={member.avatar_url} />
+                    <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                  </Avatar>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Quick Filters */}
+          <div className="flex items-center gap-2">
+            <button className="quick-filter quick-filter-inactive">
+              <Filter className="h-3.5 w-3.5 mr-1" />
+              Only My Issues
+            </button>
+            <button className="quick-filter quick-filter-inactive">
+              Blocked Items
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsFullscreen(!isFullscreen)}
+          >
+            <Maximize2 className="h-4 w-4" />
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Board settings</DropdownMenuItem>
+              <DropdownMenuItem>Configure WIP limits</DropdownMenuItem>
+              <DropdownMenuItem>Swimlanes</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Board Columns with WIP indicators */}
+      <div className="flex-1 overflow-x-auto p-4">
+        <div className="flex gap-4 h-full min-w-max">
+          {columns.map((column) => {
+            const wipStatus = getWipStatus(column);
+            const issueCount = getColumnIssues(column.id).length;
+            
+            return (
+              <div key={column.id} className="flex flex-col">
+                {/* WIP Limit Header */}
+                {column.maxIssues && (
+                  <div className={`text-xs text-center py-1 mb-1 rounded ${
+                    wipStatus === 'exceeded' ? 'bg-destructive/20 text-destructive' :
+                    wipStatus === 'warning' ? 'bg-yellow-500/20 text-yellow-700' :
+                    'bg-muted text-muted-foreground'
+                  }`}>
+                    {issueCount}/{column.maxIssues} WIP
+                  </div>
+                )}
+                <BoardColumn
+                  id={column.id}
+                  name={column.name}
+                  issues={getColumnIssues(column.id)}
+                  statusCategory={column.statusCategory}
+                  maxIssues={column.maxIssues}
+                  onIssueSelect={onIssueSelect}
+                  onCreateIssue={() => onCreateIssue?.(column.id)}
+                  onDrop={handleIssueDrop}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
