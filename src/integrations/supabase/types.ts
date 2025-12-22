@@ -643,6 +643,143 @@ export type Database = {
         }
         Relationships: []
       }
+      import_errors: {
+        Row: {
+          created_at: string
+          error_message: string
+          error_type: string
+          field_name: string | null
+          id: string
+          job_id: string
+          original_value: string | null
+          row_number: number
+        }
+        Insert: {
+          created_at?: string
+          error_message: string
+          error_type: string
+          field_name?: string | null
+          id?: string
+          job_id: string
+          original_value?: string | null
+          row_number: number
+        }
+        Update: {
+          created_at?: string
+          error_message?: string
+          error_type?: string
+          field_name?: string | null
+          id?: string
+          job_id?: string
+          original_value?: string | null
+          row_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_errors_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "import_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          failed_records: number | null
+          field_mappings: Json | null
+          file_name: string | null
+          id: string
+          import_type: string
+          processed_records: number | null
+          source_format: string
+          started_at: string | null
+          status: string
+          successful_records: number | null
+          total_records: number | null
+          updated_at: string
+          user_id: string
+          validation_errors: Json | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          failed_records?: number | null
+          field_mappings?: Json | null
+          file_name?: string | null
+          id?: string
+          import_type: string
+          processed_records?: number | null
+          source_format?: string
+          started_at?: string | null
+          status?: string
+          successful_records?: number | null
+          total_records?: number | null
+          updated_at?: string
+          user_id: string
+          validation_errors?: Json | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          failed_records?: number | null
+          field_mappings?: Json | null
+          file_name?: string | null
+          id?: string
+          import_type?: string
+          processed_records?: number | null
+          source_format?: string
+          started_at?: string | null
+          status?: string
+          successful_records?: number | null
+          total_records?: number | null
+          updated_at?: string
+          user_id?: string
+          validation_errors?: Json | null
+        }
+        Relationships: []
+      }
+      import_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          import_type: string
+          is_default: boolean | null
+          mappings: Json
+          name: string
+          source_format: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          import_type: string
+          is_default?: boolean | null
+          mappings?: Json
+          name: string
+          source_format?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          import_type?: string
+          is_default?: boolean | null
+          mappings?: Json
+          name?: string
+          source_format?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       issue_history: {
         Row: {
           changed_at: string
