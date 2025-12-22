@@ -1134,6 +1134,257 @@ export type Database = {
           },
         ]
       }
+      ldap_configurations: {
+        Row: {
+          base_dn: string
+          bind_dn: string | null
+          created_at: string | null
+          created_by: string | null
+          department_attribute: string | null
+          display_name_attribute: string | null
+          email_attribute: string | null
+          group_base_dn: string | null
+          group_member_attribute: string | null
+          group_name_attribute: string | null
+          group_search_filter: string | null
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          last_sync_error: string | null
+          last_sync_status: string | null
+          name: string
+          port: number | null
+          search_filter: string | null
+          server_url: string
+          sync_interval_minutes: number | null
+          updated_at: string | null
+          use_ssl: boolean | null
+          user_id_attribute: string | null
+        }
+        Insert: {
+          base_dn: string
+          bind_dn?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          department_attribute?: string | null
+          display_name_attribute?: string | null
+          email_attribute?: string | null
+          group_base_dn?: string | null
+          group_member_attribute?: string | null
+          group_name_attribute?: string | null
+          group_search_filter?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          last_sync_status?: string | null
+          name: string
+          port?: number | null
+          search_filter?: string | null
+          server_url: string
+          sync_interval_minutes?: number | null
+          updated_at?: string | null
+          use_ssl?: boolean | null
+          user_id_attribute?: string | null
+        }
+        Update: {
+          base_dn?: string
+          bind_dn?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          department_attribute?: string | null
+          display_name_attribute?: string | null
+          email_attribute?: string | null
+          group_base_dn?: string | null
+          group_member_attribute?: string | null
+          group_name_attribute?: string | null
+          group_search_filter?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          last_sync_status?: string | null
+          name?: string
+          port?: number | null
+          search_filter?: string | null
+          server_url?: string
+          sync_interval_minutes?: number | null
+          updated_at?: string | null
+          use_ssl?: boolean | null
+          user_id_attribute?: string | null
+        }
+        Relationships: []
+      }
+      ldap_group_mappings: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          ldap_config_id: string
+          ldap_group_dn: string
+          ldap_group_name: string
+          target_group_id: string | null
+          target_project_role_id: string | null
+          target_role: Database["public"]["Enums"]["app_role"] | null
+          target_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          ldap_config_id: string
+          ldap_group_dn: string
+          ldap_group_name: string
+          target_group_id?: string | null
+          target_project_role_id?: string | null
+          target_role?: Database["public"]["Enums"]["app_role"] | null
+          target_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          ldap_config_id?: string
+          ldap_group_dn?: string
+          ldap_group_name?: string
+          target_group_id?: string | null
+          target_project_role_id?: string | null
+          target_role?: Database["public"]["Enums"]["app_role"] | null
+          target_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ldap_group_mappings_ldap_config_id_fkey"
+            columns: ["ldap_config_id"]
+            isOneToOne: false
+            referencedRelation: "ldap_configurations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ldap_group_mappings_target_group_id_fkey"
+            columns: ["target_group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ldap_group_mappings_target_project_role_id_fkey"
+            columns: ["target_project_role_id"]
+            isOneToOne: false
+            referencedRelation: "project_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ldap_sync_logs: {
+        Row: {
+          completed_at: string | null
+          errors: Json | null
+          groups_synced: number | null
+          id: string
+          ldap_config_id: string
+          roles_assigned: number | null
+          roles_revoked: number | null
+          started_at: string | null
+          status: string
+          sync_type: string
+          triggered_by: string | null
+          users_synced: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          errors?: Json | null
+          groups_synced?: number | null
+          id?: string
+          ldap_config_id: string
+          roles_assigned?: number | null
+          roles_revoked?: number | null
+          started_at?: string | null
+          status: string
+          sync_type: string
+          triggered_by?: string | null
+          users_synced?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          errors?: Json | null
+          groups_synced?: number | null
+          id?: string
+          ldap_config_id?: string
+          roles_assigned?: number | null
+          roles_revoked?: number | null
+          started_at?: string | null
+          status?: string
+          sync_type?: string
+          triggered_by?: string | null
+          users_synced?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ldap_sync_logs_ldap_config_id_fkey"
+            columns: ["ldap_config_id"]
+            isOneToOne: false
+            referencedRelation: "ldap_configurations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ldap_user_cache: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          display_name: string | null
+          email: string | null
+          id: string
+          last_synced_at: string | null
+          ldap_config_id: string
+          ldap_dn: string
+          ldap_groups: Json | null
+          ldap_username: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          last_synced_at?: string | null
+          ldap_config_id: string
+          ldap_dn: string
+          ldap_groups?: Json | null
+          ldap_username: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          last_synced_at?: string | null
+          ldap_config_id?: string
+          ldap_dn?: string
+          ldap_groups?: Json | null
+          ldap_username?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ldap_user_cache_ldap_config_id_fkey"
+            columns: ["ldap_config_id"]
+            isOneToOne: false
+            referencedRelation: "ldap_configurations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
