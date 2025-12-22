@@ -8,3 +8,12 @@ export { ReleaseBurndown } from './components/ReleaseBurndown';
 export { TeamWorkloadChart } from './components/TeamWorkloadChart';
 export { IssueTypeDistribution } from './components/IssueTypeDistribution';
 export { AgeingChart } from './components/AgeingChart';
+
+// Advanced Executive Reports
+export { ExecutiveSummary } from './components/ExecutiveSummary';
+export { PriorityBreakdown } from './components/PriorityBreakdown';
+export { RecentActivity } from './components/RecentActivity';
+export { TrendAnalysis } from './components/TrendAnalysis';
+export { OverdueAnalysis } from './components/OverdueAnalysis';
+export { ResolutionTimeChart } from './components/ResolutionTimeChart';
+export { ContributorPerformance } from './components/ContributorPerformance';
