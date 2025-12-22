@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.cleanup-rate-limits]
 verify_jwt = false
+
+[functions.cached-query]
+verify_jwt = false
+
+[functions.background-jobs]
+verify_jwt = false
