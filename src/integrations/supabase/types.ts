@@ -3457,6 +3457,24 @@ export type Database = {
           transition_name: string
         }[]
       }
+      get_public_profile: {
+        Args: { _user_id: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          is_active: boolean
+        }[]
+      }
+      get_public_profiles: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          is_active: boolean
+        }[]
+      }
       get_workflow_for_issue: {
         Args: { p_issue_type_id: string; p_project_id: string }
         Returns: string
@@ -3490,6 +3508,15 @@ export type Database = {
       is_project_member_fast: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
+      }
+      search_public_profiles: {
+        Args: { _limit?: number; _search_term?: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          is_active: boolean
+        }[]
       }
       suggest_git_user_mapping: {
         Args: { p_git_email: string }

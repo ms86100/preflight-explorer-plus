@@ -21,16 +21,18 @@ export const teamService = {
     
     if (error) throw error;
     
-    // Fetch profiles separately
+    // Fetch profiles using secure RPC (non-sensitive fields only)
     const userIds = (data || []).map(m => m.user_id);
     if (userIds.length === 0) return [];
     
     const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, display_name, avatar_url, email')
-      .in('id', userIds);
+      .rpc('get_public_profiles', { _user_ids: userIds });
     
-    const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+    const profileMap = new Map((profiles || []).map(p => [p.id, {
+      display_name: p.display_name,
+      avatar_url: p.avatar_url,
+      email: null as string | null, // Email not exposed via public API for security
+    }]));
     
     return (data || []).map(m => ({
       ...m,
@@ -131,18 +133,15 @@ export const teamService = {
       .eq('project_id', projectId);
     
     if (!teams || teams.length === 0) {
-      // Fallback: get all profiles (for projects without teams yet)
+      // Fallback: get active profiles using secure RPC (non-sensitive fields only)
       const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url, email')
-        .eq('is_active', true)
-        .limit(50);
+        .rpc('search_public_profiles', { _search_term: null, _limit: 50 });
       
       return (profiles || []).map(p => ({
         id: p.id,
         display_name: p.display_name || 'Unknown',
         avatar_url: p.avatar_url,
-        email: p.email,
+        email: null, // Email not exposed via public API
       }));
     }
     
@@ -156,30 +155,27 @@ export const teamService = {
     const userIds = [...new Set((members || []).map(m => m.user_id))];
     
     if (userIds.length === 0) {
+      // Fallback: get active profiles using secure RPC
       const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url, email')
-        .eq('is_active', true)
-        .limit(50);
+        .rpc('search_public_profiles', { _search_term: null, _limit: 50 });
       
       return (profiles || []).map(p => ({
         id: p.id,
         display_name: p.display_name || 'Unknown',
         avatar_url: p.avatar_url,
-        email: p.email,
+        email: null, // Email not exposed via public API
       }));
     }
     
+    // Fetch profiles using secure RPC
     const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, display_name, avatar_url, email')
-      .in('id', userIds);
+      .rpc('get_public_profiles', { _user_ids: userIds });
     
     return (profiles || []).map(p => ({
       id: p.id,
       display_name: p.display_name || 'Unknown',
       avatar_url: p.avatar_url,
-      email: p.email,
+      email: null, // Email not exposed via public API
     }));
   },
 };

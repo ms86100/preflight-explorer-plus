@@ -43,12 +43,9 @@ export function MentionTextarea({
   }, [projectId]);
 
   const fetchUsers = async () => {
+    // Use secure RPC to fetch public profiles (non-sensitive fields only)
     const { data } = await supabase
-      .from('profiles')
-      .select('id, display_name, avatar_url')
-      .eq('is_active', true)
-      .order('display_name')
-      .limit(100);
+      .rpc('search_public_profiles', { _search_term: null, _limit: 100 });
     
     setAllUsers((data || []).map(u => ({
       id: u.id,
