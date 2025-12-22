@@ -224,7 +224,7 @@ export interface CreateGitOrganizationInput {
   host_url: string;
   provider_type: GitProviderType;
   oauth_client_id?: string;
-  oauth_client_secret?: string;
+  oauth_client_secret_encrypted?: string;
   access_token?: string;
   access_token_encrypted?: string;
   webhook_secret?: string;

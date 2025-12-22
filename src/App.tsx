@@ -26,6 +26,7 @@ import LdapPage from "./pages/LdapPage";
 import PluginFeaturesPage from "./pages/PluginFeaturesPage";
 import ReleasesPage from "./pages/ReleasesPage";
 import ComponentsPage from "./pages/ComponentsPage";
+import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -321,6 +322,9 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* OAuth Callback for Git Providers */}
+      <Route path="/oauth/git/callback" element={<OAuthCallbackPage />} />
 
       {/* 404 */}
       <Route path="*" element={<NotFound />} />

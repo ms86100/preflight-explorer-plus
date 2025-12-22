@@ -1138,6 +1138,44 @@ export type Database = {
           },
         ]
       }
+      git_oauth_states: {
+        Row: {
+          created_at: string
+          expires_at: string
+          host_url: string
+          id: string
+          organization_id: string | null
+          provider: string
+          state: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          host_url: string
+          id?: string
+          organization_id?: string | null
+          provider: string
+          state: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          host_url?: string
+          id?: string
+          organization_id?: string | null
+          provider?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "git_oauth_states_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "git_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       git_organizations: {
         Row: {
           access_token_encrypted: string | null
@@ -3365,6 +3403,7 @@ export type Database = {
           reset_at: string
         }[]
       }
+      cleanup_expired_oauth_states: { Args: never; Returns: number }
       cleanup_rate_limits: { Args: never; Returns: number }
       get_available_transitions: {
         Args: { p_issue_id: string }

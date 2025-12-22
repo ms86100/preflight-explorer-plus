@@ -56,7 +56,7 @@ export async function createGitOrganization(input: CreateGitOrganizationInput): 
       host_url: input.host_url,
       provider_type: input.provider_type,
       oauth_client_id: input.oauth_client_id,
-      oauth_client_secret_encrypted: input.oauth_client_secret,
+      oauth_client_secret_encrypted: input.oauth_client_secret_encrypted,
       access_token_encrypted: input.access_token_encrypted || input.access_token,
       webhook_secret: input.webhook_secret,
       created_by: user.user.id,

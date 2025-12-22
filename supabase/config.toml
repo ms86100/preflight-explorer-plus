@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.git-webhook]
 verify_jwt = false
+
+[functions.git-oauth]
+verify_jwt = false
