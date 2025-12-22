@@ -1,5 +1,5 @@
-import { BacklogView } from '@/features/backlog';
+import { DraggableBacklogView } from '@/features/backlog';
 
 export default function BacklogPage() {
-  return <BacklogView />;
+  return <DraggableBacklogView />;
 }

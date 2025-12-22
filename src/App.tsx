@@ -24,6 +24,8 @@ import AutomationPage from "./pages/AutomationPage";
 import MigrationPage from "./pages/MigrationPage";
 import LdapPage from "./pages/LdapPage";
 import PluginFeaturesPage from "./pages/PluginFeaturesPage";
+import ReleasesPage from "./pages/ReleasesPage";
+import ComponentsPage from "./pages/ComponentsPage";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -142,6 +144,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <ProjectSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:projectKey/releases"
+        element={
+          <ProtectedRoute>
+            <ReleasesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:projectKey/components"
+        element={
+          <ProtectedRoute>
+            <ComponentsPage />
           </ProtectedRoute>
         }
       />
