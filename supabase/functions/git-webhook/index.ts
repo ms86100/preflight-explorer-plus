@@ -2,8 +2,136 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-hub-signature-256, x-gitlab-token, x-event-key',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-hub-signature-256, x-hub-signature, x-gitlab-token, x-event-key, x-hook-uuid',
 };
+
+// ==================== SIGNATURE VERIFICATION ====================
+
+// Crypto utilities for HMAC verification
+async function createHmacSha256(secret: string, payload: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(payload);
+  
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const signature = await crypto.subtle.sign('HMAC', key, messageData);
+  const hashArray = Array.from(new Uint8Array(signature));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function createHmacSha1(secret: string, payload: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(payload);
+  
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-1' },
+    false,
+    ['sign']
+  );
+  
+  const signature = await crypto.subtle.sign('HMAC', key, messageData);
+  const hashArray = Array.from(new Uint8Array(signature));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
+// Verify GitHub webhook signature (supports both SHA-256 and SHA-1)
+async function verifyGitHubSignature(payload: string, headers: Headers, secret: string): Promise<boolean> {
+  if (!secret) {
+    console.log('[git-webhook] No webhook secret configured, skipping verification');
+    return true; // Allow if no secret configured
+  }
+  
+  // Try SHA-256 first (preferred)
+  const sha256Sig = headers.get('x-hub-signature-256');
+  if (sha256Sig) {
+    const expectedSig = sha256Sig.replace('sha256=', '');
+    const computedSig = await createHmacSha256(secret, payload);
+    const isValid = timingSafeEqual(expectedSig.toLowerCase(), computedSig.toLowerCase());
+    console.log(`[git-webhook] GitHub SHA-256 verification: ${isValid ? 'PASS' : 'FAIL'}`);
+    return isValid;
+  }
+  
+  // Fall back to SHA-1 (legacy)
+  const sha1Sig = headers.get('x-hub-signature');
+  if (sha1Sig) {
+    const expectedSig = sha1Sig.replace('sha1=', '');
+    const computedSig = await createHmacSha1(secret, payload);
+    const isValid = timingSafeEqual(expectedSig.toLowerCase(), computedSig.toLowerCase());
+    console.log(`[git-webhook] GitHub SHA-1 verification: ${isValid ? 'PASS' : 'FAIL'}`);
+    return isValid;
+  }
+  
+  console.warn('[git-webhook] No GitHub signature header found');
+  return false;
+}
+
+// Verify GitLab webhook signature (token-based)
+function verifyGitLabSignature(headers: Headers, secret: string): boolean {
+  if (!secret) {
+    console.log('[git-webhook] No webhook secret configured, skipping verification');
+    return true;
+  }
+  
+  const gitlabToken = headers.get('x-gitlab-token');
+  if (!gitlabToken) {
+    console.warn('[git-webhook] No GitLab token header found');
+    return false;
+  }
+  
+  const isValid = timingSafeEqual(gitlabToken, secret);
+  console.log(`[git-webhook] GitLab token verification: ${isValid ? 'PASS' : 'FAIL'}`);
+  return isValid;
+}
+
+// Verify Bitbucket webhook (no native HMAC, uses IP allowlist typically)
+// For self-hosted, we use a custom header or UUID comparison
+function verifyBitbucketWebhook(headers: Headers, secret: string): boolean {
+  if (!secret) {
+    console.log('[git-webhook] No webhook secret configured, skipping verification');
+    return true;
+  }
+  
+  // Bitbucket Cloud sends x-hook-uuid which can be compared
+  const hookUuid = headers.get('x-hook-uuid');
+  if (hookUuid && secret) {
+    const isValid = timingSafeEqual(hookUuid, secret);
+    console.log(`[git-webhook] Bitbucket UUID verification: ${isValid ? 'PASS' : 'FAIL'}`);
+    return isValid;
+  }
+  
+  // For Bitbucket Server, check custom authorization header
+  const authHeader = headers.get('authorization');
+  if (authHeader) {
+    const expectedAuth = `Bearer ${secret}`;
+    const isValid = timingSafeEqual(authHeader, expectedAuth);
+    console.log(`[git-webhook] Bitbucket auth verification: ${isValid ? 'PASS' : 'FAIL'}`);
+    return isValid;
+  }
+  
+  console.warn('[git-webhook] No Bitbucket verification headers found');
+  return false;
+}
+
+// ==================== SMART COMMITS ====================
 
 // Issue key pattern: PROJECT-123
 const ISSUE_KEY_PATTERN = /\b([A-Z][A-Z0-9]+-\d+)\b/g;
@@ -286,23 +414,64 @@ Deno.serve(async (req) => {
       );
     }
 
-    // TODO: Add webhook signature validation here based on provider
-    // For now, we'll log and proceed (in production, validate signatures!)
+    // Read raw body for signature verification
+    const rawBody = await req.text();
+    
+    // ==================== SIGNATURE VERIFICATION ====================
+    let signatureValid = false;
+    const webhookSecret = org.webhook_secret || '';
+    
+    switch (provider) {
+      case 'github':
+        signatureValid = await verifyGitHubSignature(rawBody, req.headers, webhookSecret);
+        break;
+      case 'gitlab':
+        signatureValid = verifyGitLabSignature(req.headers, webhookSecret);
+        break;
+      case 'bitbucket':
+        signatureValid = verifyBitbucketWebhook(req.headers, webhookSecret);
+        break;
+      default:
+        console.warn(`[git-webhook] Unknown provider ${provider}, skipping verification`);
+        signatureValid = true; // Allow unknown providers to proceed
+    }
+    
+    if (!signatureValid && webhookSecret) {
+      console.error(`[git-webhook] Signature verification FAILED for ${provider}`);
+      return new Response(
+        JSON.stringify({ error: 'Invalid webhook signature' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log(`[git-webhook] Signature verification: ${signatureValid ? 'PASSED' : 'SKIPPED (no secret)'}`);
+    // ================================================================
 
-    const payload = await req.json();
+    // Parse the payload
+    let payload: any;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch (parseError) {
+      console.error('[git-webhook] Failed to parse JSON payload:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON payload' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     console.log(`Received ${provider} webhook for org ${orgId}:`, JSON.stringify(payload).slice(0, 500));
 
-    let result = { processed: false, message: 'Unknown event' };
+    let result = { processed: false, message: 'Unknown event', verified: signatureValid };
 
     switch (provider) {
       case 'gitlab':
-        result = await handleGitLabWebhook(supabase, org.id, payload, req.headers);
+        result = { ...await handleGitLabWebhook(supabase, org.id, payload, req.headers), verified: signatureValid };
         break;
       case 'github':
-        result = await handleGitHubWebhook(supabase, org.id, payload, req.headers);
+        result = { ...await handleGitHubWebhook(supabase, org.id, payload, req.headers), verified: signatureValid };
         break;
       case 'bitbucket':
-        result = await handleBitbucketWebhook(supabase, org.id, payload, req.headers);
+        result = { ...await handleBitbucketWebhook(supabase, org.id, payload, req.headers), verified: signatureValid };
         break;
       default:
         console.error('Unknown provider:', provider);
