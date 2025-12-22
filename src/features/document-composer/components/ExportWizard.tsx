@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,9 @@ import {
   CheckCircle, Loader2, Download, Search
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { ExportFormat } from '../types';
+import { supabase } from '@/integrations/supabase/client';
+import { createExport, downloadExport } from '../services/documentComposerService';
+import type { ExportFormat, ExportJob } from '../types';
 
 interface ExportWizardProps {
   format: ExportFormat;
@@ -23,6 +26,7 @@ interface ExportWizardProps {
 type WizardStep = 'select-issues' | 'configure' | 'preview' | 'exporting' | 'complete';
 
 export function ExportWizard({ format, onClose, preselectedIssues = [] }: ExportWizardProps) {
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<WizardStep>('select-issues');
   const [selectedIssues, setSelectedIssues] = useState<string[]>(preselectedIssues);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,17 +38,35 @@ export function ExportWizard({ format, onClose, preselectedIssues = [] }: Export
     useClassificationWatermark: true,
   });
   const [progress, setProgress] = useState(0);
+  const [createdExport, setCreatedExport] = useState<ExportJob | null>(null);
 
-  // Mock issues for demo
-  const mockIssues = [
-    { id: '1', key: 'PROJ-101', summary: 'Implement user authentication', status: 'In Progress', type: 'Story' },
-    { id: '2', key: 'PROJ-102', summary: 'Fix login page styling', status: 'Done', type: 'Bug' },
-    { id: '3', key: 'PROJ-103', summary: 'Add export functionality', status: 'To Do', type: 'Task' },
-    { id: '4', key: 'PROJ-104', summary: 'Database migration script', status: 'In Progress', type: 'Task' },
-    { id: '5', key: 'PROJ-105', summary: 'API rate limiting', status: 'Done', type: 'Story' },
-  ];
+  // Fetch real issues from database
+  const { data: issues = [], isLoading: loadingIssues } = useQuery({
+    queryKey: ['issues-for-export'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('issues')
+        .select(`
+          id,
+          issue_key,
+          summary,
+          status:issue_statuses(name),
+          type:issue_types(name)
+        `)
+        .limit(100);
+      
+      if (error) throw error;
+      return data?.map(issue => ({
+        id: issue.id,
+        key: issue.issue_key,
+        summary: issue.summary,
+        status: (issue.status as { name: string } | null)?.name || 'Unknown',
+        type: (issue.type as { name: string } | null)?.name || 'Task',
+      })) || [];
+    },
+  });
 
-  const filteredIssues = mockIssues.filter(
+  const filteredIssues = issues.filter(
     (issue) =>
       issue.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
       issue.summary.toLowerCase().includes(searchQuery.toLowerCase())
@@ -66,21 +88,91 @@ export function ExportWizard({ format, onClose, preselectedIssues = [] }: Export
 
   const handleExport = async () => {
     setStep('exporting');
-    
-    // Simulate export progress
-    for (let i = 0; i <= 100; i += 10) {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      setProgress(i);
+    setProgress(10);
+
+    try {
+      // Create export in database
+      const exportName = `export_${new Date().toISOString().split('T')[0]}_${format}`;
+      
+      setProgress(30);
+      
+      const exportJob = await createExport({
+        name: exportName,
+        format,
+        issueIds: selectedIssues,
+        options: config,
+      });
+
+      setProgress(60);
+      setCreatedExport(exportJob);
+
+      // Poll for completion
+      let attempts = 0;
+      const maxAttempts = 20;
+      
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const { data } = await supabase
+          .from('document_exports')
+          .select('status')
+          .eq('id', exportJob.id)
+          .single();
+        
+        if (data?.status === 'completed') {
+          setProgress(100);
+          // Fetch updated export with file info
+          const { data: updatedExport } = await supabase
+            .from('document_exports')
+            .select('*')
+            .eq('id', exportJob.id)
+            .single();
+          
+          if (updatedExport) {
+            setCreatedExport({
+              ...exportJob,
+              status: 'completed',
+              file_size: updatedExport.file_size as number,
+            });
+          }
+          break;
+        } else if (data?.status === 'failed') {
+          throw new Error('Export failed');
+        }
+        
+        setProgress(60 + Math.min(attempts * 2, 35));
+        attempts++;
+      }
+
+      setStep('complete');
+      queryClient.invalidateQueries({ queryKey: ['document-exports'] });
+      toast.success(`Export completed! ${selectedIssues.length} items exported to ${format.toUpperCase()}`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Export failed. Please try again.');
+      setStep('preview');
     }
-    
-    setStep('complete');
-    toast.success(`Export completed! ${selectedIssues.length} items exported to ${format.toUpperCase()}`);
   };
 
-  const formatIcon = {
+  const handleDownload = async () => {
+    if (!createdExport) return;
+    
+    try {
+      await downloadExport(createdExport);
+      toast.success('Download started');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Download failed');
+    }
+  };
+
+  const formatIcon: Record<string, React.ReactNode> = {
     pdf: <FileText className="h-5 w-5 text-red-500" />,
     xlsx: <Table className="h-5 w-5 text-green-500" />,
     docx: <FileType className="h-5 w-5 text-blue-500" />,
+    html: <FileText className="h-5 w-5 text-orange-500" />,
+    csv: <Table className="h-5 w-5 text-green-600" />,
+    json: <FileText className="h-5 w-5 text-yellow-500" />,
   };
 
   const renderStep = () => {
@@ -113,37 +205,49 @@ export function ExportWizard({ format, onClose, preselectedIssues = [] }: Export
                 </Button>
               </div>
               <ScrollArea className="h-[300px] border rounded-md p-2">
-                <div className="space-y-2">
-                  {filteredIssues.map((issue) => (
-                    <div
-                      key={issue.id}
-                      className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors ${
-                        selectedIssues.includes(issue.id)
-                          ? 'bg-primary/10 border border-primary/30'
-                          : 'hover:bg-muted'
-                      }`}
-                      onClick={() => handleToggleIssue(issue.id)}
-                    >
-                      <Checkbox checked={selectedIssues.includes(issue.id)} />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            {issue.key}
-                          </Badge>
-                          <span className="font-medium text-sm">{issue.summary}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="text-xs">
-                            {issue.type}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {issue.status}
-                          </Badge>
+                {loadingIssues ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : filteredIssues.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                    <FileText className="h-8 w-8 mb-2 opacity-50" />
+                    <p>No issues found</p>
+                    <p className="text-sm">Create some issues first to export them</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredIssues.map((issue) => (
+                      <div
+                        key={issue.id}
+                        className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors ${
+                          selectedIssues.includes(issue.id)
+                            ? 'bg-primary/10 border border-primary/30'
+                            : 'hover:bg-muted'
+                        }`}
+                        onClick={() => handleToggleIssue(issue.id)}
+                      >
+                        <Checkbox checked={selectedIssues.includes(issue.id)} />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {issue.key}
+                            </Badge>
+                            <span className="font-medium text-sm">{issue.summary}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="secondary" className="text-xs">
+                              {issue.type}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {issue.status}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </ScrollArea>
               <div className="text-sm text-muted-foreground">
                 {selectedIssues.length} items selected
@@ -347,13 +451,18 @@ export function ExportWizard({ format, onClose, preselectedIssues = [] }: Export
                 <p className="text-sm text-muted-foreground mt-1">
                   {selectedIssues.length} items exported
                 </p>
+                {createdExport?.file_size && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Size: {(createdExport.file_size / 1024).toFixed(1)} KB
+                  </p>
+                )}
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button variant="outline" onClick={onClose}>
                 Close
               </Button>
-              <Button>
+              <Button onClick={handleDownload}>
                 <Download className="h-4 w-4 mr-2" />
                 Download File
               </Button>
@@ -364,8 +473,8 @@ export function ExportWizard({ format, onClose, preselectedIssues = [] }: Export
   };
 
   return (
-    <Card className="mt-4">
-      <div className="absolute top-4 right-4">
+    <Card className="mt-4 relative">
+      <div className="absolute top-4 right-4 z-10">
         <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
