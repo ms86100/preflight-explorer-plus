@@ -72,6 +72,25 @@ export function useDeleteWorkflow() {
   });
 }
 
+export function useCloneWorkflow() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ sourceWorkflowId, newName, projectId }: { 
+      sourceWorkflowId: string; 
+      newName: string; 
+      projectId?: string;
+    }) => workflowService.cloneWorkflow(sourceWorkflowId, newName, projectId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflows'] });
+      toast.success('Workflow cloned successfully');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to clone workflow: ' + error.message);
+    },
+  });
+}
+
 // Workflow Steps
 export function useAddWorkflowStep() {
   const queryClient = useQueryClient();
