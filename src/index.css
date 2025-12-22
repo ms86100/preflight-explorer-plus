@@ -5,16 +5,16 @@
 @tailwind utilities;
 
 /* ============================================
-   JIRA DATA CENTER CLONE - DESIGN SYSTEM
-   Atlassian Design System + MRTT+ Compliance
+   JIRA DATA CENTER - DESIGN SYSTEM
+   Classic Jira Data Center Look & Feel
    ============================================ */
 
 @layer base {
   :root {
-    /* Atlassian Brand Colors */
-    --atlassian-blue: 216 100% 50%;
-    --atlassian-blue-dark: 216 100% 40%;
-    --atlassian-blue-light: 216 100% 95%;
+    /* Atlassian Brand Colors - Classic Jira */
+    --atlassian-blue: 212 80% 42%;
+    --atlassian-blue-dark: 212 80% 32%;
+    --atlassian-blue-light: 212 80% 96%;
     
     /* Classification Colors (MRTT+ Compliance) */
     --classification-public: 142 76% 36%;
@@ -22,133 +22,133 @@
     --classification-confidential: 25 95% 53%;
     --classification-export-controlled: 0 84% 60%;
     
-    /* Core Semantic Tokens */
-    --background: 210 20% 98%;
-    --foreground: 215 25% 15%;
+    /* Core Semantic Tokens - Light Theme */
+    --background: 0 0% 100%;
+    --foreground: 210 10% 23%;
     
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 210 10% 23%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 210 10% 23%;
     
     /* Atlassian Blue as Primary */
-    --primary: 216 100% 50%;
+    --primary: 212 80% 42%;
     --primary-foreground: 0 0% 100%;
     
-    /* Neutral Secondary */
-    --secondary: 214 14% 95%;
-    --secondary-foreground: 215 25% 15%;
+    /* Neutral Secondary - Light gray backgrounds */
+    --secondary: 210 16% 93%;
+    --secondary-foreground: 210 10% 23%;
     
-    --muted: 214 14% 95%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 210 16% 96%;
+    --muted-foreground: 210 10% 46%;
     
-    --accent: 214 14% 95%;
-    --accent-foreground: 215 25% 15%;
+    --accent: 210 16% 93%;
+    --accent-foreground: 210 10% 23%;
     
     /* Status Colors */
-    --destructive: 0 84% 60%;
+    --destructive: 0 74% 42%;
     --destructive-foreground: 0 0% 100%;
     
-    --success: 142 76% 36%;
+    --success: 145 63% 32%;
     --success-foreground: 0 0% 100%;
     
     --warning: 45 93% 47%;
-    --warning-foreground: 215 25% 15%;
+    --warning-foreground: 210 10% 23%;
     
-    --info: 201 96% 32%;
+    --info: 212 80% 42%;
     --info-foreground: 0 0% 100%;
     
-    /* Borders & Inputs */
-    --border: 214 20% 88%;
-    --input: 214 20% 88%;
-    --ring: 216 100% 50%;
+    /* Borders & Inputs - Subtle gray borders */
+    --border: 210 14% 83%;
+    --input: 210 14% 83%;
+    --ring: 212 80% 42%;
     
-    --radius: 0.25rem;
+    --radius: 0.1875rem;
     
-    /* Jira-style Sidebar */
-    --sidebar-background: 220 16% 22%;
-    --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 216 100% 50%;
+    /* Jira Data Center Sidebar - Light gray */
+    --sidebar-background: 210 14% 97%;
+    --sidebar-foreground: 210 10% 23%;
+    --sidebar-primary: 212 80% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 16% 28%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 220 16% 28%;
-    --sidebar-ring: 216 100% 50%;
-    --sidebar-muted: 220 16% 35%;
+    --sidebar-accent: 212 80% 96%;
+    --sidebar-accent-foreground: 212 80% 32%;
+    --sidebar-border: 210 14% 89%;
+    --sidebar-ring: 212 80% 42%;
+    --sidebar-muted: 210 10% 60%;
     
-    /* Header */
-    --header-background: 216 100% 50%;
+    /* Header - Dark blue gradient like Jira Data Center */
+    --header-background: 212 80% 32%;
     --header-foreground: 0 0% 100%;
     
     /* Issue Type Colors */
     --issue-epic: 271 68% 53%;
-    --issue-story: 142 72% 47%;
-    --issue-task: 201 96% 55%;
-    --issue-bug: 0 84% 60%;
-    --issue-subtask: 201 96% 55%;
+    --issue-story: 145 63% 42%;
+    --issue-task: 212 80% 52%;
+    --issue-bug: 0 74% 42%;
+    --issue-subtask: 212 80% 52%;
     
     /* Priority Colors */
-    --priority-highest: 0 84% 45%;
+    --priority-highest: 0 74% 42%;
     --priority-high: 25 95% 53%;
     --priority-medium: 45 93% 47%;
-    --priority-low: 142 76% 36%;
+    --priority-low: 145 63% 42%;
     --priority-lowest: 160 84% 39%;
     
     /* Status Colors */
-    --status-todo: 215 16% 47%;
-    --status-in-progress: 216 100% 50%;
-    --status-done: 142 76% 36%;
-    --status-blocked: 0 84% 60%;
+    --status-todo: 210 10% 46%;
+    --status-in-progress: 212 80% 42%;
+    --status-done: 145 63% 32%;
+    --status-blocked: 0 74% 42%;
     
-    /* Lozenge Colors */
-    --lozenge-default-bg: 214 14% 95%;
-    --lozenge-default-text: 215 25% 35%;
-    --lozenge-success-bg: 142 76% 94%;
-    --lozenge-success-text: 142 76% 30%;
-    --lozenge-moved-bg: 45 93% 92%;
-    --lozenge-moved-text: 45 93% 30%;
-    --lozenge-inprogress-bg: 216 100% 95%;
-    --lozenge-inprogress-text: 216 100% 40%;
-    --lozenge-removed-bg: 0 84% 95%;
-    --lozenge-removed-text: 0 84% 40%;
+    /* Lozenge Colors - Classic Jira style */
+    --lozenge-default-bg: 210 16% 93%;
+    --lozenge-default-text: 210 10% 35%;
+    --lozenge-success-bg: 145 63% 91%;
+    --lozenge-success-text: 145 63% 25%;
+    --lozenge-moved-bg: 45 93% 90%;
+    --lozenge-moved-text: 45 80% 25%;
+    --lozenge-inprogress-bg: 212 80% 93%;
+    --lozenge-inprogress-text: 212 80% 32%;
+    --lozenge-removed-bg: 0 74% 94%;
+    --lozenge-removed-text: 0 74% 35%;
   }
 
   .dark {
-    --background: 220 16% 12%;
+    --background: 215 20% 14%;
     --foreground: 210 20% 90%;
     
-    --card: 220 16% 16%;
+    --card: 215 20% 18%;
     --card-foreground: 210 20% 90%;
     
-    --popover: 220 16% 16%;
+    --popover: 215 20% 18%;
     --popover-foreground: 210 20% 90%;
     
-    --primary: 216 100% 55%;
+    --primary: 212 80% 52%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 220 16% 22%;
+    --secondary: 215 20% 22%;
     --secondary-foreground: 210 20% 90%;
     
-    --muted: 220 16% 22%;
-    --muted-foreground: 215 16% 60%;
+    --muted: 215 20% 22%;
+    --muted-foreground: 210 16% 60%;
     
-    --accent: 220 16% 22%;
+    --accent: 215 20% 22%;
     --accent-foreground: 210 20% 90%;
     
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 220 16% 28%;
-    --input: 220 16% 28%;
-    --ring: 216 100% 55%;
+    --border: 215 20% 28%;
+    --input: 215 20% 28%;
+    --ring: 212 80% 52%;
     
-    --sidebar-background: 220 16% 10%;
+    --sidebar-background: 215 20% 12%;
     --sidebar-foreground: 210 20% 85%;
-    --sidebar-accent: 220 16% 16%;
-    --sidebar-border: 220 16% 20%;
+    --sidebar-accent: 215 20% 18%;
+    --sidebar-border: 215 20% 22%;
     
-    --header-background: 220 16% 16%;
+    --header-background: 215 20% 16%;
     --header-foreground: 210 20% 90%;
   }
 }
@@ -161,9 +161,11 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.42857;
   }
   
-  /* Jira-style scrollbar */
+  /* Jira Data Center scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -174,7 +176,7 @@
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/20 rounded-full;
+    @apply bg-muted-foreground/25 rounded;
   }
   
   ::-webkit-scrollbar-thumb:hover {
@@ -185,7 +187,7 @@
 @layer components {
   /* Jira Lozenge (Status Badge) */
   .lozenge {
-    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide;
+    @apply inline-flex items-center px-1.5 py-0.5 rounded-sm text-[11px] font-bold uppercase tracking-wide;
   }
   
   .lozenge-default {
@@ -238,29 +240,48 @@
     @apply text-white;
   }
   
-  /* Jira Issue Card */
+  /* Jira Issue Card - Classic style */
   .issue-card {
-    @apply bg-card border border-border rounded p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer;
+    @apply bg-card border border-border rounded-sm p-3 shadow-sm hover:bg-secondary/50 transition-colors cursor-pointer;
   }
   
   /* Jira Quick Filter */
   .quick-filter {
-    @apply inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-sm border transition-colors;
+    @apply inline-flex items-center px-3 py-1 text-sm font-medium transition-colors;
   }
   
   .quick-filter-inactive {
-    @apply bg-transparent border-border text-muted-foreground hover:bg-secondary hover:text-foreground;
+    @apply text-primary hover:underline;
   }
   
   .quick-filter-active {
-    @apply bg-primary border-primary text-primary-foreground;
+    @apply text-foreground font-semibold;
+  }
+
+  /* Jira-style form labels */
+  .jira-label {
+    @apply text-sm font-semibold text-foreground mb-1;
+  }
+
+  /* Jira-style buttons */
+  .jira-btn-primary {
+    @apply bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium rounded-sm hover:bg-primary/90 transition-colors;
+  }
+
+  .jira-btn-secondary {
+    @apply text-primary hover:underline text-sm font-medium;
+  }
+
+  /* Jira-style links */
+  .jira-link {
+    @apply text-primary hover:underline cursor-pointer;
   }
 }
 
 @layer utilities {
   /* Focus ring utility */
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background;
   }
   
   /* Truncate with ellipsis */

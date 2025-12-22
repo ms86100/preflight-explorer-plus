@@ -4,15 +4,7 @@ import {
   HelpCircle,
   Settings,
   ChevronDown,
-  LayoutDashboard,
-  FolderKanban,
-  ListTodo,
-  Grid3X3,
-  BarChart3,
-  Workflow,
-  Puzzle,
-  Zap,
-  Shield,
+  User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,7 +24,6 @@ const NAV_ITEMS = [
   {
     label: 'Dashboards',
     href: '/dashboards',
-    icon: LayoutDashboard,
     items: [
       { label: 'System Dashboard', href: '/dashboards/system' },
       { label: 'Create Dashboard', href: '/dashboards/create' },
@@ -41,7 +32,6 @@ const NAV_ITEMS = [
   {
     label: 'Projects',
     href: '/projects',
-    icon: FolderKanban,
     items: [
       { label: 'View all projects', href: '/projects' },
       { label: 'Create Project', href: '/projects/create' },
@@ -50,7 +40,6 @@ const NAV_ITEMS = [
   {
     label: 'Issues',
     href: '/issues',
-    icon: ListTodo,
     items: [
       { label: 'Search Issues', href: '/issues' },
       { label: 'My Open Issues', href: '/issues?filter=my-open' },
@@ -60,7 +49,6 @@ const NAV_ITEMS = [
   {
     label: 'Boards',
     href: '/boards',
-    icon: Grid3X3,
     items: [
       { label: 'View all boards', href: '/boards' },
     ],
@@ -68,21 +56,11 @@ const NAV_ITEMS = [
   {
     label: 'Plans',
     href: '/plans',
-    icon: BarChart3,
     items: [
       { label: 'Roadmaps', href: '/plans/roadmaps' },
       { label: 'Dependencies', href: '/plans/dependencies' },
     ],
   },
-];
-
-const ADMIN_ITEMS = [
-  { label: 'Workflows', href: '/workflows', icon: Workflow },
-  { label: 'Custom Fields', href: '/custom-fields', icon: Settings },
-  { label: 'Plugins', href: '/plugins', icon: Puzzle },
-  { label: 'Automation', href: '/automation', icon: Zap },
-  { label: 'Reports', href: '/reports', icon: BarChart3 },
-  { label: 'Admin', href: '/admin', icon: Shield },
 ];
 
 export function Header() {
@@ -109,34 +87,38 @@ export function Header() {
   };
 
   return (
-    <header className="h-14 bg-header text-header-foreground flex items-center px-4 gap-4 border-b border-header/20">
+    <header className="h-14 bg-gradient-to-b from-[hsl(212,80%,38%)] to-[hsl(212,80%,32%)] text-white flex items-center px-4 gap-2 shadow-md">
       {/* Logo */}
-      <Link to="/" className="flex items-center gap-2 font-semibold text-lg">
-        <div className="w-8 h-8 bg-white/20 rounded flex items-center justify-center">
-          <span className="text-white font-bold">J</span>
+      <Link to="/" className="flex items-center gap-2 font-semibold text-base mr-4">
+        <div className="flex items-center justify-center">
+          <svg className="w-7 h-7" viewBox="0 0 32 32" fill="none">
+            <path d="M15.9 3L4 28h6l3-6.5h10l3 6.5h6L20.1 3h-4.2z" fill="currentColor" opacity="0.9"/>
+            <path d="M13 17.5L16 10l3 7.5H13z" fill="currentColor"/>
+          </svg>
         </div>
-        <span className="hidden md:inline">Jira Software</span>
+        <span className="hidden md:inline font-medium">Jira Software</span>
       </Link>
 
       {/* Main Navigation */}
-      <nav className="flex items-center gap-1">
+      <nav className="flex items-center">
         {NAV_ITEMS.map((item) => (
           <DropdownMenu key={item.label}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
+                size="sm"
                 className={cn(
-                  'text-header-foreground/90 hover:text-header-foreground hover:bg-white/10 gap-1',
+                  'text-white/90 hover:text-white hover:bg-white/10 gap-0.5 h-8 px-2 font-normal text-sm rounded-sm',
                   location.pathname.startsWith(item.href) && 'bg-white/10'
                 )}
               >
                 {item.label}
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-3.5 w-3.5 opacity-70" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuContent align="start" className="w-56 rounded-sm shadow-lg">
               {item.items?.map((subItem) => (
-                <DropdownMenuItem key={subItem.href} asChild>
+                <DropdownMenuItem key={subItem.href} asChild className="text-sm">
                   <Link to={subItem.href}>{subItem.label}</Link>
                 </DropdownMenuItem>
               ))}
@@ -144,34 +126,11 @@ export function Header() {
           </DropdownMenu>
         ))}
 
-        {/* Settings/Admin Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="text-header-foreground/90 hover:text-header-foreground hover:bg-white/10 gap-1"
-            >
-              Settings
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
-            {ADMIN_ITEMS.map((item) => (
-              <DropdownMenuItem key={item.href} asChild>
-                <Link to={item.href} className="flex items-center gap-2">
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
         {/* Create Button */}
         <Button
           asChild
           size="sm"
-          className="bg-white/20 hover:bg-white/30 text-header-foreground ml-2"
+          className="bg-[hsl(212,80%,50%)] hover:bg-[hsl(212,80%,55%)] text-white ml-1 h-8 px-3 text-sm font-medium rounded-sm shadow-sm"
         >
           <Link to={createHref}>Create</Link>
         </Button>
@@ -181,23 +140,23 @@ export function Header() {
       <div className="flex-1" />
 
       {/* Search */}
-      <div className="relative w-64 hidden lg:block">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-header-foreground/60" />
+      <div className="relative w-52 hidden lg:block">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
         <Input
           type="search"
           placeholder="Search"
-          className="pl-10 bg-white/10 border-white/20 text-header-foreground placeholder:text-header-foreground/60 focus:bg-white/20"
+          className="pl-9 h-8 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:bg-white/15 focus:border-white/30 rounded-sm text-sm"
         />
       </div>
 
       {/* Right Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-0.5">
         <NotificationBell />
-        <Button variant="ghost" size="icon" className="text-header-foreground/90 hover:text-header-foreground hover:bg-white/10">
+        <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10 h-8 w-8 rounded-sm">
           <HelpCircle className="h-5 w-5" />
         </Button>
-        <Button variant="ghost" size="icon" className="text-header-foreground/90 hover:text-header-foreground hover:bg-white/10" asChild>
-          <Link to="/profile">
+        <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10 h-8 w-8 rounded-sm" asChild>
+          <Link to="/admin">
             <Settings className="h-5 w-5" />
           </Link>
         </Button>
@@ -206,35 +165,35 @@ export function Header() {
         {isAuthenticated ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Avatar className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 ml-1">
+                <Avatar className="h-7 w-7">
                   <AvatarImage src={profile?.avatar_url} />
-                  <AvatarFallback className="bg-white/20 text-header-foreground text-sm">
+                  <AvatarFallback className="bg-white/20 text-white text-xs font-medium">
                     {getInitials(profile?.display_name || user?.email || 'U')}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 rounded-sm">
               <div className="px-3 py-2">
-                <p className="font-medium">{profile?.display_name}</p>
-                <p className="text-sm text-muted-foreground">{user?.email}</p>
+                <p className="font-medium text-sm">{profile?.display_name}</p>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="text-sm">
                 <Link to="/profile">Profile</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="text-sm">
                 <Link to="/settings">Personal Settings</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut} className="text-destructive">
+              <DropdownMenuItem onClick={signOut} className="text-destructive text-sm">
                 Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Button asChild variant="ghost" className="text-header-foreground hover:bg-white/10">
+          <Button asChild variant="ghost" size="sm" className="text-white hover:bg-white/10 h-8 rounded-sm">
             <Link to="/auth">Sign In</Link>
           </Button>
         )}
