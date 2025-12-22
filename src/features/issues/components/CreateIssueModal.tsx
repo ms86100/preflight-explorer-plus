@@ -5,7 +5,6 @@ import { z } from 'zod';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -21,8 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useCreateIssue, useIssueTypes, usePriorities, useStatuses } from '@/features/issues';
-import { Loader2, Bug, CheckSquare, Bookmark, Zap, Layers } from 'lucide-react';
+import { Loader2, Bug, CheckSquare, Bookmark, Zap, Layers, HelpCircle, Settings, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ClassificationLevel } from '@/types/jira';
 
@@ -46,6 +46,7 @@ const ISSUE_TYPE_ICONS: Record<string, typeof Bug> = {
 
 interface CreateIssueModalProps {
   projectId: string;
+  projectKey?: string;
   statusId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -54,12 +55,14 @@ interface CreateIssueModalProps {
 
 export function CreateIssueModal({
   projectId,
+  projectKey = 'PRJ',
   statusId,
   open,
   onOpenChange,
   onSuccess,
 }: CreateIssueModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createAnother, setCreateAnother] = useState(false);
 
   const { data: issueTypes } = useIssueTypes();
   const { data: priorities } = usePriorities();
@@ -104,8 +107,14 @@ export function CreateIssueModal({
         classification: 'restricted' as ClassificationLevel,
       });
       onSuccess?.(result.issue_key);
-      onOpenChange(false);
-      reset();
+      
+      if (createAnother) {
+        reset();
+        toast.success(`Created ${result.issue_key}`);
+      } else {
+        onOpenChange(false);
+        reset();
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -122,71 +131,157 @@ export function CreateIssueModal({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Create Issue</DialogTitle>
-          <DialogDescription>Create a new issue in this project</DialogDescription>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+        <DialogHeader className="px-6 py-4 border-b border-border sticky top-0 bg-card z-10">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-lg font-medium">Create Issue</DialogTitle>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-sm text-muted-foreground">
+              <Settings className="h-4 w-4" />
+              Configure Fields
+            </Button>
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <Label>Issue Type *</Label>
-            <Select
-              value={selectedTypeId}
-              onValueChange={(v) => setValue('issue_type_id', v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select issue type" />
-              </SelectTrigger>
-              <SelectContent>
-                {issueTypes?.filter((t) => !t.is_subtask).map((type) => {
-                  const Icon = ISSUE_TYPE_ICONS[type.name] || CheckSquare;
-                  return (
-                    <SelectItem key={type.id} value={type.id}>
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4" style={{ color: type.color }} />
-                        {type.name}
+        <form onSubmit={handleSubmit(onFormSubmit)} className="px-6 py-4">
+          <p className="text-xs text-muted-foreground mb-4">
+            Required fields are marked with an asterisk <span className="text-destructive">*</span>
+          </p>
+
+          <div className="space-y-4">
+            {/* Project (Read-only display) */}
+            <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
+              <Label className="text-sm font-medium text-right pt-2">Project<span className="text-destructive">*</span></Label>
+              <div className="flex items-center gap-2 h-9 px-3 bg-muted rounded-sm border border-input text-sm">
+                <div className="w-4 h-4 rounded-sm bg-primary flex items-center justify-center">
+                  <span className="text-[10px] text-primary-foreground font-bold">{projectKey.slice(0, 1)}</span>
+                </div>
+                {projectKey} ({projectKey})
+              </div>
+            </div>
+
+            {/* Issue Type */}
+            <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
+              <Label className="text-sm font-medium text-right pt-2 flex items-center justify-end gap-1">
+                Issue Type<span className="text-destructive">*</span>
+                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+              </Label>
+              <Select
+                value={selectedTypeId}
+                onValueChange={(v) => setValue('issue_type_id', v)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select issue type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {issueTypes?.filter((t) => !t.is_subtask).map((type) => {
+                    const Icon = ISSUE_TYPE_ICONS[type.name] || CheckSquare;
+                    return (
+                      <SelectItem key={type.id} value={type.id}>
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" style={{ color: type.color }} />
+                          {type.name}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              {errors.issue_type_id && (
+                <p className="col-start-2 text-xs text-destructive">{errors.issue_type_id.message}</p>
+              )}
+            </div>
+
+            {/* Summary */}
+            <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
+              <Label htmlFor="summary" className="text-sm font-medium text-right pt-2">Summary<span className="text-destructive">*</span></Label>
+              <div>
+                <Input
+                  id="summary"
+                  placeholder=""
+                  className="h-9"
+                  {...register('summary')}
+                />
+                {errors.summary && (
+                  <p className="text-xs text-destructive mt-1">{errors.summary.message}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Reporter */}
+            <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
+              <Label className="text-sm font-medium text-right pt-2">Reporter<span className="text-destructive">*</span></Label>
+              <Select defaultValue="current">
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="current">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-medium">
+                        U
                       </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-            {errors.issue_type_id && (
-              <p className="text-sm text-destructive">{errors.issue_type_id.message}</p>
-            )}
-          </div>
+                      Current User
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="col-start-2 text-xs text-muted-foreground">
+                Start typing to get a list of possible matches.
+              </p>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="summary">Summary *</Label>
-            <Input
-              id="summary"
-              placeholder="Enter issue summary"
-              {...register('summary')}
-            />
-            {errors.summary && (
-              <p className="text-sm text-destructive">{errors.summary.message}</p>
-            )}
-          </div>
+            {/* Component/s */}
+            <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
+              <Label className="text-sm font-medium text-right pt-2">Component/s</Label>
+              <div className="text-sm text-muted-foreground pt-2">None</div>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Add a description..."
-              rows={4}
-              {...register('description')}
-            />
-          </div>
+            {/* Attachment */}
+            <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
+              <Label className="text-sm font-medium text-right pt-2">Attachment</Label>
+              <div className="border-2 border-dashed border-border rounded-sm p-4 text-center">
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Upload className="h-4 w-4" />
+                  Drop files to attach, or <button type="button" className="text-primary hover:underline">browse</button>.
+                </div>
+              </div>
+            </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Priority</Label>
+            {/* Description */}
+            <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
+              <Label htmlFor="description" className="text-sm font-medium text-right pt-2">Description</Label>
+              <div>
+                <div className="border border-input rounded-sm overflow-hidden">
+                  <div className="flex items-center gap-1 px-2 py-1 bg-muted/50 border-b border-input">
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs">Style</Button>
+                    <span className="text-muted-foreground">|</span>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs font-bold">B</Button>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs italic">I</Button>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs underline">U</Button>
+                  </div>
+                  <Textarea
+                    id="description"
+                    placeholder=""
+                    rows={6}
+                    className="border-0 rounded-none focus-visible:ring-0 resize-none"
+                    {...register('description')}
+                  />
+                </div>
+                <div className="flex gap-2 mt-1">
+                  <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary">Visual</Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground">Text</Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Priority */}
+            <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
+              <Label className="text-sm font-medium text-right pt-2">Priority</Label>
               <Select
                 value={watch('priority_id') || ''}
                 onValueChange={(v) => setValue('priority_id', v)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-9 w-48">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
@@ -205,14 +300,16 @@ export function CreateIssueModal({
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="story_points">Story Points</Label>
+            {/* Story Points */}
+            <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
+              <Label htmlFor="story_points" className="text-sm font-medium text-right pt-2">Story Points</Label>
               <Input
                 id="story_points"
                 type="number"
                 min={0}
                 max={100}
-                placeholder="0"
+                placeholder=""
+                className="h-9 w-24"
                 {...register('story_points', {
                   setValueAs: (v) => (v === '' || v === null || typeof v === 'undefined' ? undefined : Number(v)),
                 })}
@@ -220,14 +317,24 @@ export function CreateIssueModal({
             </div>
           </div>
 
-          <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting || !projectId || !defaultStatusId || !selectedTypeId}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Create Issue
-            </Button>
+          <DialogFooter className="mt-6 pt-4 border-t border-border flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Checkbox 
+                id="create-another" 
+                checked={createAnother}
+                onCheckedChange={(checked) => setCreateAnother(checked === true)}
+              />
+              <Label htmlFor="create-another" className="text-sm font-normal">Create another</Label>
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={isSubmitting || !projectId || !defaultStatusId || !selectedTypeId}>
+                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Create
+              </Button>
+              <Button type="button" variant="ghost" onClick={handleClose} disabled={isSubmitting} className="text-primary hover:text-primary hover:bg-transparent hover:underline">
+                Cancel
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
