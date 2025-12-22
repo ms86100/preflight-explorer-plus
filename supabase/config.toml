@@ -1,1 +1,7 @@
 project_id = "uuiztpfpjdqwjxfqxvbi"
+
+[functions.rate-limit]
+verify_jwt = false
+
+[functions.cleanup-rate-limits]
+verify_jwt = false
