@@ -371,13 +371,23 @@ export default function ProjectSettingsPage() {
                 </CardTitle>
                 <CardDescription>Configure issue workflows for this project</CardDescription>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm">
-                  Workflow configuration is available in the Workflows section.
-                </p>
-                <Button variant="outline" className="mt-4" onClick={() => navigate('/workflows')}>
-                  Manage Workflows
-                </Button>
+              <CardContent className="space-y-4">
+                <div className="p-4 rounded-lg border bg-muted/30">
+                  <p className="font-medium">Current Workflow Scheme</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Default Workflow Scheme
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    This project uses the default workflow which controls issue status transitions.
+                    Only transitions defined in the workflow are allowed.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => navigate('/workflows')}>
+                    <Workflow className="h-4 w-4 mr-2" />
+                    Edit Workflows
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

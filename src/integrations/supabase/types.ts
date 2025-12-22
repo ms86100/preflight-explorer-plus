@@ -1431,6 +1431,42 @@ export type Database = {
         }
         Relationships: []
       }
+      project_workflow_schemes: {
+        Row: {
+          created_at: string | null
+          id: string
+          project_id: string
+          scheme_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          project_id: string
+          scheme_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          scheme_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_workflow_schemes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_workflow_schemes_scheme_id_fkey"
+            columns: ["scheme_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_schemes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           avatar_url: string | null
@@ -1680,6 +1716,79 @@ export type Database = {
           },
         ]
       }
+      workflow_scheme_mappings: {
+        Row: {
+          created_at: string | null
+          id: string
+          issue_type_id: string | null
+          scheme_id: string
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          issue_type_id?: string | null
+          scheme_id: string
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          issue_type_id?: string | null
+          scheme_id?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_scheme_mappings_issue_type_id_fkey"
+            columns: ["issue_type_id"]
+            isOneToOne: false
+            referencedRelation: "issue_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_scheme_mappings_scheme_id_fkey"
+            columns: ["scheme_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_schemes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_scheme_mappings_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_schemes: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       workflow_steps: {
         Row: {
           created_at: string | null
@@ -1864,6 +1973,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_available_transitions: {
+        Args: { p_issue_id: string }
+        Returns: {
+          to_status_category: string
+          to_status_color: string
+          to_status_id: string
+          to_status_name: string
+          transition_id: string
+          transition_name: string
+        }[]
+      }
+      get_workflow_for_issue: {
+        Args: { p_issue_type_id: string; p_project_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1873,6 +1997,14 @@ export type Database = {
       }
       is_project_member: {
         Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      validate_status_transition: {
+        Args: {
+          p_from_status_id: string
+          p_issue_id: string
+          p_to_status_id: string
+        }
         Returns: boolean
       }
     }

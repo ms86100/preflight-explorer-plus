@@ -41,6 +41,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { ClassificationBadge } from '@/components/compliance/ClassificationBanner';
 import { useIssueById, useUpdateIssue, useIssueTypes, usePriorities, useStatuses, useCloneIssue } from '@/features/issues';
+import { useAvailableTransitions, useExecuteTransition } from '@/features/workflows';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -82,7 +83,9 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
   const { data: issue, isLoading, refetch } = useIssueById(issueId || '');
   const { data: priorities } = usePriorities();
   const { data: statuses } = useStatuses();
+  const { data: availableTransitions, isLoading: isLoadingTransitions } = useAvailableTransitions(issueId);
   const updateIssue = useUpdateIssue();
+  const executeTransition = useExecuteTransition();
   const cloneIssue = useCloneIssue();
 
   const handleClone = () => {
@@ -139,8 +142,10 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
 
   const handleStatusChange = async (statusId: string) => {
     if (!issueId) return;
-    await updateIssue.mutateAsync({ id: issueId, updates: { status_id: statusId } });
-    refetch();
+    const result = await executeTransition.mutateAsync({ issueId, toStatusId: statusId });
+    if (result.success) {
+      refetch();
+    }
   };
 
   const handlePriorityChange = async (priorityId: string) => {
@@ -207,22 +212,53 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label className="text-xs text-muted-foreground">Status</Label>
-                    <Select value={issue.status_id} onValueChange={handleStatusChange}>
+                    <Select 
+                      value={issue.status_id} 
+                      onValueChange={handleStatusChange}
+                      disabled={executeTransition.isPending}
+                    >
                       <SelectTrigger className="mt-1">
-                        <SelectValue />
+                        <SelectValue>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: issue.status?.color }}
+                            />
+                            {issue.status?.name}
+                          </div>
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {statuses?.map((status) => (
-                          <SelectItem key={status.id} value={status.id}>
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="w-2 h-2 rounded-full"
-                                style={{ backgroundColor: status.color }}
-                              />
-                              {status.name}
-                            </div>
-                          </SelectItem>
-                        ))}
+                        {/* Current status (always shown) */}
+                        <SelectItem key={issue.status_id} value={issue.status_id}>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: issue.status?.color }}
+                            />
+                            {issue.status?.name}
+                            <span className="text-xs text-muted-foreground">(current)</span>
+                          </div>
+                        </SelectItem>
+                        
+                        {/* Available transitions */}
+                        {availableTransitions && availableTransitions.length > 0 ? (
+                          availableTransitions.map((transition) => (
+                            <SelectItem key={transition.to_status_id} value={transition.to_status_id}>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className="w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: transition.to_status_color }}
+                                />
+                                {transition.transition_name}
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : !isLoadingTransitions && (
+                          <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                            No transitions available
+                          </div>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>

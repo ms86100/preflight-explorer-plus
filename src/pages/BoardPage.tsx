@@ -4,10 +4,11 @@ import { AppLayout } from '@/components/layout';
 import { ScrumBoard } from '@/features/boards';
 import { useProjects } from '@/features/projects/hooks/useProjects';
 import { useBoardsByProject, useBoardColumns, useActiveSprint, useSprintIssues } from '@/features/boards/hooks/useBoards';
-import { useUpdateIssueStatus } from '@/features/issues/hooks/useIssues';
 import { CreateIssueModal } from '@/features/issues/components/CreateIssueModal';
 import { IssueDetailModal } from '@/features/issues/components/IssueDetailModal';
+import { useExecuteTransition } from '@/features/workflows';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function BoardPage() {
   const { projectKey } = useParams<{ projectKey: string }>();
@@ -32,16 +33,21 @@ export default function BoardPage() {
   // Get sprint issues
   const { data: sprintIssues, isLoading: issuesLoading, refetch: refetchIssues } = useSprintIssues(activeSprint?.id || '');
 
-  const updateIssueStatus = useUpdateIssueStatus();
+  const executeTransition = useExecuteTransition();
 
   const isLoading = projectsLoading || boardsLoading || columnsLoading || sprintLoading || issuesLoading;
 
   const handleIssueMove = async (issueId: string, statusId: string) => {
     try {
-      await updateIssueStatus.mutateAsync({ id: issueId, statusId });
-      refetchIssues();
+      const result = await executeTransition.mutateAsync({ issueId, toStatusId: statusId });
+      if (result.success) {
+        refetchIssues();
+      } else {
+        toast.error(result.error || 'Cannot move issue - transition not allowed by workflow');
+      }
     } catch (error) {
       console.error('Failed to move issue:', error);
+      toast.error('Failed to move issue');
     }
   };
 
