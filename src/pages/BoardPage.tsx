@@ -56,7 +56,7 @@ export default function BoardPage() {
   // Real-time subscription for issues - refetch when issues change
   useEffect(() => {
     if (!project?.id) return;
-    
+
     const channel = supabase
       .channel(`board-issues-${project.id}`)
       .on(
@@ -72,6 +72,57 @@ export default function BoardPage() {
       supabase.removeChannel(channel);
     };
   }, [project?.id, refetchIssues]);
+
+  // For Scrum boards, sprint membership changes must also be real-time
+  useEffect(() => {
+    if (!isScrum || !activeSprint?.id) return;
+
+    const channel = supabase
+      .channel(`board-sprint-issues-${activeSprint.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sprint_issues', filter: `sprint_id=eq.${activeSprint.id}` },
+        () => {
+          refetchIssues();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isScrum, activeSprint?.id, refetchIssues]);
+
+  const addCreatedIssueToActiveSprint = async (issueKey: string) => {
+    if (!isScrum || !activeSprint?.id) return;
+
+    try {
+      const { data: issue, error: issueError } = await supabase
+        .from('issues')
+        .select('id')
+        .eq('issue_key', issueKey)
+        .maybeSingle();
+
+      if (issueError) throw issueError;
+      if (!issue?.id) return;
+
+      const { error: insertError } = await supabase
+        .from('sprint_issues')
+        .insert({ sprint_id: activeSprint.id, issue_id: issue.id });
+
+      // If already added, ignore
+      if (insertError && !String(insertError.message || '').toLowerCase().includes('duplicate')) {
+        throw insertError;
+      }
+
+      refetchIssues();
+    } catch (error) {
+      console.error('Failed to add issue to active sprint:', error);
+      toast.error('Issue created but could not be added to the active sprint');
+      // Still refresh to reflect creation elsewhere
+      refetchIssues();
+    }
+  };
 
   const handleIssueMove = async (issueId: string, statusId: string) => {
     try {
