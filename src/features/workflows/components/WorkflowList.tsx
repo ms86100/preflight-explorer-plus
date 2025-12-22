@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useWorkflows, useCreateWorkflow, useDeleteWorkflow, useCloneWorkflow } from '../hooks/useWorkflows';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,8 @@ import {
   CheckCircle,
   Settings,
   Copy,
-  MoreVertical
+  MoreVertical,
+  GitCompare
 } from 'lucide-react';
 import {
   Dialog,
@@ -29,7 +30,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useState } from 'react';
+import { WorkflowImportExport } from './WorkflowImportExport';
+import { WorkflowComparison } from './WorkflowComparison';
 
 interface WorkflowListProps {
   projectId?: string;
@@ -44,6 +46,7 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
   const cloneWorkflow = useCloneWorkflow();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isCloneOpen, setIsCloneOpen] = useState(false);
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [cloneSourceId, setCloneSourceId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -106,13 +109,22 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
           <GitBranch className="h-5 w-5" />
           Workflows
         </CardTitle>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              New Workflow
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <WorkflowImportExport 
+            workflowId={selectedWorkflowId}
+            onImportComplete={() => {}}
+          />
+          <Button variant="outline" size="sm" onClick={() => setIsCompareOpen(true)}>
+            <GitCompare className="h-4 w-4 mr-2" />
+            Compare
+          </Button>
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                New Workflow
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create Workflow</DialogTitle>
@@ -151,6 +163,7 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         {workflows?.length === 0 ? (
@@ -274,6 +287,13 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Workflow Comparison */}
+    <WorkflowComparison 
+      open={isCompareOpen} 
+      onOpenChange={setIsCompareOpen}
+      initialWorkflowId={selectedWorkflowId}
+    />
     </>
   );
 }
