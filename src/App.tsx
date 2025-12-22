@@ -23,8 +23,8 @@ import PluginsPage from "./pages/PluginsPage";
 import AutomationPage from "./pages/AutomationPage";
 import MigrationPage from "./pages/MigrationPage";
 import LdapPage from "./pages/LdapPage";
+import PluginFeaturesPage from "./pages/PluginFeaturesPage";
 import NotFound from "./pages/NotFound";
-
 const queryClient = new QueryClient();
 
 // Protected Route Component
@@ -280,6 +280,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <MigrationPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Plugin Features */}
+      <Route
+        path="/plugin-features"
+        element={
+          <ProtectedRoute>
+            <PluginFeaturesPage />
           </ProtectedRoute>
         }
       />
