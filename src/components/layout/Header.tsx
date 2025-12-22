@@ -9,6 +9,7 @@ import {
   Zap,
   BarChart3,
   Shield,
+  Upload,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -73,6 +74,7 @@ const ADMIN_ITEMS = [
   { label: 'Plugins', href: '/plugins', icon: Puzzle },
   { label: 'Automation', href: '/automation', icon: Zap },
   { label: 'Reports', href: '/reports', icon: BarChart3 },
+  { label: 'Data Migration', href: '/migration', icon: Upload },
   { label: 'Admin', href: '/admin', icon: Shield },
 ];
 

@@ -20,6 +20,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ProjectSettingsPage from "./pages/ProjectSettingsPage";
 import PluginsPage from "./pages/PluginsPage";
 import AutomationPage from "./pages/AutomationPage";
+import MigrationPage from "./pages/MigrationPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -267,6 +268,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AutomationPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Migration */}
+      <Route
+        path="/migration"
+        element={
+          <ProtectedRoute>
+            <MigrationPage />
           </ProtectedRoute>
         }
       />
