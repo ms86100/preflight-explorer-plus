@@ -1,0 +1,195 @@
+// Smart Commit Parser
+// Parses commit messages for Jira issue keys and smart commit commands
+// Based on Jira Data Center smart commits: https://support.atlassian.com/jira-software-cloud/docs/process-issues-with-smart-commits/
+
+import type { ParsedSmartCommit, SmartCommitAction } from '../types';
+
+// Matches Jira issue keys like PROJ-123, ABC-1, TEST-9999
+const ISSUE_KEY_PATTERN = /\b([A-Z][A-Z0-9]+-\d+)\b/g;
+
+// Smart commit command patterns
+const COMMENT_PATTERN = /#comment\s+(.+?)(?=#|$)/gi;
+const TIME_PATTERN = /#time\s+(\d+[wdhm]\s*)+/gi;
+const TRANSITION_PATTERNS: Record<string, RegExp> = {
+  resolve: /#(resolve|done|close|fixed|closes|fixes)\b/gi,
+  'in-progress': /#(in-progress|start|working|wip)\b/gi,
+  reopen: /#(reopen|open)\b/gi,
+  review: /#(review|code-review|pr)\b/gi,
+};
+
+/**
+ * Extract all Jira issue keys from a commit message
+ */
+export function extractIssueKeys(message: string): string[] {
+  const matches = message.match(ISSUE_KEY_PATTERN);
+  if (!matches) return [];
+  
+  // Remove duplicates and return unique keys
+  return [...new Set(matches)];
+}
+
+/**
+ * Parse smart commit commands from a commit message
+ */
+export function parseSmartCommitActions(message: string, issueKeys: string[]): SmartCommitAction[] {
+  const actions: SmartCommitAction[] = [];
+  
+  if (issueKeys.length === 0) return actions;
+  
+  // Parse #comment commands
+  const commentMatches = message.matchAll(COMMENT_PATTERN);
+  for (const match of commentMatches) {
+    const commentText = match[1].trim();
+    if (commentText) {
+      // Apply comment to all mentioned issues
+      for (const issueKey of issueKeys) {
+        actions.push({
+          type: 'comment',
+          value: commentText,
+          issueKey,
+        });
+      }
+    }
+  }
+  
+  // Parse #time commands
+  const timeMatches = message.matchAll(TIME_PATTERN);
+  for (const match of timeMatches) {
+    const timeValue = match[0].replace('#time', '').trim();
+    if (timeValue) {
+      for (const issueKey of issueKeys) {
+        actions.push({
+          type: 'time',
+          value: timeValue,
+          issueKey,
+        });
+      }
+    }
+  }
+  
+  // Parse transition commands
+  for (const [transitionName, pattern] of Object.entries(TRANSITION_PATTERNS)) {
+    if (pattern.test(message)) {
+      for (const issueKey of issueKeys) {
+        actions.push({
+          type: 'transition',
+          value: transitionName,
+          issueKey,
+        });
+      }
+      // Reset regex lastIndex for next use
+      pattern.lastIndex = 0;
+    }
+  }
+  
+  return actions;
+}
+
+/**
+ * Parse a commit message for issue keys and smart commit commands
+ */
+export function parseSmartCommit(message: string): ParsedSmartCommit {
+  const issueKeys = extractIssueKeys(message);
+  const actions = parseSmartCommitActions(message, issueKeys);
+  
+  return {
+    issueKeys,
+    actions,
+    rawMessage: message,
+  };
+}
+
+/**
+ * Parse time string to minutes
+ * Supports formats: 1w, 2d, 3h, 30m, 1w 2d 3h 30m
+ */
+export function parseTimeToMinutes(timeString: string): number {
+  let totalMinutes = 0;
+  
+  const weekMatch = timeString.match(/(\d+)w/i);
+  const dayMatch = timeString.match(/(\d+)d/i);
+  const hourMatch = timeString.match(/(\d+)h/i);
+  const minuteMatch = timeString.match(/(\d+)m/i);
+  
+  if (weekMatch) totalMinutes += parseInt(weekMatch[1]) * 5 * 8 * 60; // 5 days, 8 hours
+  if (dayMatch) totalMinutes += parseInt(dayMatch[1]) * 8 * 60; // 8 hours
+  if (hourMatch) totalMinutes += parseInt(hourMatch[1]) * 60;
+  if (minuteMatch) totalMinutes += parseInt(minuteMatch[1]);
+  
+  return totalMinutes;
+}
+
+/**
+ * Format minutes to a human-readable time string
+ */
+export function formatMinutesToTime(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  
+  if (hours < 8) {
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  }
+  
+  const days = Math.floor(hours / 8);
+  const remainingHours = hours % 8;
+  
+  if (days < 5) {
+    let result = `${days}d`;
+    if (remainingHours > 0) result += ` ${remainingHours}h`;
+    if (remainingMinutes > 0) result += ` ${remainingMinutes}m`;
+    return result;
+  }
+  
+  const weeks = Math.floor(days / 5);
+  const remainingDays = days % 5;
+  
+  let result = `${weeks}w`;
+  if (remainingDays > 0) result += ` ${remainingDays}d`;
+  if (remainingHours > 0) result += ` ${remainingHours}h`;
+  
+  return result;
+}
+
+/**
+ * Check if a commit message contains any smart commit commands
+ */
+export function hasSmartCommitCommands(message: string): boolean {
+  return (
+    COMMENT_PATTERN.test(message) ||
+    TIME_PATTERN.test(message) ||
+    Object.values(TRANSITION_PATTERNS).some(pattern => {
+      const result = pattern.test(message);
+      pattern.lastIndex = 0; // Reset for reuse
+      return result;
+    })
+  );
+}
+
+/**
+ * Generate a branch name from an issue key and optional description
+ */
+export function generateBranchName(
+  issueKey: string,
+  description?: string,
+  prefix: string = 'feature'
+): string {
+  let branchName = `${prefix}/${issueKey.toLowerCase()}`;
+  
+  if (description) {
+    // Sanitize description for branch name
+    const sanitized = description
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .substring(0, 50);
+    
+    if (sanitized) {
+      branchName += `-${sanitized}`;
+    }
+  }
+  
+  return branchName;
+}

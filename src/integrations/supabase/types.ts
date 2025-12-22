@@ -817,6 +817,553 @@ export type Database = {
         }
         Relationships: []
       }
+      git_branches: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          issue_id: string | null
+          last_commit_at: string | null
+          last_commit_hash: string | null
+          name: string
+          repository_id: string | null
+          updated_at: string | null
+          web_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          issue_id?: string | null
+          last_commit_at?: string | null
+          last_commit_hash?: string | null
+          name: string
+          repository_id?: string | null
+          updated_at?: string | null
+          web_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          issue_id?: string | null
+          last_commit_at?: string | null
+          last_commit_hash?: string | null
+          name?: string
+          repository_id?: string | null
+          updated_at?: string | null
+          web_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "git_branches_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "git_branches_repository_id_fkey"
+            columns: ["repository_id"]
+            isOneToOne: false
+            referencedRelation: "git_repositories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      git_builds: {
+        Row: {
+          build_number: string | null
+          commit_id: string | null
+          created_at: string | null
+          duration_seconds: number | null
+          finished_at: string | null
+          id: string
+          pipeline_name: string | null
+          remote_id: string | null
+          repository_id: string | null
+          started_at: string | null
+          status: string | null
+          updated_at: string | null
+          web_url: string | null
+        }
+        Insert: {
+          build_number?: string | null
+          commit_id?: string | null
+          created_at?: string | null
+          duration_seconds?: number | null
+          finished_at?: string | null
+          id?: string
+          pipeline_name?: string | null
+          remote_id?: string | null
+          repository_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          web_url?: string | null
+        }
+        Update: {
+          build_number?: string | null
+          commit_id?: string | null
+          created_at?: string | null
+          duration_seconds?: number | null
+          finished_at?: string | null
+          id?: string
+          pipeline_name?: string | null
+          remote_id?: string | null
+          repository_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          web_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "git_builds_commit_id_fkey"
+            columns: ["commit_id"]
+            isOneToOne: false
+            referencedRelation: "git_commits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "git_builds_repository_id_fkey"
+            columns: ["repository_id"]
+            isOneToOne: false
+            referencedRelation: "git_repositories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      git_commit_issues: {
+        Row: {
+          commit_id: string | null
+          created_at: string | null
+          id: string
+          issue_id: string | null
+          issue_key: string
+          smartcommit_actions: Json | null
+          smartcommit_processed: boolean | null
+        }
+        Insert: {
+          commit_id?: string | null
+          created_at?: string | null
+          id?: string
+          issue_id?: string | null
+          issue_key: string
+          smartcommit_actions?: Json | null
+          smartcommit_processed?: boolean | null
+        }
+        Update: {
+          commit_id?: string | null
+          created_at?: string | null
+          id?: string
+          issue_id?: string | null
+          issue_key?: string
+          smartcommit_actions?: Json | null
+          smartcommit_processed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "git_commit_issues_commit_id_fkey"
+            columns: ["commit_id"]
+            isOneToOne: false
+            referencedRelation: "git_commits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "git_commit_issues_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      git_commits: {
+        Row: {
+          additions: number | null
+          author_email: string | null
+          author_name: string | null
+          commit_hash: string
+          committed_at: string | null
+          created_at: string | null
+          deletions: number | null
+          files_changed: number | null
+          id: string
+          message: string | null
+          repository_id: string | null
+          web_url: string | null
+        }
+        Insert: {
+          additions?: number | null
+          author_email?: string | null
+          author_name?: string | null
+          commit_hash: string
+          committed_at?: string | null
+          created_at?: string | null
+          deletions?: number | null
+          files_changed?: number | null
+          id?: string
+          message?: string | null
+          repository_id?: string | null
+          web_url?: string | null
+        }
+        Update: {
+          additions?: number | null
+          author_email?: string | null
+          author_name?: string | null
+          commit_hash?: string
+          committed_at?: string | null
+          created_at?: string | null
+          deletions?: number | null
+          files_changed?: number | null
+          id?: string
+          message?: string | null
+          repository_id?: string | null
+          web_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "git_commits_repository_id_fkey"
+            columns: ["repository_id"]
+            isOneToOne: false
+            referencedRelation: "git_repositories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      git_deployment_issues: {
+        Row: {
+          created_at: string | null
+          deployment_id: string | null
+          id: string
+          issue_id: string | null
+          issue_key: string
+        }
+        Insert: {
+          created_at?: string | null
+          deployment_id?: string | null
+          id?: string
+          issue_id?: string | null
+          issue_key: string
+        }
+        Update: {
+          created_at?: string | null
+          deployment_id?: string | null
+          id?: string
+          issue_id?: string | null
+          issue_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "git_deployment_issues_deployment_id_fkey"
+            columns: ["deployment_id"]
+            isOneToOne: false
+            referencedRelation: "git_deployments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "git_deployment_issues_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      git_deployments: {
+        Row: {
+          build_id: string | null
+          commit_id: string | null
+          created_at: string | null
+          deployed_at: string | null
+          deployed_by: string | null
+          environment: string
+          id: string
+          remote_id: string | null
+          repository_id: string | null
+          status: string | null
+          updated_at: string | null
+          web_url: string | null
+        }
+        Insert: {
+          build_id?: string | null
+          commit_id?: string | null
+          created_at?: string | null
+          deployed_at?: string | null
+          deployed_by?: string | null
+          environment: string
+          id?: string
+          remote_id?: string | null
+          repository_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          web_url?: string | null
+        }
+        Update: {
+          build_id?: string | null
+          commit_id?: string | null
+          created_at?: string | null
+          deployed_at?: string | null
+          deployed_by?: string | null
+          environment?: string
+          id?: string
+          remote_id?: string | null
+          repository_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+          web_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "git_deployments_build_id_fkey"
+            columns: ["build_id"]
+            isOneToOne: false
+            referencedRelation: "git_builds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "git_deployments_commit_id_fkey"
+            columns: ["commit_id"]
+            isOneToOne: false
+            referencedRelation: "git_commits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "git_deployments_repository_id_fkey"
+            columns: ["repository_id"]
+            isOneToOne: false
+            referencedRelation: "git_repositories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      git_organizations: {
+        Row: {
+          access_token_encrypted: string | null
+          created_at: string | null
+          created_by: string | null
+          host_url: string
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          last_sync_error: string | null
+          name: string
+          oauth_client_id: string | null
+          oauth_client_secret_encrypted: string | null
+          provider_type: string
+          updated_at: string | null
+          webhook_secret: string | null
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          host_url: string
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          name: string
+          oauth_client_id?: string | null
+          oauth_client_secret_encrypted?: string | null
+          provider_type: string
+          updated_at?: string | null
+          webhook_secret?: string | null
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          host_url?: string
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          name?: string
+          oauth_client_id?: string | null
+          oauth_client_secret_encrypted?: string | null
+          provider_type?: string
+          updated_at?: string | null
+          webhook_secret?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "git_organizations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      git_pull_request_issues: {
+        Row: {
+          created_at: string | null
+          id: string
+          issue_id: string | null
+          issue_key: string
+          pull_request_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          issue_id?: string | null
+          issue_key: string
+          pull_request_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          issue_id?: string | null
+          issue_key?: string
+          pull_request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "git_pull_request_issues_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "git_pull_request_issues_pull_request_id_fkey"
+            columns: ["pull_request_id"]
+            isOneToOne: false
+            referencedRelation: "git_pull_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      git_pull_requests: {
+        Row: {
+          author_email: string | null
+          author_name: string | null
+          created_at: string | null
+          description: string | null
+          destination_branch: string | null
+          id: string
+          merged_at: string | null
+          remote_id: string
+          repository_id: string | null
+          reviewers: Json | null
+          source_branch: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          web_url: string | null
+        }
+        Insert: {
+          author_email?: string | null
+          author_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          destination_branch?: string | null
+          id?: string
+          merged_at?: string | null
+          remote_id: string
+          repository_id?: string | null
+          reviewers?: Json | null
+          source_branch?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          web_url?: string | null
+        }
+        Update: {
+          author_email?: string | null
+          author_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          destination_branch?: string | null
+          id?: string
+          merged_at?: string | null
+          remote_id?: string
+          repository_id?: string | null
+          reviewers?: Json | null
+          source_branch?: string | null
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
+          web_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "git_pull_requests_repository_id_fkey"
+            columns: ["repository_id"]
+            isOneToOne: false
+            referencedRelation: "git_repositories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      git_repositories: {
+        Row: {
+          clone_url: string | null
+          created_at: string | null
+          default_branch: string | null
+          id: string
+          is_active: boolean | null
+          last_commit_at: string | null
+          name: string
+          organization_id: string | null
+          project_id: string | null
+          remote_id: string
+          slug: string
+          smartcommits_enabled: boolean | null
+          updated_at: string | null
+          web_url: string | null
+        }
+        Insert: {
+          clone_url?: string | null
+          created_at?: string | null
+          default_branch?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_commit_at?: string | null
+          name: string
+          organization_id?: string | null
+          project_id?: string | null
+          remote_id: string
+          slug: string
+          smartcommits_enabled?: boolean | null
+          updated_at?: string | null
+          web_url?: string | null
+        }
+        Update: {
+          clone_url?: string | null
+          created_at?: string | null
+          default_branch?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_commit_at?: string | null
+          name?: string
+          organization_id?: string | null
+          project_id?: string | null
+          remote_id?: string
+          slug?: string
+          smartcommits_enabled?: boolean | null
+          updated_at?: string | null
+          web_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "git_repositories_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "git_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "git_repositories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_memberships: {
         Row: {
           created_at: string | null
