@@ -5,13 +5,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Demo data constants
-const DEMO_ORG_ID = 'demo-git-org-00000000';
-const DEMO_REPO_ID = 'demo-git-repo-00000000';
+// Demo data constants - using valid UUIDs with recognizable pattern
+const DEMO_ORG_ID = 'de000000-0000-0000-0000-000000000001';
+const DEMO_REPO_ID = 'de000000-0000-0000-0000-000000000002';
 
 const DEMO_COMMITS = [
   {
-    id: 'demo-commit-001',
+    id: 'de000000-0000-0000-0001-000000000001',
     commit_hash: 'a1b2c3d4e5f6789012345678901234567890abcd',
     message: 'DEMO-1 feat: Add user authentication module',
     author_name: 'Alice Developer',
@@ -23,7 +23,7 @@ const DEMO_COMMITS = [
     web_url: 'https://github.com/demo-org/demo-repo/commit/a1b2c3d',
   },
   {
-    id: 'demo-commit-002',
+    id: 'de000000-0000-0000-0001-000000000002',
     commit_hash: 'b2c3d4e5f6789012345678901234567890abcde',
     message: 'DEMO-1 #time 2h fix: Resolve login timeout issue',
     author_name: 'Bob Engineer',
@@ -35,7 +35,7 @@ const DEMO_COMMITS = [
     web_url: 'https://github.com/demo-org/demo-repo/commit/b2c3d4e',
   },
   {
-    id: 'demo-commit-003',
+    id: 'de000000-0000-0000-0001-000000000003',
     commit_hash: 'c3d4e5f6789012345678901234567890abcdef',
     message: 'DEMO-2 chore: Update dependencies and security patches',
     author_name: 'Charlie DevOps',
@@ -47,7 +47,7 @@ const DEMO_COMMITS = [
     web_url: 'https://github.com/demo-org/demo-repo/commit/c3d4e5f',
   },
   {
-    id: 'demo-commit-004',
+    id: 'de000000-0000-0000-0001-000000000004',
     commit_hash: 'd4e5f6789012345678901234567890abcdef01',
     message: 'DEMO-3 feat: Implement dashboard analytics #resolve',
     author_name: 'Diana PM',
@@ -62,7 +62,7 @@ const DEMO_COMMITS = [
 
 const DEMO_BRANCHES = [
   {
-    id: 'demo-branch-001',
+    id: 'de000000-0000-0000-0002-000000000001',
     name: 'feature/DEMO-1-user-auth',
     is_default: false,
     last_commit_hash: 'b2c3d4e5f6789012345678901234567890abcde',
@@ -70,7 +70,7 @@ const DEMO_BRANCHES = [
     web_url: 'https://github.com/demo-org/demo-repo/tree/feature/DEMO-1-user-auth',
   },
   {
-    id: 'demo-branch-002',
+    id: 'de000000-0000-0000-0002-000000000002',
     name: 'feature/DEMO-2-security-updates',
     is_default: false,
     last_commit_hash: 'c3d4e5f6789012345678901234567890abcdef',
@@ -78,7 +78,7 @@ const DEMO_BRANCHES = [
     web_url: 'https://github.com/demo-org/demo-repo/tree/feature/DEMO-2-security-updates',
   },
   {
-    id: 'demo-branch-003',
+    id: 'de000000-0000-0000-0002-000000000003',
     name: 'main',
     is_default: true,
     last_commit_hash: 'd4e5f6789012345678901234567890abcdef01',
@@ -89,7 +89,7 @@ const DEMO_BRANCHES = [
 
 const DEMO_PULL_REQUESTS = [
   {
-    id: 'demo-pr-001',
+    id: 'de000000-0000-0000-0003-000000000001',
     remote_id: '42',
     title: 'DEMO-1: Add user authentication module',
     description: 'This PR implements the complete user authentication flow including login, logout, and session management.',
@@ -103,7 +103,7 @@ const DEMO_PULL_REQUESTS = [
     created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
   },
   {
-    id: 'demo-pr-002',
+    id: 'de000000-0000-0000-0003-000000000002',
     remote_id: '41',
     title: 'DEMO-3: Dashboard analytics implementation',
     description: 'Adds comprehensive analytics dashboard with charts and real-time data.',
@@ -121,7 +121,7 @@ const DEMO_PULL_REQUESTS = [
 
 const DEMO_BUILDS = [
   {
-    id: 'demo-build-001',
+    id: 'de000000-0000-0000-0004-000000000001',
     remote_id: 'run-12345',
     build_number: '1234',
     pipeline_name: 'CI/CD Pipeline',
@@ -130,41 +130,41 @@ const DEMO_BUILDS = [
     finished_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 5 * 60 * 1000).toISOString(),
     duration_seconds: 300,
     web_url: 'https://github.com/demo-org/demo-repo/actions/runs/12345',
-    commit_id: 'demo-commit-002',
+    commit_id: 'de000000-0000-0000-0001-000000000002',
   },
   {
-    id: 'demo-build-002',
+    id: 'de000000-0000-0000-0004-000000000002',
     remote_id: 'run-12346',
     build_number: '1235',
     pipeline_name: 'CI/CD Pipeline',
     status: 'running',
     started_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
     web_url: 'https://github.com/demo-org/demo-repo/actions/runs/12346',
-    commit_id: 'demo-commit-004',
+    commit_id: 'de000000-0000-0000-0001-000000000004',
   },
 ];
 
 const DEMO_DEPLOYMENTS = [
   {
-    id: 'demo-deploy-001',
+    id: 'de000000-0000-0000-0005-000000000001',
     remote_id: 'deploy-789',
     environment: 'staging',
     status: 'success',
     deployed_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
     deployed_by: 'Charlie DevOps',
     web_url: 'https://github.com/demo-org/demo-repo/deployments/staging',
-    commit_id: 'demo-commit-003',
-    build_id: 'demo-build-001',
+    commit_id: 'de000000-0000-0000-0001-000000000003',
+    build_id: 'de000000-0000-0000-0004-000000000001',
   },
   {
-    id: 'demo-deploy-002',
+    id: 'de000000-0000-0000-0005-000000000002',
     remote_id: 'deploy-790',
     environment: 'production',
     status: 'success',
     deployed_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
     deployed_by: 'Diana PM',
     web_url: 'https://github.com/demo-org/demo-repo/deployments/production',
-    commit_id: 'demo-commit-004',
+    commit_id: 'de000000-0000-0000-0001-000000000004',
   },
 ];
 
@@ -210,16 +210,22 @@ Deno.serve(async (req) => {
         .select('id, issue_key')
         .limit(5);
 
-      // Clean up existing demo data first
+      // Clean up existing demo data first (use specific IDs since LIKE doesn't work with UUID)
       console.log('[git-demo-seed] Cleaning up existing demo data...');
-      await supabase.from('git_deployment_issues').delete().like('deployment_id', 'demo-%');
-      await supabase.from('git_pull_request_issues').delete().like('pull_request_id', 'demo-%');
-      await supabase.from('git_commit_issues').delete().like('commit_id', 'demo-%');
-      await supabase.from('git_deployments').delete().like('id', 'demo-%');
-      await supabase.from('git_builds').delete().like('id', 'demo-%');
-      await supabase.from('git_pull_requests').delete().like('id', 'demo-%');
-      await supabase.from('git_branches').delete().like('id', 'demo-%');
-      await supabase.from('git_commits').delete().like('id', 'demo-%');
+      const demoDeploymentIds = DEMO_DEPLOYMENTS.map(d => d.id);
+      const demoPRIds = DEMO_PULL_REQUESTS.map(p => p.id);
+      const demoCommitIds = DEMO_COMMITS.map(c => c.id);
+      const demoBranchIds = DEMO_BRANCHES.map(b => b.id);
+      const demoBuildIds = DEMO_BUILDS.map(b => b.id);
+      
+      await supabase.from('git_deployment_issues').delete().in('deployment_id', demoDeploymentIds);
+      await supabase.from('git_pull_request_issues').delete().in('pull_request_id', demoPRIds);
+      await supabase.from('git_commit_issues').delete().in('commit_id', demoCommitIds);
+      await supabase.from('git_deployments').delete().in('id', demoDeploymentIds);
+      await supabase.from('git_builds').delete().in('id', demoBuildIds);
+      await supabase.from('git_pull_requests').delete().in('id', demoPRIds);
+      await supabase.from('git_branches').delete().in('id', demoBranchIds);
+      await supabase.from('git_commits').delete().in('id', demoCommitIds);
       await supabase.from('git_repositories').delete().eq('id', DEMO_REPO_ID);
       await supabase.from('git_organizations').delete().eq('id', DEMO_ORG_ID);
 
@@ -359,15 +365,21 @@ Deno.serve(async (req) => {
     if (action === 'cleanup') {
       console.log('[git-demo-seed] Cleaning up demo data...');
 
-      // Remove all demo data
-      await supabase.from('git_deployment_issues').delete().like('deployment_id', 'demo-%');
-      await supabase.from('git_pull_request_issues').delete().like('pull_request_id', 'demo-%');
-      await supabase.from('git_commit_issues').delete().like('commit_id', 'demo-%');
-      await supabase.from('git_deployments').delete().like('id', 'demo-%');
-      await supabase.from('git_builds').delete().like('id', 'demo-%');
-      await supabase.from('git_pull_requests').delete().like('id', 'demo-%');
-      await supabase.from('git_branches').delete().like('id', 'demo-%');
-      await supabase.from('git_commits').delete().like('id', 'demo-%');
+      // Remove all demo data using specific IDs
+      const demoDeploymentIds = DEMO_DEPLOYMENTS.map(d => d.id);
+      const demoPRIds = DEMO_PULL_REQUESTS.map(p => p.id);
+      const demoCommitIds = DEMO_COMMITS.map(c => c.id);
+      const demoBranchIds = DEMO_BRANCHES.map(b => b.id);
+      const demoBuildIds = DEMO_BUILDS.map(b => b.id);
+      
+      await supabase.from('git_deployment_issues').delete().in('deployment_id', demoDeploymentIds);
+      await supabase.from('git_pull_request_issues').delete().in('pull_request_id', demoPRIds);
+      await supabase.from('git_commit_issues').delete().in('commit_id', demoCommitIds);
+      await supabase.from('git_deployments').delete().in('id', demoDeploymentIds);
+      await supabase.from('git_builds').delete().in('id', demoBuildIds);
+      await supabase.from('git_pull_requests').delete().in('id', demoPRIds);
+      await supabase.from('git_branches').delete().in('id', demoBranchIds);
+      await supabase.from('git_commits').delete().in('id', demoCommitIds);
       await supabase.from('git_repositories').delete().eq('id', DEMO_REPO_ID);
       await supabase.from('git_organizations').delete().eq('id', DEMO_ORG_ID);
 

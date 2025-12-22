@@ -5,8 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Demo mode constants
-const DEMO_ORG_ID = 'demo-git-org-00000000';
+// Demo mode constants - must match git-demo-seed
+const DEMO_ORG_ID = 'de000000-0000-0000-0000-000000000001';
 const DEMO_MODE_TOKEN = 'DEMO_MODE_TOKEN';
 
 function isDemoOrganization(org: { id?: string; access_token_encrypted?: string | null }): boolean {
