@@ -183,16 +183,39 @@ export function DraggableBacklogView() {
         .select(`
           sprint_id,
           issue:issues(
-            id, issue_key, summary, story_points, classification,
+            id, issue_key, summary, story_points, classification, assignee_id,
             issue_type:issue_types(name, color),
             status:issue_statuses(name, color, category),
-            priority:priorities(name, color),
-            assignee:profiles!issues_assignee_id_fkey(display_name, avatar_url)
+            priority:priorities(name, color)
           )
         `)
         .in('sprint_id', sprintIds);
       if (error) throw error;
-      return data || [];
+      
+      // Fetch profiles separately for assignees
+      const assigneeIds = [...new Set(
+        (data || [])
+          .map((si: any) => si.issue?.assignee_id)
+          .filter(Boolean)
+      )];
+      
+      let profileMap = new Map<string, any>();
+      if (assigneeIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .in('id', assigneeIds);
+        profileMap = new Map((profiles || []).map(p => [p.id, p]));
+      }
+      
+      // Attach profiles to issues
+      return (data || []).map((si: any) => ({
+        ...si,
+        issue: si.issue ? {
+          ...si.issue,
+          assignee: si.issue.assignee_id ? profileMap.get(si.issue.assignee_id) || null : null
+        } : null
+      }));
     },
     enabled: sprintIds.length > 0,
   });
