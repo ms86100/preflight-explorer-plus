@@ -119,20 +119,43 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
   // Fetch comments
   const fetchComments = async () => {
     if (!issueId) return;
-    const { data } = await supabase
+
+    const { data, error } = await supabase
       .from('comments')
-      .select(`
-        id,
-        body,
-        created_at,
-        author:profiles!comments_author_id_fkey(display_name, avatar_url)
-      `)
+      .select('id, body, created_at, author_id')
       .eq('issue_id', issueId)
       .order('created_at', { ascending: true });
-    
-    if (data) {
-      setComments(data as unknown as Comment[]);
+
+    if (error) {
+      console.error('Failed to fetch comments:', error);
+      return;
     }
+
+    const rows = (data || []) as Array<{ id: string; body: string; created_at: string; author_id: string }>;
+    const authorIds = [...new Set(rows.map(r => r.author_id).filter(Boolean))];
+
+    let profileMap = new Map<string, { display_name: string | null; avatar_url: string | null }>();
+    if (authorIds.length > 0) {
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', authorIds);
+
+      if (profilesError) {
+        console.error('Failed to fetch comment authors:', profilesError);
+      } else {
+        profileMap = new Map((profiles || []).map(p => [p.id, { display_name: p.display_name, avatar_url: p.avatar_url }]));
+      }
+    }
+
+    const mapped: Comment[] = rows.map((r) => ({
+      id: r.id,
+      body: r.body,
+      created_at: r.created_at,
+      author: profileMap.get(r.author_id) || { display_name: 'Unknown', avatar_url: null },
+    }));
+
+    setComments(mapped);
   };
 
   // Load comments when issue changes
