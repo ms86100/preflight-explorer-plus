@@ -5,13 +5,17 @@ import {
   useAddWorkflowStep,
   useDeleteWorkflowStep,
   useAddWorkflowTransition,
-  useDeleteWorkflowTransition
+  useDeleteWorkflowTransition,
+  useUpdateWorkflow
 } from '../hooks/useWorkflows';
 import { useStatuses } from '@/features/issues/hooks/useIssues';
 import { WorkflowStepRow, WorkflowTransitionRow } from '../services/workflowService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { 
   Plus, 
   Trash2, 
@@ -19,15 +23,34 @@ import {
   GripVertical,
   Circle,
   CheckCircle2,
-  Clock
+  Clock,
+  Star,
+  Edit2,
+  Copy,
+  MoreVertical
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface WorkflowDesignerProps {
   workflowId: string;
@@ -55,11 +78,25 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
   const deleteStep = useDeleteWorkflowStep();
   const addTransition = useAddWorkflowTransition();
   const deleteTransition = useDeleteWorkflowTransition();
+  const updateWorkflow = useUpdateWorkflow();
 
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
+  
+  // Edit workflow properties state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+
+  // Initialize edit form when workflow loads
+  useEffect(() => {
+    if (workflow) {
+      setEditName(workflow.name);
+      setEditDescription(workflow.description || '');
+    }
+  }, [workflow]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!canvasRef.current) return;
@@ -155,6 +192,45 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
     });
   };
 
+  // Set a status as the initial status (only one can be initial)
+  const handleSetInitialStatus = (stepId: string) => {
+    // First, unset all other initial statuses
+    workflow?.steps.forEach(step => {
+      if (step.is_initial && step.id !== stepId) {
+        updateStep.mutate({
+          id: step.id,
+          data: { is_initial: false }
+        });
+      }
+    });
+    
+    // Then set the selected one as initial
+    updateStep.mutate({
+      id: stepId,
+      data: { is_initial: true }
+    });
+    
+    toast.success('Initial status updated');
+  };
+
+  // Save workflow properties
+  const handleSaveWorkflowProperties = () => {
+    if (!editName.trim()) {
+      toast.error('Workflow name is required');
+      return;
+    }
+    
+    updateWorkflow.mutate({
+      id: workflowId,
+      data: {
+        name: editName.trim(),
+        description: editDescription.trim() || null
+      }
+    });
+    
+    setIsEditDialogOpen(false);
+  };
+
   const getCategoryIcon = (category?: string) => {
     switch (category) {
       case 'done': return <CheckCircle2 className="h-4 w-4" />;
@@ -192,34 +268,50 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
   }
 
   return (
+    <>
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>{workflow.name}</CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">{workflow.description}</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <CardTitle>{workflow.name}</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {workflow.description || 'No description'}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setIsEditDialogOpen(true)}
+            title="Edit workflow properties"
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm" disabled={!availableStatuses?.length}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Status
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {availableStatuses?.map(status => (
-              <DropdownMenuItem 
-                key={status.id}
-                onClick={() => handleAddStatus(status.id)}
-              >
-                <span 
-                  className="w-3 h-3 rounded-full mr-2" 
-                  style={{ backgroundColor: status.color || '#6B7280' }}
-                />
-                {status.name}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" disabled={!availableStatuses?.length}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Status
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {availableStatuses?.map(status => (
+                <DropdownMenuItem 
+                  key={status.id}
+                  onClick={() => handleAddStatus(status.id)}
+                >
+                  <span 
+                    className="w-3 h-3 rounded-full mr-2" 
+                    style={{ backgroundColor: status.color || '#6B7280' }}
+                  />
+                  {status.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </CardHeader>
       <CardContent>
         <div 
@@ -315,63 +407,111 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
 
           {/* Status nodes */}
           {workflow.steps.map(step => (
-            <div
-              key={step.id}
-              className={cn(
-                "absolute cursor-move select-none",
-                "w-40 rounded-lg border-2 shadow-lg",
-                getCategoryColor(step.status?.category),
-                connectionState && connectionState.fromStepId !== step.id && "ring-2 ring-primary ring-offset-2",
-                step.is_initial && "ring-2 ring-yellow-500"
-              )}
-              style={{
-                left: step.position_x,
-                top: step.position_y,
-                transform: dragState?.stepId === step.id ? 'scale(1.05)' : 'scale(1)',
-                transition: dragState?.stepId === step.id ? 'none' : 'transform 0.1s',
-              }}
-              onMouseDown={(e) => handleStepMouseDown(step, e)}
-              onClick={() => handleStepClick(step)}
-            >
-              <div className="flex items-center gap-2 p-3">
-                <GripVertical className="h-4 w-4 opacity-50" />
-                {getCategoryIcon(step.status?.category)}
-                <span className="font-medium text-sm truncate flex-1">
-                  {step.status?.name}
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between px-3 pb-2 gap-1">
-                {step.is_initial && (
-                  <Badge variant="outline" className="text-xs bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                    Initial
-                  </Badge>
-                )}
-                <div className="flex gap-1 ml-auto">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6"
-                    onClick={(e) => handleStartConnection(step, e)}
-                    title="Create transition"
-                  >
-                    <ArrowRight className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6 text-destructive hover:text-destructive"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteStep.mutate({ id: step.id, workflowId });
-                    }}
-                    title="Remove status"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+            <ContextMenu key={step.id}>
+              <ContextMenuTrigger asChild>
+                <div
+                  className={cn(
+                    "absolute cursor-move select-none",
+                    "w-40 rounded-lg border-2 shadow-lg",
+                    getCategoryColor(step.status?.category),
+                    connectionState && connectionState.fromStepId !== step.id && "ring-2 ring-primary ring-offset-2",
+                    step.is_initial && "ring-2 ring-yellow-500"
+                  )}
+                  style={{
+                    left: step.position_x,
+                    top: step.position_y,
+                    transform: dragState?.stepId === step.id ? 'scale(1.05)' : 'scale(1)',
+                    transition: dragState?.stepId === step.id ? 'none' : 'transform 0.1s',
+                  }}
+                  onMouseDown={(e) => handleStepMouseDown(step, e)}
+                  onClick={() => handleStepClick(step)}
+                >
+                  <div className="flex items-center gap-2 p-3">
+                    <GripVertical className="h-4 w-4 opacity-50" />
+                    {getCategoryIcon(step.status?.category)}
+                    <span className="font-medium text-sm truncate flex-1">
+                      {step.status?.name}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between px-3 pb-2 gap-1">
+                    {step.is_initial && (
+                      <Badge variant="outline" className="text-xs bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                        Initial
+                      </Badge>
+                    )}
+                    <div className="flex gap-1 ml-auto">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6"
+                        onClick={(e) => handleStartConnection(step, e)}
+                        title="Create transition"
+                      >
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6"
+                            onClick={(e) => e.stopPropagation()}
+                            title="More options"
+                          >
+                            <MoreVertical className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSetInitialStatus(step.id);
+                            }}
+                            disabled={step.is_initial}
+                          >
+                            <Star className="h-4 w-4 mr-2" />
+                            Set as Initial Status
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteStep.mutate({ id: step.id, workflowId });
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Remove Status
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </ContextMenuTrigger>
+              <ContextMenuContent>
+                <ContextMenuItem
+                  onClick={() => handleSetInitialStatus(step.id)}
+                  disabled={step.is_initial}
+                >
+                  <Star className="h-4 w-4 mr-2" />
+                  Set as Initial Status
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => handleStartConnection(step, {} as React.MouseEvent)}>
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                  Create Transition
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => deleteStep.mutate({ id: step.id, workflowId })}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remove Status
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
           ))}
 
           {/* Instructions overlay */}
@@ -411,5 +551,47 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
         </div>
       </CardContent>
     </Card>
+
+    {/* Edit Workflow Properties Dialog */}
+    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Workflow Properties</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 mt-4">
+          <div className="space-y-2">
+            <Label htmlFor="workflow-name">Name</Label>
+            <Input
+              id="workflow-name"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="Workflow name"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="workflow-description">Description</Label>
+            <Textarea
+              id="workflow-description"
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              placeholder="Describe this workflow..."
+              rows={3}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveWorkflowProperties}
+              disabled={!editName.trim() || updateWorkflow.isPending}
+            >
+              Save Changes
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

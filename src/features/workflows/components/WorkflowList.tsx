@@ -1,5 +1,5 @@
 import React from 'react';
-import { useWorkflows, useCreateWorkflow, useDeleteWorkflow } from '../hooks/useWorkflows';
+import { useWorkflows, useCreateWorkflow, useDeleteWorkflow, useCloneWorkflow } from '../hooks/useWorkflows';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,9 @@ import {
   Trash2, 
   GitBranch,
   CheckCircle,
-  Settings
+  Settings,
+  Copy,
+  MoreVertical
 } from 'lucide-react';
 import {
   Dialog,
@@ -17,6 +19,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -32,7 +41,10 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
   const { data: workflows, isLoading } = useWorkflows(projectId);
   const createWorkflow = useCreateWorkflow();
   const deleteWorkflow = useDeleteWorkflow();
+  const cloneWorkflow = useCloneWorkflow();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isCloneOpen, setIsCloneOpen] = useState(false);
+  const [cloneSourceId, setCloneSourceId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
@@ -51,6 +63,27 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
     );
   };
 
+  const handleClone = () => {
+    if (!name.trim() || !cloneSourceId) return;
+    cloneWorkflow.mutate(
+      { sourceWorkflowId: cloneSourceId, newName: name.trim(), projectId },
+      {
+        onSuccess: (workflow) => {
+          setIsCloneOpen(false);
+          setCloneSourceId(null);
+          setName('');
+          onSelectWorkflow(workflow.id);
+        },
+      }
+    );
+  };
+
+  const openCloneDialog = (workflowId: string, workflowName: string) => {
+    setCloneSourceId(workflowId);
+    setName(`${workflowName} (Copy)`);
+    setIsCloneOpen(true);
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -66,6 +99,7 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
   }
 
   return (
+    <>
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
@@ -156,24 +190,90 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
                     )}
                   </div>
                 </div>
-                {!workflow.is_default && (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-destructive hover:text-destructive h-8 w-8"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteWorkflow.mutate(workflow.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openCloneDialog(workflow.id, workflow.name);
+                      }}
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Clone Workflow
+                    </DropdownMenuItem>
+                    {!workflow.is_default && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteWorkflow.mutate(workflow.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Workflow
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ))}
           </div>
         )}
       </CardContent>
     </Card>
+
+    {/* Clone Workflow Dialog */}
+    <Dialog open={isCloneOpen} onOpenChange={(open) => {
+      setIsCloneOpen(open);
+      if (!open) {
+        setCloneSourceId(null);
+        setName('');
+      }
+    }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Clone Workflow</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 mt-4">
+          <p className="text-sm text-muted-foreground">
+            Create a copy of this workflow including all statuses and transitions.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="clone-name">New Workflow Name</Label>
+            <Input
+              id="clone-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter name for the cloned workflow"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsCloneOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleClone}
+              disabled={!name.trim() || cloneWorkflow.isPending}
+            >
+              {cloneWorkflow.isPending ? 'Cloning...' : 'Clone Workflow'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
