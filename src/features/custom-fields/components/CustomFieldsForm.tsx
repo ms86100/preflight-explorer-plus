@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useCustomFieldDefinitions, useIssueCustomFieldValues, useSetCustomFieldValue } from '../hooks/useCustomFields';
 import { CustomFieldInput } from './CustomFieldInput';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,8 +16,30 @@ export function CustomFieldsForm({ issueId, disabled }: CustomFieldsFormProps) {
   const { data: fields, isLoading: fieldsLoading } = useCustomFieldDefinitions();
   const { data: values, isLoading: valuesLoading } = useIssueCustomFieldValues(issueId);
   const setFieldValue = useSetCustomFieldValue();
+  
+  // Local state for field values to enable smooth typing
+  const [localValues, setLocalValues] = useState<Record<string, any>>({});
+  const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
 
   const isLoading = fieldsLoading || valuesLoading;
+
+  // Sync local state when server values change
+  useEffect(() => {
+    if (values) {
+      const valuesMap: Record<string, any> = {};
+      values.forEach(v => {
+        valuesMap[v.field_id] = v;
+      });
+      setLocalValues(valuesMap);
+    }
+  }, [values]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(debounceTimers.current).forEach(timer => clearTimeout(timer));
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -42,7 +64,7 @@ export function CustomFieldsForm({ issueId, disabled }: CustomFieldsFormProps) {
   }
 
   const getValueForField = (fieldId: string) => {
-    return values?.find(v => v.field_id === fieldId);
+    return localValues[fieldId];
   };
 
   const handleFieldChange = (fieldId: string, newValue: {
@@ -51,11 +73,25 @@ export function CustomFieldsForm({ issueId, disabled }: CustomFieldsFormProps) {
     value_date?: string | null;
     value_json?: unknown | null;
   }) => {
-    setFieldValue.mutate({
-      issue_id: issueId,
-      field_id: fieldId,
-      ...newValue,
-    });
+    // Update local state immediately for smooth typing
+    setLocalValues(prev => ({
+      ...prev,
+      [fieldId]: { ...prev[fieldId], ...newValue, field_id: fieldId }
+    }));
+
+    // Clear existing debounce timer
+    if (debounceTimers.current[fieldId]) {
+      clearTimeout(debounceTimers.current[fieldId]);
+    }
+
+    // Debounce the actual save
+    debounceTimers.current[fieldId] = setTimeout(() => {
+      setFieldValue.mutate({
+        issue_id: issueId,
+        field_id: fieldId,
+        ...newValue,
+      });
+    }, 500);
   };
 
   return (
@@ -73,7 +109,7 @@ export function CustomFieldsForm({ issueId, disabled }: CustomFieldsFormProps) {
             field={field}
             value={getValueForField(field.id)}
             onChange={(newValue) => handleFieldChange(field.id, newValue)}
-            disabled={disabled || setFieldValue.isPending}
+            disabled={disabled}
           />
         ))}
       </CardContent>

@@ -51,10 +51,14 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -75,11 +79,12 @@ import {
   useDeleteSprint, 
   useMoveIssuesToBacklog 
 } from '@/features/boards';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { SprintPlanningModal } from './SprintPlanningModal';
 import { SprintConfigModal } from './SprintConfigModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { format, addDays } from 'date-fns';
 import type { ClassificationLevel, SprintState } from '@/types/jira';
 
 const ISSUE_TYPE_ICONS: Record<string, typeof Bug> = {
@@ -129,6 +134,7 @@ interface TeamMember {
 
 export function DraggableBacklogView() {
   const { projectKey } = useParams<{ projectKey: string }>();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIssues, setSelectedIssues] = useState<Set<string>>(new Set());
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(new Set(['backlog']));
@@ -138,6 +144,13 @@ export function DraggableBacklogView() {
   const [createIssueContext, setCreateIssueContext] = useState<string | undefined>();
   const [planningSprintId, setPlanningSprintId] = useState<string>('');
   const [planningSprintName, setPlanningSprintName] = useState<string>('');
+
+  // Create sprint with dates modal state
+  const [isCreateSprintOpen, setIsCreateSprintOpen] = useState(false);
+  const [newSprintName, setNewSprintName] = useState('');
+  const [newSprintGoal, setNewSprintGoal] = useState('');
+  const [newSprintStartDate, setNewSprintStartDate] = useState<Date | undefined>(undefined);
+  const [newSprintEndDate, setNewSprintEndDate] = useState<Date | undefined>(undefined);
 
   // Drag state
   const [draggedIssue, setDraggedIssue] = useState<BacklogIssue | null>(null);
@@ -247,6 +260,40 @@ export function DraggableBacklogView() {
     }
   }, [assigneeDialogOpen, project?.id]);
 
+  // Realtime subscription for sprint_issues and issues
+  useEffect(() => {
+    const channel = supabase
+      .channel('backlog-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sprint_issues' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['all-sprint-issues'] });
+          queryClient.invalidateQueries({ queryKey: ['sprintIssues'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'issues' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['issues'] });
+          queryClient.invalidateQueries({ queryKey: ['all-sprint-issues'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sprints' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['sprints'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   // Build sprint sections with issues from sprint_issues
   const sprintIssueMap = new Map<string, BacklogIssue[]>();
   const allSprintIssueIds = new Set<string>();
@@ -311,13 +358,29 @@ export function DraggableBacklogView() {
     });
   };
 
-  const handleCreateSprint = async () => {
-    if (!boardId) return;
+  const openCreateSprintModal = () => {
     const sprintNumber = (sprints?.length || 0) + 1;
-    await createSprint.mutateAsync({
-      board_id: boardId,
-      name: `Sprint ${sprintNumber}`,
-    });
+    setNewSprintName(`Sprint ${sprintNumber}`);
+    setNewSprintGoal('');
+    setNewSprintStartDate(new Date());
+    setNewSprintEndDate(addDays(new Date(), 14));
+    setIsCreateSprintOpen(true);
+  };
+
+  const handleCreateSprintWithDates = async () => {
+    if (!boardId || !newSprintName.trim()) return;
+    try {
+      await createSprint.mutateAsync({
+        board_id: boardId,
+        name: newSprintName.trim(),
+        goal: newSprintGoal.trim() || undefined,
+        start_date: newSprintStartDate?.toISOString(),
+        end_date: newSprintEndDate?.toISOString(),
+      });
+      setIsCreateSprintOpen(false);
+    } catch (error) {
+      console.error('Failed to create sprint:', error);
+    }
   };
 
   const handleStartSprintWithPlanning = (sprintId: string, sprintName: string) => {
@@ -722,7 +785,7 @@ export function DraggableBacklogView() {
                 <Settings2 className="h-4 w-4 mr-2" />
                 Sprint Settings
               </Button>
-              <Button variant="outline" size="sm" onClick={handleCreateSprint}>
+              <Button variant="outline" size="sm" onClick={openCreateSprintModal}>
                 <Calendar className="h-4 w-4 mr-2" />
                 Create Sprint
               </Button>
@@ -960,6 +1023,101 @@ export function DraggableBacklogView() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Sprint with Dates Modal (Jira DC style) */}
+      <Dialog open={isCreateSprintOpen} onOpenChange={setIsCreateSprintOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Sprint</DialogTitle>
+            <DialogDescription>
+              Define sprint details including dates. You can start the sprint later from the backlog.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label>Sprint Name *</Label>
+              <Input
+                value={newSprintName}
+                onChange={(e) => setNewSprintName(e.target.value)}
+                placeholder="e.g. Sprint 1"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Date (optional)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {newSprintStartDate ? format(newSprintStartDate, 'MMM d, yyyy') : 'Select date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      selected={newSprintStartDate}
+                      onSelect={setNewSprintStartDate}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>End Date (optional)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {newSprintEndDate ? format(newSprintEndDate, 'MMM d, yyyy') : 'Select date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      selected={newSprintEndDate}
+                      onSelect={setNewSprintEndDate}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Sprint Goal (optional)</Label>
+              <Textarea
+                value={newSprintGoal}
+                onChange={(e) => setNewSprintGoal(e.target.value)}
+                placeholder="What do you want to accomplish in this sprint?"
+                rows={3}
+              />
+            </div>
+
+            {newSprintStartDate && newSprintEndDate && (
+              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                <p className="font-medium">Duration</p>
+                <p className="text-muted-foreground">
+                  {Math.ceil((newSprintEndDate.getTime() - newSprintStartDate.getTime()) / (1000 * 60 * 60 * 24))} days
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="mt-6">
+            <Button variant="outline" onClick={() => setIsCreateSprintOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateSprintWithDates} 
+              disabled={!newSprintName.trim() || createSprint.isPending}
+            >
+              {createSprint.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Create Sprint
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

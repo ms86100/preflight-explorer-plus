@@ -54,7 +54,7 @@ export function useCreateSprint() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (sprint: { board_id: string; name: string; goal?: string }) =>
+    mutationFn: (sprint: { board_id: string; name: string; goal?: string; start_date?: string; end_date?: string }) =>
       sprintService.create(sprint),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['sprints'] });

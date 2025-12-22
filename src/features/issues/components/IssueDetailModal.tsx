@@ -21,6 +21,7 @@ import {
   Copy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -79,6 +80,8 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState<Comment[]>([]);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<{ id: string; display_name: string | null; avatar_url: string | null }[]>([]);
+  const [storyPointsInput, setStoryPointsInput] = useState<string>('');
 
   const { data: issue, isLoading, refetch } = useIssueById(issueId || '');
   const { data: priorities } = usePriorities();
@@ -93,6 +96,25 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
       cloneIssue.mutate(issueId);
     }
   };
+
+  // Fetch team members for assignee selection
+  useEffect(() => {
+    if (open) {
+      supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .then(({ data }) => {
+          setTeamMembers(data || []);
+        });
+    }
+  }, [open]);
+
+  // Sync story points with issue data
+  useEffect(() => {
+    if (issue) {
+      setStoryPointsInput(issue.story_points?.toString() || '');
+    }
+  }, [issue?.story_points]);
 
   // Fetch comments
   const fetchComments = async () => {
@@ -120,18 +142,39 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
     }
   }, [issueId, open]);
 
+  // Realtime subscription for comments
+  useEffect(() => {
+    if (!issueId || !open) return;
+    
+    const channel = supabase
+      .channel(`comments-${issueId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'comments', filter: `issue_id=eq.${issueId}` },
+        () => {
+          fetchComments();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [issueId, open]);
+
   const handleSubmitComment = async () => {
     if (!newComment.trim() || !issueId || !user?.id) return;
     
     setIsSubmittingComment(true);
     try {
-      await supabase.from('comments').insert({
+      const { error } = await supabase.from('comments').insert({
         issue_id: issueId,
         author_id: user.id,
         body: newComment.trim(),
       });
+      if (error) throw error;
       setNewComment('');
-      fetchComments();
+      await fetchComments();
       toast.success('Comment added');
     } catch (error) {
       toast.error('Failed to add comment');
@@ -152,6 +195,25 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
     if (!issueId) return;
     await updateIssue.mutateAsync({ id: issueId, updates: { priority_id: priorityId } });
     refetch();
+  };
+
+  const handleAssigneeChange = async (assigneeId: string) => {
+    if (!issueId) return;
+    await updateIssue.mutateAsync({ 
+      id: issueId, 
+      updates: { assignee_id: assigneeId === 'unassigned' ? null : assigneeId } 
+    });
+    refetch();
+  };
+
+  const handleStoryPointsBlur = async () => {
+    if (!issueId) return;
+    const newPoints = storyPointsInput.trim() === '' ? null : parseInt(storyPointsInput, 10);
+    if (isNaN(newPoints as number) && storyPointsInput.trim() !== '') return;
+    if (newPoints !== issue?.story_points) {
+      await updateIssue.mutateAsync({ id: issueId, updates: { story_points: newPoints } });
+      refetch();
+    }
   };
 
   if (!issueId) return null;
@@ -284,9 +346,20 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
 
                   <div>
                     <Label className="text-xs text-muted-foreground">Story Points</Label>
-                    <div className="mt-1 text-sm font-medium">
-                      {issue.story_points ?? '-'}
-                    </div>
+                    <Input
+                      type="number"
+                      value={storyPointsInput}
+                      onChange={(e) => setStoryPointsInput(e.target.value)}
+                      onBlur={handleStoryPointsBlur}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleStoryPointsBlur();
+                        }
+                      }}
+                      placeholder="-"
+                      className="mt-1 w-20 h-8"
+                      min={0}
+                    />
                   </div>
                 </div>
 
@@ -296,21 +369,48 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs text-muted-foreground">Assignee</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                      {issue.assignee ? (
-                        <>
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={issue.assignee.avatar_url || ''} />
-                            <AvatarFallback className="text-xs">
-                              {issue.assignee.display_name?.slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm">{issue.assignee.display_name}</span>
-                        </>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Unassigned</span>
-                      )}
-                    </div>
+                    <Select 
+                      value={issue.assignee_id || 'unassigned'} 
+                      onValueChange={handleAssigneeChange}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue>
+                          <div className="flex items-center gap-2">
+                            {issue.assignee ? (
+                              <>
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage src={issue.assignee.avatar_url || ''} />
+                                  <AvatarFallback className="text-[10px]">
+                                    {issue.assignee.display_name?.slice(0, 2).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-sm">{issue.assignee.display_name}</span>
+                              </>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">Unassigned</span>
+                            )}
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">
+                          <span className="text-muted-foreground">Unassigned</span>
+                        </SelectItem>
+                        {teamMembers.map((member) => (
+                          <SelectItem key={member.id} value={member.id}>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-5 w-5">
+                                <AvatarImage src={member.avatar_url || ''} />
+                                <AvatarFallback className="text-[10px]">
+                                  {member.display_name?.slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              {member.display_name || 'Unknown'}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>
