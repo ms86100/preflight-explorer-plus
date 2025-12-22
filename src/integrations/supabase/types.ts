@@ -643,6 +643,50 @@ export type Database = {
         }
         Relationships: []
       }
+      issue_history: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          field_name: string
+          id: string
+          issue_id: string
+          new_value: string | null
+          new_value_id: string | null
+          old_value: string | null
+          old_value_id: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          field_name: string
+          id?: string
+          issue_id: string
+          new_value?: string | null
+          new_value_id?: string | null
+          old_value?: string | null
+          old_value_id?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          field_name?: string
+          id?: string
+          issue_id?: string
+          new_value?: string | null
+          new_value_id?: string | null
+          old_value?: string | null
+          old_value_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issue_history_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       issue_labels: {
         Row: {
           id: string

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { issueService, referenceDataService, type IssueInsert } from '../services/issueService';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import type { ClassificationLevel } from '@/types/jira';
 
 export function useIssuesByProject(projectId: string) {
   return useQuery({
@@ -92,6 +93,44 @@ export function useDeleteIssue() {
     onError: (error) => {
       console.error('Failed to delete issue:', error);
       toast.error('Failed to delete issue.');
+    },
+  });
+}
+
+export function useCloneIssue() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (sourceIssueId: string) => {
+      if (!user?.id) throw new Error('User not authenticated');
+      
+      // Fetch the source issue
+      const sourceIssue = await issueService.getById(sourceIssueId);
+      if (!sourceIssue) throw new Error('Source issue not found');
+
+      // Create a cloned issue
+      const clonedIssue: IssueInsert = {
+        project_id: sourceIssue.project_id,
+        summary: `[CLONE] ${sourceIssue.summary}`,
+        description: sourceIssue.description || undefined,
+        issue_type_id: sourceIssue.issue_type_id,
+        status_id: sourceIssue.status_id,
+        priority_id: sourceIssue.priority_id || undefined,
+        story_points: sourceIssue.story_points || undefined,
+        epic_id: sourceIssue.epic_id || undefined,
+        classification: (sourceIssue.classification as ClassificationLevel) || undefined,
+      };
+
+      return issueService.create(clonedIssue, user.id);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['issues'] });
+      toast.success(`Issue cloned as ${data.issue_key}`);
+    },
+    onError: (error) => {
+      console.error('Failed to clone issue:', error);
+      toast.error('Failed to clone issue.');
     },
   });
 }

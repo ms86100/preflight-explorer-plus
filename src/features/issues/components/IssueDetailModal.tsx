@@ -18,6 +18,7 @@ import {
   Layers,
   Send,
   Loader2,
+  Copy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,7 +40,7 @@ import {
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { ClassificationBadge } from '@/components/compliance/ClassificationBanner';
-import { useIssueById, useUpdateIssue, useIssueTypes, usePriorities, useStatuses } from '@/features/issues';
+import { useIssueById, useUpdateIssue, useIssueTypes, usePriorities, useStatuses, useCloneIssue } from '@/features/issues';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -47,6 +48,7 @@ import type { ClassificationLevel } from '@/types/jira';
 import { TimeTrackingSection } from './TimeTrackingSection';
 import { AttachmentsSection } from './AttachmentsSection';
 import { LinkedIssuesSection } from './LinkedIssuesSection';
+import { IssueHistorySection } from './IssueHistorySection';
 import { CustomFieldsForm } from '@/features/custom-fields/components/CustomFieldsForm';
 
 const ISSUE_TYPE_ICONS: Record<string, typeof Bug> = {
@@ -81,6 +83,13 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
   const { data: priorities } = usePriorities();
   const { data: statuses } = useStatuses();
   const updateIssue = useUpdateIssue();
+  const cloneIssue = useCloneIssue();
+
+  const handleClone = () => {
+    if (issueId) {
+      cloneIssue.mutate(issueId);
+    }
+  };
 
   // Fetch comments
   const fetchComments = async () => {
@@ -168,6 +177,15 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
                   </div>
                   <SheetTitle className="text-lg mt-1">{issue.summary}</SheetTitle>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClone}
+                  disabled={cloneIssue.isPending}
+                  title="Clone issue"
+                >
+                  {cloneIssue.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+                </Button>
               </div>
             </SheetHeader>
 
@@ -394,10 +412,7 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
               </TabsContent>
 
               <TabsContent value="history" className="mt-6">
-                <div className="text-center py-8 text-muted-foreground">
-                  <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Activity history coming soon</p>
-                </div>
+                <IssueHistorySection issueId={issueId} />
               </TabsContent>
             </Tabs>
           </>

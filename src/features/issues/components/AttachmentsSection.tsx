@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Paperclip, Upload, Trash2, Download, FileText, Image, File, Loader2, X } from 'lucide-react';
+import { Paperclip, Upload, Trash2, Download, FileText, Image, File, Loader2, X, Eye } from 'lucide-react';
 
 interface Attachment {
   id: string;
@@ -15,6 +16,7 @@ interface Attachment {
   author_id: string;
   created_at: string;
   author?: { display_name: string };
+  previewUrl?: string;
 }
 
 interface AttachmentsSectionProps {
@@ -27,6 +29,8 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAttachments();
@@ -152,6 +156,36 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
     }
   };
 
+  const handlePreview = async (attachment: Attachment) => {
+    if (!attachment.mime_type?.startsWith('image/')) {
+      handleDownload(attachment);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('attachments')
+        .download(attachment.file_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      setPreviewUrl(url);
+      setPreviewAttachment(attachment);
+    } catch (error) {
+      console.error('Error loading preview:', error);
+      toast.error('Failed to load preview');
+    }
+  };
+
+  const closePreview = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
+    setPreviewAttachment(null);
+  };
+
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -186,6 +220,38 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
 
   return (
     <div className="space-y-4">
+      {/* Image Preview Dialog */}
+      <Dialog open={!!previewAttachment} onOpenChange={(open) => !open && closePreview()}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-2">
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 z-10 bg-background/80"
+              onClick={closePreview}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            {previewUrl && (
+              <img
+                src={previewUrl}
+                alt={previewAttachment?.filename || 'Preview'}
+                className="max-w-full max-h-[80vh] mx-auto object-contain rounded"
+              />
+            )}
+            <div className="text-center mt-2">
+              <p className="text-sm font-medium">{previewAttachment?.filename}</p>
+              <div className="flex justify-center gap-2 mt-2">
+                <Button size="sm" variant="outline" onClick={() => previewAttachment && handleDownload(previewAttachment)}>
+                  <Download className="h-4 w-4 mr-1" />
+                  Download
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Drop Zone */}
       <div
         className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
@@ -234,10 +300,12 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
         <div className="space-y-2">
           {attachments.map((attachment) => {
             const FileIcon = getFileIcon(attachment.mime_type);
+            const isImage = attachment.mime_type?.startsWith('image/');
             return (
               <div
                 key={attachment.id}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                onClick={() => handlePreview(attachment)}
               >
                 <FileIcon className="h-8 w-8 text-muted-foreground flex-shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -247,12 +315,24 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
                     {format(new Date(attachment.created_at), 'MMM d, yyyy')}
                   </p>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                  {isImage && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handlePreview(attachment)}
+                      title="Preview"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => handleDownload(attachment)}
+                    title="Download"
                   >
                     <Download className="h-4 w-4" />
                   </Button>
@@ -262,6 +342,7 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"
                       onClick={() => handleDelete(attachment)}
+                      title="Delete"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
