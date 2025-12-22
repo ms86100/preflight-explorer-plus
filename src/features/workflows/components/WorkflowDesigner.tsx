@@ -108,7 +108,6 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
   // Create status dialog state
   const [isCreateStatusOpen, setIsCreateStatusOpen] = useState(false);
   const [newStatusName, setNewStatusName] = useState('');
-  const [newStatusCategory, setNewStatusCategory] = useState<'todo' | 'in_progress' | 'done'>('todo');
   const [newStatusColor, setNewStatusColor] = useState('#6B7280');
 
   // Initialize edit form when workflow loads
@@ -248,7 +247,7 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
     try {
       const newStatus = await createStatus.mutateAsync({
         name: newStatusName.trim(),
-        category: newStatusCategory,
+        category: 'todo',
         color: newStatusColor,
       });
       
@@ -265,7 +264,6 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
       
       // Reset form
       setNewStatusName('');
-      setNewStatusCategory('todo');
       setNewStatusColor('#6B7280');
       setIsCreateStatusOpen(false);
     } catch (error) {
@@ -716,34 +714,6 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
               onChange={(e) => setNewStatusName(e.target.value)}
               placeholder="e.g., In Review, Testing, Blocked"
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="status-category">Category</Label>
-            <Select value={newStatusCategory} onValueChange={(v) => setNewStatusCategory(v as 'todo' | 'in_progress' | 'done')}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todo">
-                  <div className="flex items-center gap-2">
-                    <Circle className="h-4 w-4 text-gray-400" />
-                    To Do
-                  </div>
-                </SelectItem>
-                <SelectItem value="in_progress">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-blue-400" />
-                    In Progress
-                  </div>
-                </SelectItem>
-                <SelectItem value="done">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-400" />
-                    Done
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="status-color">Color</Label>
