@@ -46,10 +46,11 @@ import type { ProjectTeam, ProjectTeamMember } from '../types';
 
 interface TeamManagerProps {
   projectId: string;
-  isProjectAdmin: boolean;
+  isProjectAdmin?: boolean;
 }
 
-export function TeamManager({ projectId, isProjectAdmin }: TeamManagerProps) {
+export function TeamManager({ projectId, isProjectAdmin: isProjectAdminProp }: TeamManagerProps) {
+  const [isAdmin, setIsAdmin] = useState(false);
   const { data: teams, isLoading } = useTeamsByProject(projectId);
   const [selectedTeam, setSelectedTeam] = useState<ProjectTeam | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -63,6 +64,39 @@ export function TeamManager({ projectId, isProjectAdmin }: TeamManagerProps) {
   const createTeam = useCreateTeam();
   const updateTeam = useUpdateTeam();
   const deleteTeam = useDeleteTeam();
+
+  // Check if user is project admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (isProjectAdminProp !== undefined) {
+        setIsAdmin(isProjectAdminProp);
+        return;
+      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      // Check if user is project lead or has admin role
+      const { data: project } = await supabase
+        .from('projects')
+        .select('lead_id')
+        .eq('id', projectId)
+        .single();
+      
+      if (project?.lead_id === user.id) {
+        setIsAdmin(true);
+        return;
+      }
+
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      
+      const hasAdminRole = roles?.some(r => r.role === 'admin');
+      setIsAdmin(hasAdminRole || false);
+    };
+    checkAdmin();
+  }, [projectId, isProjectAdminProp]);
 
   const handleCreateTeam = async () => {
     if (!newTeamName.trim()) return;
@@ -116,7 +150,7 @@ export function TeamManager({ projectId, isProjectAdmin }: TeamManagerProps) {
             Manage teams and their members for this project
           </p>
         </div>
-        {isProjectAdmin && (
+        {isAdmin && (
           <Button onClick={() => setIsCreateOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Create Team
@@ -133,7 +167,7 @@ export function TeamManager({ projectId, isProjectAdmin }: TeamManagerProps) {
               <CardContent className="p-6 text-center text-muted-foreground">
                 <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p>No teams yet</p>
-                {isProjectAdmin && (
+                {isAdmin && (
                   <Button variant="link" onClick={() => setIsCreateOpen(true)}>
                     Create your first team
                   </Button>
@@ -152,7 +186,7 @@ export function TeamManager({ projectId, isProjectAdmin }: TeamManagerProps) {
                 <CardHeader className="p-4">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base">{team.name}</CardTitle>
-                    {isProjectAdmin && (
+                    {isAdmin && (
                       <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
@@ -193,7 +227,7 @@ export function TeamManager({ projectId, isProjectAdmin }: TeamManagerProps) {
           {selectedTeam ? (
             <TeamMembersPanel
               team={selectedTeam}
-              isProjectAdmin={isProjectAdmin}
+              isProjectAdmin={isAdmin}
               onAddMember={() => setIsAddMemberOpen(true)}
             />
           ) : (

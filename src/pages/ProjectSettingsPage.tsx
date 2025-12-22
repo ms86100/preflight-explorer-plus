@@ -15,8 +15,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { 
   Settings, Save, Users, Shield, Workflow, Archive, 
-  AlertTriangle, Trash2, ArrowLeft 
+  AlertTriangle, Trash2, ArrowLeft, UsersRound 
 } from 'lucide-react';
+import { TeamManager } from '@/features/teams';
 import type { Database } from '@/integrations/supabase/types';
 
 type Project = Database['public']['Tables']['projects']['Row'];
@@ -172,6 +173,7 @@ export default function ProjectSettingsPage() {
         <Tabs defaultValue="general" className="space-y-4">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="teams">Teams</TabsTrigger>
             <TabsTrigger value="access">Access & Security</TabsTrigger>
             <TabsTrigger value="workflows">Workflows</TabsTrigger>
             <TabsTrigger value="danger">Danger Zone</TabsTrigger>
@@ -301,6 +303,23 @@ export default function ProjectSettingsPage() {
                     <p className="text-sm text-muted-foreground mt-2">Status</p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="teams" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UsersRound className="h-5 w-5" />
+                  Project Teams
+                </CardTitle>
+                <CardDescription>
+                  Create and manage teams for this project. Only project admins can manage teams.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {project?.id && <TeamManager projectId={project.id} />}
               </CardContent>
             </Card>
           </TabsContent>
