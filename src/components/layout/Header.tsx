@@ -4,7 +4,11 @@ import {
   HelpCircle,
   Settings,
   ChevronDown,
-  User,
+  Workflow,
+  Puzzle,
+  Zap,
+  BarChart3,
+  Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -61,6 +65,15 @@ const NAV_ITEMS = [
       { label: 'Dependencies', href: '/plans/dependencies' },
     ],
   },
+];
+
+const ADMIN_ITEMS = [
+  { label: 'Workflows', href: '/workflows', icon: Workflow },
+  { label: 'Custom Fields', href: '/custom-fields', icon: Settings },
+  { label: 'Plugins', href: '/plugins', icon: Puzzle },
+  { label: 'Automation', href: '/automation', icon: Zap },
+  { label: 'Reports', href: '/reports', icon: BarChart3 },
+  { label: 'Admin', href: '/admin', icon: Shield },
 ];
 
 export function Header() {
@@ -123,8 +136,32 @@ export function Header() {
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
-          </DropdownMenu>
+        </DropdownMenu>
         ))}
+
+        {/* Settings/Admin Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white/90 hover:text-white hover:bg-white/10 gap-0.5 h-8 px-2 font-normal text-sm rounded-sm"
+            >
+              Settings
+              <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-56 rounded-sm shadow-lg">
+            {ADMIN_ITEMS.map((item) => (
+              <DropdownMenuItem key={item.href} asChild className="text-sm">
+                <Link to={item.href} className="flex items-center gap-2">
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Create Button */}
         <Button
