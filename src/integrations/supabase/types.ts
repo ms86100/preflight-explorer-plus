@@ -2640,30 +2640,42 @@ export type Database = {
       }
       workflow_transitions: {
         Row: {
+          conditions: Json | null
           created_at: string | null
           description: string | null
           from_step_id: string
           id: string
           name: string
+          post_functions: Json | null
+          screen_id: string | null
           to_step_id: string
+          validators: Json | null
           workflow_id: string
         }
         Insert: {
+          conditions?: Json | null
           created_at?: string | null
           description?: string | null
           from_step_id: string
           id?: string
           name: string
+          post_functions?: Json | null
+          screen_id?: string | null
           to_step_id: string
+          validators?: Json | null
           workflow_id: string
         }
         Update: {
+          conditions?: Json | null
           created_at?: string | null
           description?: string | null
           from_step_id?: string
           id?: string
           name?: string
+          post_functions?: Json | null
+          screen_id?: string | null
           to_step_id?: string
+          validators?: Json | null
           workflow_id?: string
         }
         Relationships: [
