@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Filter, Search, MoreHorizontal, Maximize2, Clock, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,6 +75,11 @@ export function KanbanBoard({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Sync local state with prop changes (for real-time updates)
+  useEffect(() => {
+    setIssues(initialIssues);
+  }, [initialIssues]);
 
   // Calculate Kanban metrics
   const metrics = {
