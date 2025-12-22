@@ -1,4 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  validateRateLimitRequest,
+  createValidationErrorResponse,
+} from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -32,11 +36,6 @@ const RATE_LIMITS: Record<string, { maxRequests: number; windowMinutes: number }
   "default": { maxRequests: 100, windowMinutes: 1 },
 };
 
-interface RateLimitRequest {
-  endpoint: string;
-  identifier?: string; // Optional - will use IP or user ID if not provided
-}
-
 interface RateLimitResponse {
   allowed: boolean;
   remaining: number;
@@ -57,19 +56,16 @@ Deno.serve(async (req) => {
     // Create admin client for rate limit operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Parse request
-    const body: RateLimitRequest = await req.json();
-    const { endpoint, identifier: providedIdentifier } = body;
-
-    if (!endpoint) {
-      return new Response(
-        JSON.stringify({ error: "endpoint is required" }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
+    // Parse and validate request
+    const body = await req.json();
+    const validation = validateRateLimitRequest(body);
+    
+    if (!validation.success) {
+      console.log("[Rate Limit] Validation failed:", validation.errors);
+      return createValidationErrorResponse(validation.errors!, corsHeaders);
     }
+
+    const { endpoint, identifier: providedIdentifier } = validation.data!;
 
     // Determine identifier: use provided, or extract from auth header, or use IP
     let identifier = providedIdentifier;

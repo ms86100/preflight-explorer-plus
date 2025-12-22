@@ -1,4 +1,8 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  validateBackgroundJobsRequest,
+  createValidationErrorResponse,
+} from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -112,9 +116,15 @@ async function handleSyncSprintMetrics(
   let issueCount = 0;
   let completedCount = 0;
 
-  // deno-lint-ignore no-explicit-any
-  for (const si of (sprintIssues || []) as any[]) {
-    const issue = si.issues as { story_points?: number; issue_statuses?: { category?: string } } | null;
+  interface SprintIssueData {
+    issues?: {
+      story_points?: number;
+      issue_statuses?: { category?: string };
+    } | null;
+  }
+
+  for (const si of (sprintIssues || []) as SprintIssueData[]) {
+    const issue = si.issues;
     if (issue) {
       issueCount++;
       totalPoints += issue.story_points || 0;
@@ -165,8 +175,12 @@ async function handleArchiveOldIssues(
     return { success: false, message: error.message };
   }
 
-  // deno-lint-ignore no-explicit-any
-  const issueList = (oldIssues || []) as any[];
+  interface OldIssue {
+    id: string;
+    issue_key: string;
+  }
+
+  const issueList = (oldIssues || []) as OldIssue[];
   
   return { 
     success: true, 
@@ -242,18 +256,19 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Parse and validate request body
     const body = await req.json();
-    const { jobs } = body as { jobs: Job[] };
-
-    if (!jobs || !Array.isArray(jobs) || jobs.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "jobs array is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const validation = validateBackgroundJobsRequest(body);
+    
+    if (!validation.success) {
+      console.log("[Jobs] Validation failed:", validation.errors);
+      return createValidationErrorResponse(validation.errors!, corsHeaders);
     }
 
+    const { jobs } = validation.data!;
+
     // Sort by priority (higher = first)
-    const sortedJobs = [...jobs].sort((a, b) => (b.priority || 0) - (a.priority || 0));
+    const sortedJobs = [...jobs].sort((a, b) => (b.priority || 0) - (a.priority || 0)) as Job[];
     
     console.log(`[Jobs] Processing ${sortedJobs.length} jobs`);
 

@@ -1,4 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  validateCachedQueryRequest,
+  createValidationErrorResponse,
+} from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -81,17 +85,17 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    const body: CachedQueryRequest = await req.json();
-    const { cacheKey, table, select = "*", filters, order, limit, ttlOverride } = body;
-
-    if (!cacheKey || !table) {
-      return new Response(
-        JSON.stringify({ error: "cacheKey and table are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // Parse and validate request
+    const body = await req.json();
+    const validation = validateCachedQueryRequest(body);
+    
+    if (!validation.success) {
+      console.log("[Cache] Validation failed:", validation.errors);
+      return createValidationErrorResponse(validation.errors!, corsHeaders);
     }
 
-    const fullCacheKey = getCacheKey(body);
+    const { cacheKey, table, select = "*", filters, order, limit, ttlOverride } = validation.data!;
+    const fullCacheKey = getCacheKey({ cacheKey, table, filters } as CachedQueryRequest);
     
     // Check cache first
     const cached = getFromCache(fullCacheKey);
