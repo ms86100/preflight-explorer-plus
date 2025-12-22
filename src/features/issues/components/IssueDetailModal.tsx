@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   X,
   Link as LinkIcon,
@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -52,6 +51,8 @@ import { AttachmentsSection } from './AttachmentsSection';
 import { LinkedIssuesSection } from './LinkedIssuesSection';
 import { IssueHistorySection } from './IssueHistorySection';
 import { CustomFieldsForm } from '@/features/custom-fields/components/CustomFieldsForm';
+import { MentionTextarea, renderMentions } from '@/features/comments';
+import { Jobs } from '@/lib/backgroundJobs';
 
 const ISSUE_TYPE_ICONS: Record<string, typeof Bug> = {
   Epic: Zap,
@@ -82,6 +83,7 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [teamMembers, setTeamMembers] = useState<{ id: string; display_name: string | null; avatar_url: string | null }[]>([]);
   const [storyPointsInput, setStoryPointsInput] = useState<string>('');
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
 
   const { data: issue, isLoading, refetch } = useIssueById(issueId || '');
   const { data: priorities } = usePriorities();
@@ -190,16 +192,42 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
     
     setIsSubmittingComment(true);
     try {
-      const { error } = await supabase.from('comments').insert({
+      // Insert comment
+      const { data: commentData, error } = await supabase.from('comments').insert({
         issue_id: issueId,
         author_id: user.id,
         body: newComment.trim(),
-      });
+      }).select('id').single();
+      
       if (error) throw error;
+      
+      // Insert mentions and send notifications
+      if (mentionedUserIds.length > 0 && commentData) {
+        // Store mentions
+        const mentionInserts = mentionedUserIds.map(userId => ({
+          comment_id: commentData.id,
+          mentioned_user_id: userId,
+        }));
+        await supabase.from('comment_mentions').insert(mentionInserts);
+        
+        // Send notifications to mentioned users (excluding self)
+        const usersToNotify = mentionedUserIds.filter(id => id !== user.id);
+        if (usersToNotify.length > 0) {
+          await Jobs.sendNotifications(
+            usersToNotify,
+            'You were mentioned in a comment',
+            `${user.email || 'Someone'} mentioned you in ${issue?.issue_key || 'an issue'}`,
+            'mention'
+          );
+        }
+      }
+      
       setNewComment('');
+      setMentionedUserIds([]);
       await fetchComments();
       toast.success('Comment added');
     } catch (error) {
+      console.error('Comment error:', error);
       toast.error('Failed to add comment');
     } finally {
       setIsSubmittingComment(false);
@@ -532,7 +560,7 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
                               {new Date(comment.created_at).toLocaleString()}
                             </span>
                           </div>
-                          <p className="text-sm mt-1 whitespace-pre-wrap">{comment.body}</p>
+                          <p className="text-sm mt-1 whitespace-pre-wrap">{renderMentions(comment.body)}</p>
                         </div>
                       </div>
                     ))
@@ -543,11 +571,13 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
                       <AvatarFallback className="text-xs">You</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 space-y-2">
-                      <Textarea
-                        placeholder="Add a comment..."
+                      <MentionTextarea
                         value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
+                        onChange={setNewComment}
+                        onMentions={setMentionedUserIds}
+                        placeholder="Add a comment... Use @ to mention someone"
                         rows={3}
+                        projectId={issue?.project_id}
                       />
                       <Button
                         size="sm"

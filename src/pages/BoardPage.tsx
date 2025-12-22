@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { ScrumBoard, KanbanBoard, BasicBoard } from '@/features/boards';
@@ -10,6 +10,7 @@ import { useExecuteTransition } from '@/features/workflows';
 import { useIssuesByProject } from '@/features/issues';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function BoardPage() {
   const { projectKey } = useParams<{ projectKey: string }>();
@@ -51,6 +52,26 @@ export default function BoardPage() {
 
   const isLoading = projectsLoading || boardsLoading || columnsLoading || 
     (isScrum && sprintLoading) || issuesLoading;
+
+  // Real-time subscription for issues - refetch when issues change
+  useEffect(() => {
+    if (!project?.id) return;
+    
+    const channel = supabase
+      .channel(`board-issues-${project.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'issues', filter: `project_id=eq.${project.id}` },
+        () => {
+          refetchIssues();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [project?.id, refetchIssues]);
 
   const handleIssueMove = async (issueId: string, statusId: string) => {
     try {
