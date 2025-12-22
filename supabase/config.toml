@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.git-sync]
 verify_jwt = false
+
+[functions.git-demo-seed]
+verify_jwt = false
