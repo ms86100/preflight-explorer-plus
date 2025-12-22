@@ -5,6 +5,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Demo mode constants
+const DEMO_ORG_ID = 'demo-git-org-00000000';
+const DEMO_MODE_TOKEN = 'DEMO_MODE_TOKEN';
+
+function isDemoOrganization(org: { id?: string; access_token_encrypted?: string | null }): boolean {
+  return org.id === DEMO_ORG_ID || org.access_token_encrypted === DEMO_MODE_TOKEN;
+}
+
 interface GitRepository {
   id: string;
   name: string;
@@ -514,6 +522,20 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Demo mode: return mock repositories
+      if (isDemoOrganization(org)) {
+        console.log('[git-api] Demo mode: returning mock repositories');
+        const mockRepos: GitRepository[] = [
+          { id: 'demo-1', name: 'demo-project', full_name: 'demo-org/demo-project', web_url: 'https://github.com/demo-org/demo-project', default_branch: 'main', private: false, description: 'Demo project for testing' },
+          { id: 'demo-2', name: 'frontend-app', full_name: 'demo-org/frontend-app', web_url: 'https://github.com/demo-org/frontend-app', default_branch: 'main', private: true, description: 'Frontend application' },
+          { id: 'demo-3', name: 'api-service', full_name: 'demo-org/api-service', web_url: 'https://github.com/demo-org/api-service', default_branch: 'develop', private: true, description: 'Backend API service' },
+        ];
+        return new Response(
+          JSON.stringify({ repositories: mockRepos }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       let repos: GitRepository[] = [];
 
       if (org.provider_type === 'github') {
@@ -548,6 +570,15 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ error: 'Organization not found or no access token' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Demo mode: return mock success
+      if (isDemoOrganization(org)) {
+        console.log('[git-api] Demo mode: mock branch creation');
+        return new Response(
+          JSON.stringify({ success: true, web_url: `https://github.com/demo-org/demo-repo/tree/${branch_name}`, demo: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -590,6 +621,15 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ error: 'Organization not found or no access token' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Demo mode: return mock success
+      if (isDemoOrganization(org)) {
+        console.log('[git-api] Demo mode: mock PR creation');
+        return new Response(
+          JSON.stringify({ success: true, web_url: `https://github.com/demo-org/demo-repo/pull/99`, pr_id: '99', demo: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 

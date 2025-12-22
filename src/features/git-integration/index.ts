@@ -13,6 +13,9 @@ export * from './hooks/useGitOrganizations';
 export * from './hooks/useGitRepositories';
 export * from './hooks/useIssueDevelopmentInfo';
 
+// Context
+export { GitDemoProvider, useGitDemo } from './context/GitDemoContext';
+
 // Components
 export { DevelopmentPanel } from './components/DevelopmentPanel';
 export { BuildStatusBadge } from './components/BuildStatusBadge';
@@ -30,3 +33,4 @@ export { TriggerBuildModal } from './components/TriggerBuildModal';
 export { RepositorySettingsModal } from './components/RepositorySettingsModal';
 export { SyncStatusIndicator, SyncStatusBadge } from './components/SyncStatusIndicator';
 export { GitUserMappingManager } from './components/GitUserMappingManager';
+export { GitDemoToggle } from './components/GitDemoToggle';
