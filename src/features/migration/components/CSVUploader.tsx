@@ -1,24 +1,33 @@
 import { useCallback, useState } from "react";
-import { Upload, FileText, X, AlertCircle } from "lucide-react";
+import { Upload, FileText, X, AlertCircle, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { ImportType, ENHANCED_FIELD_DEFINITIONS } from "../types";
 
 interface CSVUploaderProps {
   onFileLoad: (content: string, fileName: string) => void;
   accept?: string;
   maxSize?: number; // in MB
+  importType?: ImportType;
 }
 
 export function CSVUploader({ 
   onFileLoad, 
   accept = ".csv", 
-  maxSize = 10 
+  maxSize = 10,
+  importType = 'issues'
 }: CSVUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const fieldDefs = ENHANCED_FIELD_DEFINITIONS[importType];
+  const metadata = fieldDefs.metadata as Record<string, { jiraHeader: string }>;
+  const requiredFields = (fieldDefs.required as readonly string[]).map(f => {
+    return metadata[f]?.jiraHeader || f;
+  });
 
   const handleFile = useCallback((file: File) => {
     setError(null);
@@ -134,6 +143,17 @@ export function CSVUploader({
                 Browse Files
               </label>
             </Button>
+            
+            {/* Required fields hint */}
+            <div className="mt-6 text-center">
+              <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1">
+                <HelpCircle className="h-3 w-3" />
+                <span>Required columns for {importType}:</span>
+              </div>
+              <p className="text-xs font-medium">
+                {requiredFields.join(', ')}
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}

@@ -4,5 +4,8 @@ export * from './components/CSVUploader';
 export * from './components/FieldMapper';
 export * from './components/ValidationPreview';
 export * from './components/ImportProgress';
+export * from './components/TemplateDownload';
+export * from './components/FormatGuideModal';
 export * from './services/importService';
+export * from './services/templateService';
 export * from './types';

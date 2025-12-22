@@ -8,6 +8,8 @@ import { CSVUploader } from "./CSVUploader";
 import { FieldMapper } from "./FieldMapper";
 import { ValidationPreview } from "./ValidationPreview";
 import { ImportProgress } from "./ImportProgress";
+import { TemplateDownload } from "./TemplateDownload";
+import { FormatGuideModal } from "./FormatGuideModal";
 import { 
   validateCSV, 
   createImportJob, 
@@ -15,6 +17,7 @@ import {
   parseCSVHeaders, 
   countCSVRows 
 } from "../services/importService";
+import { autoMapHeaders } from "../services/templateService";
 import { FIELD_DEFINITIONS, type ImportType, type ValidationResult } from "../types";
 
 type WizardStep = 'select-type' | 'upload' | 'mapping' | 'validate' | 'import' | 'complete';
@@ -46,29 +49,16 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
     const parsedHeaders = parseCSVHeaders(content);
     setHeaders(parsedHeaders);
     
-    // Auto-suggest mappings
-    const fieldDef = FIELD_DEFINITIONS[importType];
-    const autoMappings: Record<string, string> = {};
+    // Use smart auto-mapping that recognizes Jira headers
+    const autoMappings = autoMapHeaders(parsedHeaders, importType);
     
-    for (const field of fieldDef.all as readonly string[]) {
-      const label = (fieldDef.labels as Record<string, string>)[field]?.toLowerCase() || '';
-      const fieldLower = field.toLowerCase().replace(/_/g, ' ');
-      
-      for (const header of parsedHeaders) {
-        const headerLower = header.toLowerCase().replace(/[_-]/g, ' ');
-        if (
-          headerLower === fieldLower ||
-          headerLower === label ||
-          headerLower.includes(fieldLower) ||
-          fieldLower.includes(headerLower)
-        ) {
-          autoMappings[field] = header;
-          break;
-        }
-      }
+    // Convert the mapping format (csvHeader -> field) to (field -> csvHeader)
+    const fieldMappings: Record<string, string> = {};
+    for (const [csvHeader, fieldKey] of Object.entries(autoMappings)) {
+      fieldMappings[fieldKey] = csvHeader;
     }
     
-    setMappings(autoMappings);
+    setMappings(fieldMappings);
     setStep('mapping');
   }, [importType]);
 
@@ -248,12 +238,20 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
       {step === 'upload' && (
         <Card>
           <CardHeader>
-            <CardTitle>Upload CSV File</CardTitle>
-            <CardDescription>
-              Upload a CSV file containing your {importType} data
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Upload CSV File</CardTitle>
+                <CardDescription>
+                  Upload a CSV file containing your {importType} data
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <FormatGuideModal importType={importType} />
+                <TemplateDownload importType={importType} variant="compact" />
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <Tabs value={importType} onValueChange={(v) => setImportType(v as ImportType)}>
               <TabsList className="mb-4">
                 <TabsTrigger value="issues">Issues</TabsTrigger>
@@ -261,7 +259,13 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
                 <TabsTrigger value="users">Users</TabsTrigger>
               </TabsList>
             </Tabs>
-            <CSVUploader onFileLoad={handleFileLoad} />
+            
+            <CSVUploader onFileLoad={handleFileLoad} importType={importType} />
+            
+            {/* Template Download Section */}
+            <div className="border-t pt-4">
+              <TemplateDownload importType={importType} />
+            </div>
           </CardContent>
         </Card>
       )}
