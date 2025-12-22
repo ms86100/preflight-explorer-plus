@@ -3,11 +3,9 @@ import {
   GitBranch, 
   ExternalLink, 
   Trash2, 
-  RefreshCw, 
   MoreHorizontal,
   CheckCircle2,
   XCircle,
-  AlertCircle,
   Copy,
   Loader2,
 } from 'lucide-react';
@@ -31,6 +29,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useGitOrganizations, useDeleteGitOrganization, useUpdateGitOrganization } from '../hooks/useGitOrganizations';
+import { SyncStatusIndicator } from './SyncStatusIndicator';
 import { toast } from 'sonner';
 
 const PROVIDER_ICONS: Record<string, string> = {
@@ -161,37 +160,12 @@ export function GitOrganizationsList() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-1.5">
-                  {org.last_sync_error ? (
-                    <>
-                      <AlertCircle className="h-4 w-4 text-destructive" />
-                      <span className="text-destructive">Sync error</span>
-                    </>
-                  ) : org.last_sync_at ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      <span className="text-muted-foreground">
-                        Last sync: {new Date(org.last_sync_at).toLocaleString()}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Never synced</span>
-                    </>
-                  )}
-                </div>
+                <SyncStatusIndicator organization={org} onSyncComplete={() => refetch()} />
 
                 <div className="text-muted-foreground">
                   Created {new Date(org.created_at || '').toLocaleDateString()}
                 </div>
               </div>
-
-              {org.last_sync_error && (
-                <div className="mt-2 p-2 bg-destructive/10 rounded text-sm text-destructive">
-                  {org.last_sync_error}
-                </div>
-              )}
             </CardContent>
           </Card>
         ))}

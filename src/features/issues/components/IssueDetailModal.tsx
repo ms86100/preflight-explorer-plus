@@ -529,7 +529,7 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
                     <GitBranch className="h-4 w-4" />
                     Development
                   </Label>
-                  <DevelopmentPanel issueId={issueId} issueKey={issue.issue_key} />
+                  <DevelopmentPanel issueId={issueId} issueKey={issue.issue_key} projectId={issue.project_id} />
                 </div>
 
                 <Separator />

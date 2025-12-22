@@ -1,13 +1,16 @@
 // Pull Requests List Component
 // Shows PRs/MRs linked to an issue
 
-import { GitPullRequest as GitPRIcon, GitMerge, ExternalLink, X } from 'lucide-react';
+import { GitPullRequest as GitPRIcon, GitMerge, ExternalLink, X, Plus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import type { GitPullRequest, PullRequestStatus } from '../types';
 
 interface PullRequestsListProps {
   pullRequests: GitPullRequest[];
+  onCreatePR?: () => void;
+  showCreateButton?: boolean;
 }
 
 const statusConfig: Record<PullRequestStatus, {
@@ -37,11 +40,19 @@ const statusConfig: Record<PullRequestStatus, {
   },
 };
 
-export function PullRequestsList({ pullRequests }: PullRequestsListProps) {
+export function PullRequestsList({ pullRequests, onCreatePR, showCreateButton = true }: PullRequestsListProps) {
   if (pullRequests.length === 0) {
     return (
-      <div className="text-sm text-muted-foreground italic">
-        No pull requests linked yet
+      <div className="space-y-2">
+        <div className="text-sm text-muted-foreground italic">
+          No pull requests linked yet
+        </div>
+        {showCreateButton && onCreatePR && (
+          <Button variant="outline" size="sm" onClick={onCreatePR} className="gap-1">
+            <Plus className="h-3 w-3" />
+            Create pull request
+          </Button>
+        )}
       </div>
     );
   }
@@ -51,6 +62,12 @@ export function PullRequestsList({ pullRequests }: PullRequestsListProps) {
       {pullRequests.map((pr) => (
         <PullRequestItem key={pr.id} pullRequest={pr} />
       ))}
+      {showCreateButton && onCreatePR && (
+        <Button variant="ghost" size="sm" onClick={onCreatePR} className="gap-1 w-full justify-center">
+          <Plus className="h-3 w-3" />
+          Create another PR
+        </Button>
+      )}
     </div>
   );
 }

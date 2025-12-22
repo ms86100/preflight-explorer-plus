@@ -24,3 +24,8 @@ export { GitIntegrationPanel } from './components/GitIntegrationPanel';
 export { GitOrganizationForm } from './components/GitOrganizationForm';
 export { GitOrganizationsList } from './components/GitOrganizationsList';
 export { RepositoryLinker } from './components/RepositoryLinker';
+export { CreateBranchModal } from './components/CreateBranchModal';
+export { CreatePRModal } from './components/CreatePRModal';
+export { TriggerBuildModal } from './components/TriggerBuildModal';
+export { RepositorySettingsModal } from './components/RepositorySettingsModal';
+export { SyncStatusIndicator, SyncStatusBadge } from './components/SyncStatusIndicator';
