@@ -27,6 +27,30 @@ export interface WorkflowStepRow {
   };
 }
 
+// Condition types for transitions
+export interface TransitionCondition {
+  type: 'only_assignee' | 'only_reporter' | 'user_in_group' | 'user_in_role' | 'permission_check';
+  group?: string;
+  role?: string;
+  permission?: string;
+}
+
+// Validator types for transitions
+export interface TransitionValidator {
+  type: 'field_required' | 'field_not_empty' | 'subtasks_closed' | 'resolution_set' | 'custom_field_value';
+  field?: string;
+  value?: string;
+  message?: string;
+}
+
+// Post-function types for transitions
+export interface TransitionPostFunction {
+  type: 'set_field' | 'clear_field' | 'assign_to_lead' | 'assign_to_reporter' | 'add_comment' | 'send_notification';
+  field?: string;
+  value?: string;
+  comment?: string;
+}
+
 export interface WorkflowTransitionRow {
   id: string;
   workflow_id: string;
@@ -34,6 +58,10 @@ export interface WorkflowTransitionRow {
   to_step_id: string;
   name: string;
   description: string | null;
+  conditions: TransitionCondition[];
+  validators: TransitionValidator[];
+  post_functions: TransitionPostFunction[];
+  screen_id: string | null;
   created_at: string;
 }
 
@@ -42,6 +70,15 @@ export interface WorkflowWithDetails extends WorkflowRow {
   transitions: WorkflowTransitionRow[];
 }
 
+// Helper to cast DB transition row to typed interface
+function castTransition(t: any): WorkflowTransitionRow {
+  return {
+    ...t,
+    conditions: (Array.isArray(t.conditions) ? t.conditions : []) as TransitionCondition[],
+    validators: (Array.isArray(t.validators) ? t.validators : []) as TransitionValidator[],
+    post_functions: (Array.isArray(t.post_functions) ? t.post_functions : []) as TransitionPostFunction[],
+  };
+}
 export async function getWorkflows(projectId?: string): Promise<WorkflowRow[]> {
   let query = supabase
     .from('workflows')
@@ -100,7 +137,7 @@ export async function getWorkflowWithDetails(id: string): Promise<WorkflowWithDe
       ...s,
       status: s.status as WorkflowStepRow['status']
     })),
-    transitions: transitions || []
+    transitions: (transitions || []).map(t => castTransition(t))
   };
 }
 
@@ -261,28 +298,34 @@ export async function addWorkflowTransition(data: {
   to_step_id: string;
   name: string;
   description?: string;
+  conditions?: TransitionCondition[];
+  validators?: TransitionValidator[];
+  post_functions?: TransitionPostFunction[];
 }): Promise<WorkflowTransitionRow> {
   const { data: transition, error } = await supabase
     .from('workflow_transitions')
-    .insert(data)
+    .insert(data as any)
     .select()
     .single();
   if (error) throw error;
-  return transition;
+  return castTransition(transition);
 }
 
 export async function updateWorkflowTransition(id: string, data: {
   name?: string;
   description?: string;
+  conditions?: TransitionCondition[];
+  validators?: TransitionValidator[];
+  post_functions?: TransitionPostFunction[];
 }): Promise<WorkflowTransitionRow> {
   const { data: transition, error } = await supabase
     .from('workflow_transitions')
-    .update(data)
+    .update(data as any)
     .eq('id', id)
     .select()
     .single();
   if (error) throw error;
-  return transition;
+  return castTransition(transition);
 }
 
 export async function deleteWorkflowTransition(id: string): Promise<void> {
