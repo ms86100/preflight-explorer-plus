@@ -1995,7 +1995,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      insert_audit_log: {
+        Args: {
+          p_action: string
+          p_classification_context?: Database["public"]["Enums"]["classification_level"]
+          p_entity_id?: string
+          p_entity_type: string
+          p_new_values?: Json
+          p_old_values?: Json
+        }
+        Returns: string
+      }
       is_project_member: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_project_member_fast: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
