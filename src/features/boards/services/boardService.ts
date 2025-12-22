@@ -202,16 +202,33 @@ export const sprintService = {
       .from('sprint_issues')
       .select(`
         issue:issues(
-          id, issue_key, summary, story_points, classification, status_id,
+          id, issue_key, summary, story_points, classification, status_id, assignee_id,
           issue_type:issue_types(id, name, color, category),
           status:issue_statuses(id, name, color, category),
-          priority:priorities(id, name, color),
-          assignee:profiles(id, display_name, avatar_url)
+          priority:priorities(id, name, color)
         )
       `)
       .eq('sprint_id', sprintId);
 
     if (error) throw error;
-    return data?.map(d => d.issue).filter(Boolean) || [];
+    
+    const issues = data?.map(d => d.issue).filter(Boolean) || [];
+    
+    // Fetch profiles for assignees
+    const assigneeIds = [...new Set(issues.map(i => i?.assignee_id).filter(Boolean))];
+    if (assigneeIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', assigneeIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      return issues.map(issue => ({
+        ...issue,
+        assignee: issue?.assignee_id ? profileMap.get(issue.assignee_id) || null : null,
+      }));
+    }
+    
+    return issues.map(issue => ({ ...issue, assignee: null }));
   },
 };

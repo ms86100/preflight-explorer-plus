@@ -55,7 +55,8 @@ export interface IssueWithRelations extends IssueRow {
 
 export const issueService = {
   async getByProject(projectId: string) {
-    const { data, error } = await supabase
+    // Fetch issues with reference data (no profile FK hints - profiles are linked by id match)
+    const { data: issues, error } = await supabase
       .from('issues')
       .select(`
         id, issue_key, issue_number, summary, description, story_points, classification,
@@ -63,19 +64,32 @@ export const issueService = {
         due_date, original_estimate, remaining_estimate, time_spent, created_at, updated_at,
         issue_type:issue_types(id, name, color, category),
         status:issue_statuses(id, name, color, category),
-        priority:priorities(id, name, color),
-        reporter:profiles!issues_reporter_id_fkey(id, display_name, avatar_url),
-        assignee:profiles!issues_assignee_id_fkey(id, display_name, avatar_url)
+        priority:priorities(id, name, color)
       `)
       .eq('project_id', projectId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data as unknown as IssueWithRelations[];
+    
+    // Fetch profiles for reporter and assignee
+    const userIds = [...new Set(issues?.flatMap(i => [i.reporter_id, i.assignee_id].filter(Boolean)) || [])];
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url')
+      .in('id', userIds.length > 0 ? userIds : ['00000000-0000-0000-0000-000000000000']);
+
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    
+    return (issues || []).map(issue => ({
+      ...issue,
+      reporter: issue.reporter_id ? profileMap.get(issue.reporter_id) || null : null,
+      assignee: issue.assignee_id ? profileMap.get(issue.assignee_id) || null : null,
+      epic: null,
+    })) as IssueWithRelations[];
   },
 
   async getByKey(issueKey: string) {
-    const { data, error } = await supabase
+    const { data: issue, error } = await supabase
       .from('issues')
       .select(`
         id, issue_key, issue_number, summary, description, story_points, classification,
@@ -83,19 +97,33 @@ export const issueService = {
         due_date, original_estimate, remaining_estimate, time_spent, created_at, updated_at,
         issue_type:issue_types(id, name, color, category),
         status:issue_statuses(id, name, color, category),
-        priority:priorities(id, name, color),
-        reporter:profiles!issues_reporter_id_fkey(id, display_name, avatar_url),
-        assignee:profiles!issues_assignee_id_fkey(id, display_name, avatar_url)
+        priority:priorities(id, name, color)
       `)
       .eq('issue_key', issueKey)
       .maybeSingle();
 
     if (error) throw error;
-    return data as unknown as IssueWithRelations;
+    if (!issue) return null as unknown as IssueWithRelations;
+    
+    // Fetch profiles
+    const userIds = [issue.reporter_id, issue.assignee_id].filter(Boolean);
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url')
+      .in('id', userIds.length > 0 ? userIds : ['00000000-0000-0000-0000-000000000000']);
+
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    
+    return {
+      ...issue,
+      reporter: issue.reporter_id ? profileMap.get(issue.reporter_id) || null : null,
+      assignee: issue.assignee_id ? profileMap.get(issue.assignee_id) || null : null,
+      epic: null,
+    } as IssueWithRelations;
   },
 
   async getById(id: string) {
-    const { data, error } = await supabase
+    const { data: issue, error } = await supabase
       .from('issues')
       .select(`
         id, issue_key, issue_number, summary, description, story_points, classification,
@@ -103,15 +131,29 @@ export const issueService = {
         due_date, original_estimate, remaining_estimate, time_spent, created_at, updated_at,
         issue_type:issue_types(id, name, color, category),
         status:issue_statuses(id, name, color, category),
-        priority:priorities(id, name, color),
-        reporter:profiles!issues_reporter_id_fkey(id, display_name, avatar_url),
-        assignee:profiles!issues_assignee_id_fkey(id, display_name, avatar_url)
+        priority:priorities(id, name, color)
       `)
       .eq('id', id)
       .maybeSingle();
 
     if (error) throw error;
-    return data as unknown as IssueWithRelations;
+    if (!issue) return null as unknown as IssueWithRelations;
+    
+    // Fetch profiles
+    const userIds = [issue.reporter_id, issue.assignee_id].filter(Boolean);
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url')
+      .in('id', userIds.length > 0 ? userIds : ['00000000-0000-0000-0000-000000000000']);
+
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    
+    return {
+      ...issue,
+      reporter: issue.reporter_id ? profileMap.get(issue.reporter_id) || null : null,
+      assignee: issue.assignee_id ? profileMap.get(issue.assignee_id) || null : null,
+      epic: null,
+    } as IssueWithRelations;
   },
 
   async create(issue: IssueInsert, reporterId: string) {
