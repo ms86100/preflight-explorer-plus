@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,28 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { usePlugins, useTogglePlugin } from '@/features/plugins';
+import type { Plugin } from '@/features/plugins';
 import {
   Puzzle, Search, Download, Settings, CheckCircle, XCircle,
   Zap, BarChart3, Shield, Workflow, Bell, Layout, FileText, Lock,
-  ExternalLink
 } from 'lucide-react';
-
-interface Plugin {
-  id: string;
-  key: string;
-  name: string;
-  description: string | null;
-  version: string;
-  vendor: string | null;
-  vendor_url: string | null;
-  documentation_url: string | null;
-  icon_url: string | null;
-  category: string;
-  is_system: boolean;
-  is_enabled: boolean;
-}
 
 const CATEGORY_ICONS: Record<string, typeof Puzzle> = {
   core: Layout,
@@ -37,6 +21,9 @@ const CATEGORY_ICONS: Record<string, typeof Puzzle> = {
   reports: BarChart3,
   admin: Shield,
   integration: Bell,
+  export: FileText,
+  data: Layout,
+  operations: Zap,
   other: Puzzle,
 };
 
@@ -48,56 +35,23 @@ const CATEGORY_LABELS: Record<string, string> = {
   reports: 'Reports',
   admin: 'Administration',
   integration: 'Integrations',
+  export: 'Export & Documents',
+  data: 'Data Management',
+  operations: 'Operations',
   other: 'Other',
 };
 
 export default function PluginsPage() {
-  const [plugins, setPlugins] = useState<Plugin[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: plugins = [], isLoading } = usePlugins();
+  const togglePlugin = useTogglePlugin();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchPlugins();
-  }, []);
-
-  const fetchPlugins = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('plugins')
-        .select('*')
-        .order('is_system', { ascending: false })
-        .order('name');
-
-      if (error) throw error;
-      setPlugins(data || []);
-    } catch (error) {
-      console.error('Error fetching plugins:', error);
-      toast.error('Failed to load plugins');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const togglePlugin = async (plugin: Plugin) => {
+  const handleTogglePlugin = (plugin: Plugin) => {
     if (plugin.is_system) {
-      toast.error('System plugins cannot be disabled');
       return;
     }
-
-    try {
-      const { error } = await supabase
-        .from('plugins')
-        .update({ is_enabled: !plugin.is_enabled })
-        .eq('id', plugin.id);
-
-      if (error) throw error;
-      toast.success(`${plugin.name} ${plugin.is_enabled ? 'disabled' : 'enabled'}`);
-      fetchPlugins();
-    } catch (error) {
-      console.error('Error toggling plugin:', error);
-      toast.error('Failed to update plugin');
-    }
+    togglePlugin.mutate({ id: plugin.id, enabled: !plugin.is_enabled });
   };
 
   const filteredPlugins = plugins.filter((plugin) => {
@@ -110,7 +64,7 @@ export default function PluginsPage() {
   });
 
   const systemPlugins = filteredPlugins.filter((p) => p.is_system);
-  const marketplacePlugins = filteredPlugins.filter((p) => !p.is_system);
+  const installedPlugins = filteredPlugins.filter((p) => p.is_enabled);
 
   const categories = [...new Set(plugins.map((p) => p.category))];
 
@@ -148,7 +102,7 @@ export default function PluginsPage() {
               className="pl-10"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button
               variant={selectedCategory === null ? 'default' : 'outline'}
               size="sm"
@@ -172,7 +126,7 @@ export default function PluginsPage() {
         <Tabs defaultValue="installed" className="space-y-4">
           <TabsList>
             <TabsTrigger value="installed">
-              Installed ({plugins.filter((p) => p.is_enabled).length})
+              Installed ({installedPlugins.length})
             </TabsTrigger>
             <TabsTrigger value="system">System ({systemPlugins.length})</TabsTrigger>
             <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
@@ -180,15 +134,16 @@ export default function PluginsPage() {
 
           <TabsContent value="installed" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              {filteredPlugins.filter((p) => p.is_enabled).map((plugin) => (
+              {installedPlugins.map((plugin) => (
                 <PluginCard
                   key={plugin.id}
                   plugin={plugin}
-                  onToggle={() => togglePlugin(plugin)}
+                  onToggle={() => handleTogglePlugin(plugin)}
+                  isToggling={togglePlugin.isPending}
                 />
               ))}
             </div>
-            {filteredPlugins.filter((p) => p.is_enabled).length === 0 && (
+            {installedPlugins.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <Puzzle className="h-12 w-12 mx-auto mb-4 opacity-20" />
                 <p>No plugins match your search</p>
@@ -202,7 +157,8 @@ export default function PluginsPage() {
                 <PluginCard
                   key={plugin.id}
                   plugin={plugin}
-                  onToggle={() => togglePlugin(plugin)}
+                  onToggle={() => handleTogglePlugin(plugin)}
+                  isToggling={togglePlugin.isPending}
                 />
               ))}
             </div>
@@ -216,13 +172,13 @@ export default function PluginsPage() {
                 <p className="text-muted-foreground mb-4">
                   Browse and install plugins from the marketplace to extend functionality.
                 </p>
-                <div className="flex justify-center gap-4">
+                <div className="flex justify-center gap-4 flex-wrap">
                   <Card className="p-4 text-left max-w-xs cursor-pointer hover:bg-accent/50 transition-colors">
                     <div className="flex items-center gap-3 mb-2">
                       <FileText className="h-8 w-8 text-blue-500" />
                       <div>
-                        <p className="font-medium">ScriptRunner</p>
-                        <p className="text-xs text-muted-foreground">Groovy scripting</p>
+                        <p className="font-medium">Document Composer</p>
+                        <p className="text-xs text-muted-foreground">Export to PDF/Excel/Word</p>
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground">Coming Soon</p>
@@ -231,8 +187,8 @@ export default function PluginsPage() {
                     <div className="flex items-center gap-3 mb-2">
                       <BarChart3 className="h-8 w-8 text-green-500" />
                       <div>
-                        <p className="font-medium">eazyBI</p>
-                        <p className="text-xs text-muted-foreground">Advanced reporting</p>
+                        <p className="font-medium">Structured Data Blocks</p>
+                        <p className="text-xs text-muted-foreground">Schema-defined data matrices</p>
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground">Coming Soon</p>
@@ -241,8 +197,8 @@ export default function PluginsPage() {
                     <div className="flex items-center gap-3 mb-2">
                       <Lock className="h-8 w-8 text-purple-500" />
                       <div>
-                        <p className="font-medium">Insight</p>
-                        <p className="text-xs text-muted-foreground">Asset management</p>
+                        <p className="font-medium">Guided Operations</p>
+                        <p className="text-xs text-muted-foreground">Multi-step bulk actions</p>
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground">Coming Soon</p>
@@ -257,7 +213,13 @@ export default function PluginsPage() {
   );
 }
 
-function PluginCard({ plugin, onToggle }: { plugin: Plugin; onToggle: () => void }) {
+interface PluginCardProps {
+  plugin: Plugin;
+  onToggle: () => void;
+  isToggling?: boolean;
+}
+
+function PluginCard({ plugin, onToggle, isToggling }: PluginCardProps) {
   const CategoryIcon = CATEGORY_ICONS[plugin.category] || Puzzle;
 
   return (
@@ -283,7 +245,7 @@ function PluginCard({ plugin, onToggle }: { plugin: Plugin; onToggle: () => void
           <Switch
             checked={plugin.is_enabled}
             onCheckedChange={onToggle}
-            disabled={plugin.is_system}
+            disabled={plugin.is_system || isToggling}
           />
         </div>
       </CardHeader>
