@@ -3,6 +3,7 @@
 export type ColumnType = 'string' | 'number' | 'boolean' | 'enum' | 'reference' | 'date';
 
 export interface ColumnDefinition {
+  id?: string;
   key: string;
   label: string;
   type: ColumnType;
@@ -19,17 +20,22 @@ export interface DataBlockSchema {
   id: string;
   name: string;
   description?: string;
-  version: string;
+  version: number;
   columns: ColumnDefinition[];
+  validation_rules?: Record<string, unknown>;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
-  created_by: string;
+  created_by?: string;
 }
 
 export interface DataBlockInstance {
   id: string;
   schema_id: string;
-  issue_id: string;
+  schema_name?: string;
+  name?: string;
+  issue_id?: string;
+  project_id?: string;
   rows: DataRow[];
   created_at: string;
   updated_at: string;
@@ -38,9 +44,9 @@ export interface DataBlockInstance {
 export interface DataRow {
   id: string;
   values: Record<string, unknown>;
-  created_at: string;
-  updated_at: string;
-  created_by: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
 }
 
 export interface ValidationError {

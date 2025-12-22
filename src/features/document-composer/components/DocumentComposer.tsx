@@ -97,10 +97,11 @@ interface ExportFormatCardProps {
 }
 
 function ExportFormatCard({ format, title, description, icon, onExport }: ExportFormatCardProps) {
-  const colorMap: Record<ExportFormat, string> = {
+  const colorMap: Record<string, string> = {
     pdf: 'text-red-500',
     xlsx: 'text-green-500',
     docx: 'text-blue-500',
+    html: 'text-orange-500',
   };
 
   return (

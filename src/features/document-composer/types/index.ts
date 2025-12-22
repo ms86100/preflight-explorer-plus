@@ -1,6 +1,6 @@
 // Document Composer types
 
-export type ExportFormat = 'pdf' | 'xlsx' | 'docx';
+export type ExportFormat = 'pdf' | 'xlsx' | 'docx' | 'html';
 
 export interface DocumentTemplate {
   id: string;
@@ -10,7 +10,7 @@ export interface DocumentTemplate {
   schema: TemplateSchema;
   created_at: string;
   updated_at: string;
-  created_by: string;
+  created_by?: string;
   is_default?: boolean;
 }
 
@@ -29,6 +29,7 @@ export interface TemplateHeader {
 }
 
 export interface TemplateSection {
+  id?: string;
   name: string;
   type: 'fields' | 'timeline' | 'comments' | 'attachments' | 'linked-items' | 'custom';
   fields?: string[];
@@ -65,12 +66,19 @@ export interface ExportRequest {
 
 export interface ExportJob {
   id: string;
+  name?: string;
+  template_id?: string;
+  template_name?: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   format: ExportFormat;
+  issue_ids?: string[];
   issueCount: number;
   progress: number;
+  file_path?: string;
   fileUrl?: string;
+  file_size?: number;
   error?: string;
+  error_message?: string;
   created_at: string;
   completed_at?: string;
 }
@@ -79,10 +87,12 @@ export const FORMAT_LABELS: Record<ExportFormat, string> = {
   pdf: 'PDF Document',
   xlsx: 'Excel Spreadsheet',
   docx: 'Word Document',
+  html: 'HTML Document',
 };
 
 export const FORMAT_ICONS: Record<ExportFormat, string> = {
   pdf: 'FileText',
   xlsx: 'Table',
   docx: 'FileType',
+  html: 'Code',
 };
