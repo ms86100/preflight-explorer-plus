@@ -44,14 +44,14 @@ export async function createOperation(operation: {
 
   const { data, error } = await supabase
     .from('guided_operations')
-    .insert({
+    .insert([{
       name: operation.name,
       description: operation.description,
       category: operation.category || 'general',
-      steps: operation.steps,
+      steps: JSON.parse(JSON.stringify(operation.steps)),
       requires_approval: operation.requires_approval || false,
       created_by: user.user.id,
-    })
+    }])
     .select()
     .single();
 

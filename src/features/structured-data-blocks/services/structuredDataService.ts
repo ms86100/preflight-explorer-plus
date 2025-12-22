@@ -42,13 +42,13 @@ export async function createSchema(schema: {
 
   const { data, error } = await supabase
     .from('data_block_schemas')
-    .insert({
+    .insert([{
       name: schema.name,
       description: schema.description,
-      columns: schema.columns,
-      validation_rules: schema.validation_rules || {},
+      columns: JSON.parse(JSON.stringify(schema.columns)),
+      validation_rules: JSON.parse(JSON.stringify(schema.validation_rules || {})),
       created_by: user.user.id,
-    })
+    }])
     .select()
     .single();
 
@@ -143,14 +143,14 @@ export async function createInstance(instance: {
 
   const { data, error } = await supabase
     .from('data_block_instances')
-    .insert({
+    .insert([{
       schema_id: instance.schemaId,
       name: instance.name,
       issue_id: instance.issueId || null,
       project_id: instance.projectId || null,
-      rows: instance.rows || [],
+      rows: JSON.parse(JSON.stringify(instance.rows || [])),
       created_by: user.user.id,
-    })
+    }])
     .select('*, schema:data_block_schemas(name)')
     .single();
 

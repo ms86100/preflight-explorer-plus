@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import type { DocumentTemplate, ExportJob, ExportFormat, TemplateSchema } from '../types';
 
 // =============================================
@@ -43,17 +44,17 @@ export async function createTemplate(template: {
 
   const { data, error } = await supabase
     .from('document_templates')
-    .insert({
+    .insert([{
       name: template.name,
       description: template.description,
       format: template.format,
-      header_config: template.schema.header || {},
-      sections: template.schema.sections || [],
-      footer_config: template.schema.footer || {},
-      watermark_config: template.schema.watermark || {},
+      header_config: JSON.parse(JSON.stringify(template.schema.header || {})),
+      sections: JSON.parse(JSON.stringify(template.schema.sections || [])),
+      footer_config: JSON.parse(JSON.stringify(template.schema.footer || {})),
+      watermark_config: JSON.parse(JSON.stringify(template.schema.watermark || {})),
       is_default: template.is_default || false,
       created_by: user.user.id,
-    })
+    }])
     .select()
     .single();
 
@@ -128,15 +129,15 @@ export async function createExport(exportData: {
 
   const { data, error } = await supabase
     .from('document_exports')
-    .insert({
+    .insert([{
       template_id: exportData.templateId || null,
       name: exportData.name,
       format: exportData.format,
-      issue_ids: exportData.issueIds,
-      options: exportData.options || {},
+      issue_ids: JSON.parse(JSON.stringify(exportData.issueIds)),
+      options: JSON.parse(JSON.stringify(exportData.options || {})),
       status: 'pending',
       created_by: user.user.id,
-    })
+    }])
     .select()
     .single();
 
@@ -204,10 +205,10 @@ function mapDbToTemplate(db: Record<string, unknown>): DocumentTemplate {
     description: db.description as string | undefined,
     format: db.format as ExportFormat,
     schema: {
-      header: headerConfig as DocumentTemplate['schema']['header'],
+      header: headerConfig as unknown as DocumentTemplate['schema']['header'],
       sections: sections as DocumentTemplate['schema']['sections'],
-      footer: footerConfig as DocumentTemplate['schema']['footer'],
-      watermark: watermarkConfig as DocumentTemplate['schema']['watermark'],
+      footer: footerConfig as unknown as DocumentTemplate['schema']['footer'],
+      watermark: watermarkConfig as unknown as DocumentTemplate['schema']['watermark'],
     },
     is_default: db.is_default as boolean,
     created_at: db.created_at as string,
