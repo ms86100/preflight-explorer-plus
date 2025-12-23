@@ -31,8 +31,8 @@ interface LinkedIssue {
 }
 
 interface LinkedIssuesSectionProps {
-  issueId: string;
-  projectId: string;
+  readonly issueId: string;
+  readonly projectId: string;
 }
 
 const LINK_TYPES = [

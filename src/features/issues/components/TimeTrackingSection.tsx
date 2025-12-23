@@ -21,11 +21,11 @@ interface Worklog {
 }
 
 interface TimeTrackingSectionProps {
-  issueId: string;
-  originalEstimate: number | null;
-  remainingEstimate: number | null;
-  timeSpent: number | null;
-  onUpdate?: () => void;
+  readonly issueId: string;
+  readonly originalEstimate: number | null;
+  readonly remainingEstimate: number | null;
+  readonly timeSpent: number | null;
+  readonly onUpdate?: () => void;
 }
 
 export function TimeTrackingSection({
