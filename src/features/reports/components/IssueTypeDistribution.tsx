@@ -39,7 +39,8 @@ export function IssueTypeDistribution({ projectId }: IssueTypeDistributionProps)
         if (!typeCount.has(typeName)) {
           typeCount.set(typeName, { name: typeName, count: 0, color: typeColor });
         }
-        typeCount.get(typeName)!.count++;
+        const typeData = typeCount.get(typeName);
+        if (typeData) typeData.count++;
       });
 
       return Array.from(typeCount.values()).sort((a, b) => b.count - a.count);
@@ -96,8 +97,8 @@ export function IssueTypeDistribution({ projectId }: IssueTypeDistributionProps)
                   label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                   labelLine={false}
                 >
-                  {chartData?.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                  {chartData?.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color || COLORS[0]} />
                   ))}
                 </Pie>
                 <Tooltip

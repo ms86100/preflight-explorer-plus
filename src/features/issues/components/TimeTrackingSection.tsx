@@ -167,7 +167,7 @@ export function TimeTrackingSection({
       </div>
 
       {/* Progress Bar */}
-      {originalEstimate && originalEstimate > 0 && (
+      {!!(originalEstimate && originalEstimate > 0) && (
         <div className="space-y-1">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Progress</span>

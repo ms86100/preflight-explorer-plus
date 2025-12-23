@@ -102,7 +102,7 @@ export function DevelopmentPanel({ issueId, issueKey, projectId, onCreateBranch 
         {/* Summary row with action buttons */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
-            {summary.branchCount > 0 && (
+             {summary.branchCount > 0 && (
               <Badge variant="outline" className="gap-1">
                 <GitBranch className="h-3 w-3" />
                 {summary.branchCount} branch{summary.branchCount !== 1 ? 'es' : ''}

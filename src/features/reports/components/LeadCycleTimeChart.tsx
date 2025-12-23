@@ -62,8 +62,9 @@ export function LeadCycleTimeChart({ projectId }: LeadCycleTimeChartProps) {
         if (!weeklyData.has(weekKey)) {
           weeklyData.set(weekKey, { leadTimes: [], cycleTimes: [] });
         }
-        weeklyData.get(weekKey)!.leadTimes.push(leadTime);
-        weeklyData.get(weekKey)!.cycleTimes.push(cycleTime);
+        const weekData = weeklyData.get(weekKey);
+        weekData?.leadTimes.push(leadTime);
+        weekData?.cycleTimes.push(cycleTime);
       });
 
       const data: TimeData[] = [];

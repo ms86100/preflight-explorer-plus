@@ -43,7 +43,8 @@ export function TeamWorkloadChart({ projectId }: TeamWorkloadChartProps) {
           workloadMap.set(assigneeName, { name: assigneeName, inProgress: 0, todo: 0, done: 0 });
         }
 
-        const current = workloadMap.get(assigneeName)!;
+        const current = workloadMap.get(assigneeName);
+        if (!current) return;
         if (category === 'in_progress') {
           current.inProgress += points;
         } else if (category === 'done') {

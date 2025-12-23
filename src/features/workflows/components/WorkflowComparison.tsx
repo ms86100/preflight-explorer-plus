@@ -51,13 +51,7 @@ export function WorkflowComparison({ open, onOpenChange, initialWorkflowId }: Re
     // Find added and unchanged
     rightWorkflow.steps.forEach(step => {
       const leftStep = leftStatuses.get(step.status_id);
-      if (!leftStep) {
-        results.push({
-          type: 'added',
-          label: step.status?.name || 'Unknown Status',
-          details: step.is_initial ? '(Initial status)' : undefined,
-        });
-      } else {
+      if (leftStep) {
         const isModified = leftStep.is_initial !== step.is_initial;
         results.push({
           type: isModified ? 'modified' : 'unchanged',
@@ -65,6 +59,12 @@ export function WorkflowComparison({ open, onOpenChange, initialWorkflowId }: Re
           details: isModified 
             ? `Initial: ${leftStep.is_initial} → ${step.is_initial}` 
             : undefined,
+        });
+      } else {
+        results.push({
+          type: 'added',
+          label: step.status?.name || 'Unknown Status',
+          details: step.is_initial ? '(Initial status)' : undefined,
         });
       }
     });
@@ -111,9 +111,7 @@ export function WorkflowComparison({ open, onOpenChange, initialWorkflowId }: Re
       const toStep = rightWorkflow.steps.find(s => s.id === t.to_step_id);
       const label = `${fromStep?.status?.name} → ${toStep?.status?.name}`;
       
-      if (!leftT) {
-        results.push({ type: 'added', label });
-      } else {
+      if (leftT) {
         // Check for modifications
         const conditionsChanged = JSON.stringify(leftT.conditions) !== JSON.stringify(t.conditions);
         const validatorsChanged = JSON.stringify(leftT.validators) !== JSON.stringify(t.validators);
@@ -133,6 +131,8 @@ export function WorkflowComparison({ open, onOpenChange, initialWorkflowId }: Re
         } else {
           results.push({ type: 'unchanged', label });
         }
+      } else {
+        results.push({ type: 'added', label });
       }
     });
     
@@ -188,7 +188,7 @@ export function WorkflowComparison({ open, onOpenChange, initialWorkflowId }: Re
         
         <div className="grid grid-cols-2 gap-4 mt-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Base Workflow</label>
+            <label htmlFor="base-workflow-select" className="text-sm font-medium">Base Workflow</label>
             <Select value={leftWorkflowId} onValueChange={setLeftWorkflowId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select workflow..." />
@@ -204,7 +204,7 @@ export function WorkflowComparison({ open, onOpenChange, initialWorkflowId }: Re
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium">Compare To</label>
+            <label htmlFor="compare-workflow-select" className="text-sm font-medium">Compare To</label>
             <Select value={rightWorkflowId} onValueChange={setRightWorkflowId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select workflow..." />
@@ -233,9 +233,9 @@ export function WorkflowComparison({ open, onOpenChange, initialWorkflowId }: Re
                     <p className="text-sm text-muted-foreground">No statuses to compare</p>
                   ) : (
                     <div className="space-y-2">
-                      {stepComparison.map((item, idx) => (
+                      {stepComparison.map((item) => (
                         <div
-                          key={idx}
+                          key={`status-${item.type}-${item.label}`}
                           className={cn(
                             "flex items-center gap-3 p-2 rounded-lg",
                             item.type === 'added' && "bg-green-500/10",
@@ -268,9 +268,9 @@ export function WorkflowComparison({ open, onOpenChange, initialWorkflowId }: Re
                     <p className="text-sm text-muted-foreground">No transitions to compare</p>
                   ) : (
                     <div className="space-y-2">
-                      {transitionComparison.map((item, idx) => (
+                      {transitionComparison.map((item) => (
                         <div
-                          key={idx}
+                          key={`transition-${item.type}-${item.label}`}
                           className={cn(
                             "flex items-center gap-3 p-2 rounded-lg",
                             item.type === 'added' && "bg-green-500/10",

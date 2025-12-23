@@ -268,7 +268,7 @@ export function KanbanBoard({
             return (
               <div key={column.id} className="flex flex-col">
                 {/* WIP Limit Header */}
-                {column.maxIssues && (
+                {!!column.maxIssues && (
                   <div className={`text-xs text-center py-1 mb-1 rounded ${getWipStatusClass(wipStatus)}`}>
                     {issueCount}/{column.maxIssues} WIP
                   </div>

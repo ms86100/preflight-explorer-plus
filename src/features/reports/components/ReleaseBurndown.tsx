@@ -63,10 +63,11 @@ export function ReleaseBurndown({ projectId }: ReleaseBurndownProps) {
         
         const actualRemaining = day <= today ? totalPoints - resolvedBeforeDay : null;
 
+        const actualValue = actualRemaining !== null ? Math.round(actualRemaining * 10) / 10 : undefined;
         return {
           date: format(day, 'MMM d'),
           ideal: Math.round(idealRemaining * 10) / 10,
-          actual: actualRemaining !== null ? Math.round(actualRemaining * 10) / 10 : undefined,
+          actual: actualValue,
         };
       });
     },
@@ -100,17 +101,25 @@ export function ReleaseBurndown({ projectId }: ReleaseBurndownProps) {
       </CardHeader>
       <CardContent>
         <div className="h-64">
-          {!selectedVersionId ? (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              Select a release to view burndown
-            </div>
-          ) : isLoading ? (
-            <div className="h-64 animate-pulse bg-muted rounded" />
-          ) : chartData?.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              No data available for this release
-            </div>
-          ) : (
+          {(() => {
+            if (!selectedVersionId) {
+              return (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  Select a release to view burndown
+                </div>
+              );
+            }
+            if (isLoading) {
+              return <div className="h-64 animate-pulse bg-muted rounded" />;
+            }
+            if (chartData?.length === 0) {
+              return (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No data available for this release
+                </div>
+              );
+            }
+            return (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -147,7 +156,8 @@ export function ReleaseBurndown({ projectId }: ReleaseBurndownProps) {
                 />
               </AreaChart>
             </ResponsiveContainer>
-          )}
+            );
+          })()}
         </div>
       </CardContent>
     </Card>
