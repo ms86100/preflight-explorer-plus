@@ -482,6 +482,116 @@ async function triggerGitLabPipeline(
   };
 }
 
+// ==================== HANDLER HELPERS (S3776 fix) ====================
+
+// Common response helper
+function jsonResponse(data: unknown, status = 200): Response {
+  return new Response(
+    JSON.stringify(data),
+    { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+function errorResponse(message: string, status = 400): Response {
+  return jsonResponse({ error: message }, status);
+}
+
+// Fetch organization with validation
+async function getOrganizationWithToken(supabase: any, organizationId: string): Promise<{ org: any; error?: Response }> {
+  const { data: org, error: orgError } = await supabase
+    .from('git_organizations')
+    .select('*')
+    .eq('id', organizationId)
+    .single();
+
+  if (orgError || !org) {
+    return { org: null, error: errorResponse('Organization not found', 404) };
+  }
+
+  if (!org.access_token_encrypted) {
+    return { org: null, error: errorResponse('No access token configured') };
+  }
+
+  return { org };
+}
+
+// Fetch repositories by provider type
+async function fetchRepositoriesByProvider(org: any): Promise<GitRepository[]> {
+  switch (org.provider_type) {
+    case 'github':
+      return fetchGitHubRepos(org.access_token_encrypted);
+    case 'gitlab':
+      return fetchGitLabRepos(org.host_url, org.access_token_encrypted);
+    case 'bitbucket':
+      return fetchBitbucketRepos(org.access_token_encrypted);
+    default:
+      return [];
+  }
+}
+
+// Create branch by provider type
+async function createBranchByProvider(
+  org: any,
+  repositorySlug: string,
+  branchName: string,
+  fromBranch: string
+): Promise<{ success: boolean; web_url?: string; error?: string } | null> {
+  const [owner, repo] = repositorySlug.split('/');
+
+  switch (org.provider_type) {
+    case 'github':
+      return createGitHubBranch(org.access_token_encrypted, owner, repo, branchName, fromBranch);
+    case 'gitlab':
+      return createGitLabBranch(org.host_url, org.access_token_encrypted, repositorySlug, branchName, fromBranch);
+    case 'bitbucket':
+      return createBitbucketBranch(org.access_token_encrypted, owner, repo, branchName, fromBranch);
+    default:
+      return null;
+  }
+}
+
+// Create PR by provider type
+async function createPRByProvider(
+  org: any,
+  repositorySlug: string,
+  title: string,
+  body: string,
+  headBranch: string,
+  baseBranch: string
+): Promise<{ success: boolean; pr_id?: string; web_url?: string; error?: string } | null> {
+  const [owner, repo] = repositorySlug.split('/');
+
+  switch (org.provider_type) {
+    case 'github':
+      return createGitHubPR(org.access_token_encrypted, owner, repo, title, body, headBranch, baseBranch);
+    case 'gitlab':
+      return createGitLabMR(org.host_url, org.access_token_encrypted, repositorySlug, title, body, headBranch, baseBranch);
+    case 'bitbucket':
+      return createBitbucketPR(org.access_token_encrypted, owner, repo, title, body, headBranch, baseBranch);
+    default:
+      return null;
+  }
+}
+
+// Trigger build by provider type
+async function triggerBuildByProvider(
+  org: any,
+  repositorySlug: string,
+  ref: string,
+  workflowId: string
+): Promise<{ success: boolean; pipeline_id?: string; web_url?: string; error?: string } | null> {
+  const [owner, repo] = repositorySlug.split('/');
+
+  switch (org.provider_type) {
+    case 'github':
+      return triggerGitHubWorkflow(org.access_token_encrypted, owner, repo, workflowId || 'ci.yml', ref);
+    case 'gitlab':
+      return triggerGitLabPipeline(org.host_url, org.access_token_encrypted, repositorySlug, ref);
+    default:
+      return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
