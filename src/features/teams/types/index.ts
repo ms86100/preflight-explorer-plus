@@ -1,9 +1,3 @@
-import { TEAM_ROLE, type TeamRoleType } from '@/lib/constants';
-
-// Re-export constants for convenience
-export { TEAM_ROLE };
-export type { TeamRoleType };
-
 export interface ProjectTeam {
   id: string;
   project_id: string;
@@ -18,7 +12,7 @@ export interface ProjectTeamMember {
   id: string;
   team_id: string;
   user_id: string;
-  role: TeamRoleType;
+  role: 'lead' | 'member';
   added_at: string;
   added_by: string;
   profile?: {

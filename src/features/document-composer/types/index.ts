@@ -1,12 +1,6 @@
 // Document Composer types
 
-import { EXPORT_STATUS, type ExportStatusType } from '@/lib/constants';
-
 export type ExportFormat = 'pdf' | 'xlsx' | 'docx' | 'html' | 'csv' | 'json';
-
-// Re-export status constants for convenience
-export { EXPORT_STATUS };
-export type { ExportStatusType };
 
 export interface DocumentTemplate {
   id: string;
@@ -75,7 +69,7 @@ export interface ExportJob {
   name?: string;
   template_id?: string;
   template_name?: string;
-  status: ExportStatusType;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
   format: ExportFormat;
   issue_ids?: string[];
   issueCount: number;

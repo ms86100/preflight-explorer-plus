@@ -1,31 +1,18 @@
 // Git Integration Types
 // Based on Jira Data Center DVCS architecture
 
-import {
-  GIT_PROVIDER,
-  PULL_REQUEST_STATUS,
-  BUILD_STATUS,
-  DEPLOYMENT_ENVIRONMENT,
-  DEPLOYMENT_STATUS,
-  SMART_COMMIT_ACTION,
-  type GitProviderType as GitProviderTypeImport,
-  type PullRequestStatusType,
-  type BuildStatusType,
-  type DeploymentEnvironmentType,
-  type DeploymentStatusType,
-  type SmartCommitActionType as SmartCommitActionTypeImport,
-} from '@/lib/constants';
+export type GitProviderType = 'gitlab' | 'github' | 'bitbucket';
 
-// Re-export constants for convenience
-export { GIT_PROVIDER, PULL_REQUEST_STATUS, BUILD_STATUS, DEPLOYMENT_ENVIRONMENT, DEPLOYMENT_STATUS, SMART_COMMIT_ACTION };
+export type PullRequestStatus = 'open' | 'merged' | 'declined' | 'closed';
 
-// Type aliases for backward compatibility
-export type GitProviderType = GitProviderTypeImport;
-export type PullRequestStatus = PullRequestStatusType;
-export type BuildStatus = BuildStatusType;
-export type DeploymentEnvironment = DeploymentEnvironmentType;
-export type DeploymentStatus = DeploymentStatusType;
-export type SmartCommitActionType = SmartCommitActionTypeImport;
+export type BuildStatus = 'pending' | 'running' | 'success' | 'failed' | 'canceled';
+
+export type DeploymentEnvironment = 'development' | 'staging' | 'production' | 'testing' | 'other';
+
+export type DeploymentStatus = 'pending' | 'in_progress' | 'success' | 'failed' | 'rolled_back';
+
+// Smart commit action types
+export type SmartCommitActionType = 'comment' | 'time' | 'transition';
 
 export interface SmartCommitAction {
   type: SmartCommitActionType;
