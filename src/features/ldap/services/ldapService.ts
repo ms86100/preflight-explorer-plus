@@ -23,8 +23,6 @@ export async function fetchLdapConfiguration(id: string): Promise<LdapConfigurat
 }
 
 export async function createLdapConfiguration(config: Partial<LdapConfiguration>): Promise<LdapConfiguration> {
-  const { data: { user } } = await supabase.auth.getUser();
-  
   const { data, error } = await supabase
     .from('ldap_configurations')
     .insert({

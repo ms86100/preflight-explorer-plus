@@ -339,9 +339,17 @@ export function RepositoryLinker() {
                                   return (
                                     <div
                                       key={repo.id}
+                                      role="button"
+                                      tabIndex={linked ? -1 : 0}
                                       className={getRepoItemClassName(field.value === repo.id, linked)}
                                       onClick={() => {
                                         if (!linked) {
+                                          field.onChange(repo.id);
+                                        }
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if ((e.key === 'Enter' || e.key === ' ') && !linked) {
+                                          e.preventDefault();
                                           field.onChange(repo.id);
                                         }
                                       }}

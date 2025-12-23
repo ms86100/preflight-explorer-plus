@@ -28,12 +28,10 @@ export function useGitRepository(id: string | undefined) {
   });
 }
 
-export function useCreateGitRepository() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
+function createRepositoryMutation(queryClient: ReturnType<typeof useQueryClient>) {
+  return {
     mutationFn: (input: LinkRepositoryInput) => linkRepository(input),
-    onSuccess: (_, variables) => {
+    onSuccess: (_: Awaited<ReturnType<typeof linkRepository>>, variables: LinkRepositoryInput) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY, variables.project_id] });
       toast.success('Repository linked successfully');
@@ -41,7 +39,25 @@ export function useCreateGitRepository() {
     onError: (error: Error) => {
       toast.error(`Failed to link repository: ${error.message}`);
     },
-  });
+  };
+}
+
+function deleteRepositoryMutation(queryClient: ReturnType<typeof useQueryClient>) {
+  return {
+    mutationFn: (id: string) => unlinkRepository(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      toast.success('Repository unlinked');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to unlink repository: ${error.message}`);
+    },
+  };
+}
+
+export function useCreateGitRepository() {
+  const queryClient = useQueryClient();
+  return useMutation(createRepositoryMutation(queryClient));
 }
 
 export function useUpdateGitRepository() {
@@ -62,46 +78,15 @@ export function useUpdateGitRepository() {
 
 export function useDeleteGitRepository() {
   const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (id: string) => unlinkRepository(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      toast.success('Repository unlinked');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to unlink repository: ${error.message}`);
-    },
-  });
+  return useMutation(deleteRepositoryMutation(queryClient));
 }
 
 export function useLinkRepository() {
   const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (input: LinkRepositoryInput) => linkRepository(input),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY, variables.project_id] });
-      toast.success('Repository linked successfully');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to link repository: ${error.message}`);
-    },
-  });
+  return useMutation(createRepositoryMutation(queryClient));
 }
 
 export function useUnlinkRepository() {
   const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (id: string) => unlinkRepository(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      toast.success('Repository unlinked');
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to unlink repository: ${error.message}`);
-    },
-  });
+  return useMutation(deleteRepositoryMutation(queryClient));
 }

@@ -48,7 +48,7 @@ function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let result = 0;
   for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    result |= (a.codePointAt(i) ?? 0) ^ (b.codePointAt(i) ?? 0);
   }
   return result === 0;
 }
@@ -735,7 +735,8 @@ async function handlePushEvent(supabase: any, orgId: string, provider: string, p
 
   // Collect issue IDs for automation
   const linkedIssueIds: string[] = [];
-  for (const issueKey of [...new Set(linkedIssues)]) {
+  const uniqueLinkedIssues = new Set(linkedIssues);
+  for (const issueKey of uniqueLinkedIssues) {
     const { data: issue } = await supabase
       .from('issues')
       .select('id')

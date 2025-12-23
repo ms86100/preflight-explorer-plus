@@ -45,7 +45,6 @@ import {
   Pencil, 
   Trash2,
   Loader2,
-  Users,
   FolderKanban,
 } from 'lucide-react';
 import { toast } from 'sonner';

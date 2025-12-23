@@ -10,21 +10,21 @@
 export type PluginKey = string;
 
 export interface Plugin {
-  id: string;
-  key: PluginKey;
-  name: string;
-  description: string | null;
-  version: string;
-  vendor: string | null;
-  vendor_url: string | null;
-  documentation_url: string | null;
-  icon_url: string | null;
-  category: string;
-  is_system: boolean;
-  is_enabled: boolean;
-  config?: Record<string, unknown>;
-  hooks?: string[];
-  permissions?: string[];
+  readonly id: string;
+  readonly key: PluginKey;
+  readonly name: string;
+  readonly description: string | null;
+  readonly version: string;
+  readonly vendor: string | null;
+  readonly vendor_url: string | null;
+  readonly documentation_url: string | null;
+  readonly icon_url: string | null;
+  readonly category: string;
+  readonly is_system: boolean;
+  readonly is_enabled: boolean;
+  readonly config?: Record<string, unknown>;
+  readonly hooks?: string[];
+  readonly permissions?: string[];
 }
 
 // Feature-to-Plugin mapping

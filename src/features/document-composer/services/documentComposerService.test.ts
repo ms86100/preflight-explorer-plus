@@ -337,7 +337,7 @@ function generateCSV(
     fields.map((field) => {
       const value = String((issue as Record<string, unknown>)[field] || '');
       if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-        return `"${value.replace(/"/g, '""')}"`;
+        return `"${value.split('"').join('""')}"`;
       }
       return value;
     }).join(',')

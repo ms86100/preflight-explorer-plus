@@ -260,7 +260,14 @@ async function syncGitHubPullRequests(
   const prs = await response.json();
   
   for (const pr of prs) {
-    const status = pr.merged_at ? 'merged' : pr.state === 'closed' ? 'closed' : 'open';
+    let status: string;
+    if (pr.merged_at) {
+      status = 'merged';
+    } else if (pr.state === 'closed') {
+      status = 'closed';
+    } else {
+      status = 'open';
+    }
     
     const { data: existing } = await supabase
       .from('git_pull_requests')
@@ -324,7 +331,14 @@ async function syncGitLabMergeRequests(
   const mrs = await response.json();
   
   for (const mr of mrs) {
-    const status = mr.state === 'merged' ? 'merged' : mr.state === 'closed' ? 'closed' : 'open';
+    let status: string;
+    if (mr.state === 'merged') {
+      status = 'merged';
+    } else if (mr.state === 'closed') {
+      status = 'closed';
+    } else {
+      status = 'open';
+    }
     
     const { data: existing } = await supabase
       .from('git_pull_requests')

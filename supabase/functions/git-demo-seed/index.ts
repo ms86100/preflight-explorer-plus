@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
         .limit(1);
 
       const projectId = projects?.[0]?.id;
-      const projectKey = projects?.[0]?.project_key || 'DEMO';
+      const projectKey = projectId ? (projects?.[0]?.project_key ?? 'DEMO') : 'DEMO';
 
       // Get first issue to link demo data to
       const { data: issues } = await supabase

@@ -80,7 +80,7 @@ export function GitUserMappingManager() {
   });
 
   // Fetch unmapped authors from commits
-  const { data: unmappedAuthors, isLoading: loadingAuthors } = useQuery({
+  const { data: unmappedAuthors } = useQuery({
     queryKey: ['unmapped-git-authors'],
     queryFn: async () => {
       // Get unique authors from commits that don't have mappings
@@ -358,8 +358,8 @@ function UnmappedAuthorRow({
 }: {
   readonly author: UnmappedAuthor;
   readonly profiles: readonly Profile[];
-  onMap: (userId: string | null) => void;
-  isLoading: boolean;
+  readonly onMap: (userId: string | null) => void;
+  readonly isLoading: boolean;
 }) {
   const [selectedUser, setSelectedUser] = useState<string>('');
 

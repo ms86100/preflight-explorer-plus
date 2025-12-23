@@ -135,15 +135,15 @@ export function GitOrganizationsList() {
                       Copy Webhook URL
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleToggleActive(org.id, org.is_active ?? true)}>
-                      {org.is_active ? (
-                        <>
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Disable
-                        </>
-                      ) : (
+                      {org.is_active === false ? (
                         <>
                           <CheckCircle2 className="h-4 w-4 mr-2" />
                           Enable
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Disable
                         </>
                       )}
                     </DropdownMenuItem>
