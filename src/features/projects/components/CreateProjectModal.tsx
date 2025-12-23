@@ -24,7 +24,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClassificationBadge } from '@/components/compliance/ClassificationBanner';
 import { FolderKanban, LayoutGrid, ListTodo, AlertTriangle, Shield } from 'lucide-react';
-import type { ClassificationLevel, ProjectTemplate } from '@/types/jira';
+import type { ClassificationLevel } from '@/types/jira';
 
 const projectSchema = z.object({
   name: z.string().min(1, 'Project name is required').max(100),

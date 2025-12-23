@@ -127,7 +127,7 @@ export function CreateIssueModal({
 
   const selectedTypeId = watch('issue_type_id');
   const selectedType = issueTypes?.find((t) => t.id === selectedTypeId);
-  const TypeIcon = selectedType ? ISSUE_TYPE_ICONS[selectedType.name] || CheckSquare : CheckSquare;
+  const TypeIcon = selectedType ? (ISSUE_TYPE_ICONS[selectedType.name] || CheckSquare) : CheckSquare;
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>

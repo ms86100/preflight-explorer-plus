@@ -121,7 +121,7 @@ export function BacklogView() {
   const [selectedIssues, setSelectedIssues] = useState<Set<string>>(new Set());
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(new Set(['backlog']));
   const [isCreateIssueOpen, setIsCreateIssueOpen] = useState(false);
-  const [isSprintPlanningOpen, setIsSprintPlanningOpen] = useState(false);
+  const [, setIsSprintPlanningOpen] = useState(false);
   const [createIssueContext, setCreateIssueContext] = useState<string | undefined>();
   
   // Issue detail modal state
@@ -150,7 +150,7 @@ export function BacklogView() {
   const { data: issues, isLoading: issuesLoading } = useIssuesByProject(project?.id || '');
   const { data: boards } = useBoardsByProject(project?.id || '');
   const { data: sprints } = useSprintsByBoard(boards?.[0]?.id || '');
-  const { data: statuses } = useStatuses();
+  useStatuses(); // Fetch statuses for potential use
   
   const createSprint = useCreateSprint();
   const startSprint = useStartSprint();

@@ -181,7 +181,7 @@ export function DraggableBacklogView() {
   const { data: boards } = useBoardsByProject(project?.id || '');
   const boardId = boards?.[0]?.id || '';
   const { data: sprints } = useSprintsByBoard(boardId);
-  const { data: statuses } = useStatuses();
+  useStatuses(); // Fetch statuses for potential use
 
   // Fetch ALL sprint issues in a single query instead of per-sprint hooks
   const sprintIds = (sprints || []).filter(s => s.state !== 'closed').map(s => s.id);
@@ -232,7 +232,7 @@ export function DraggableBacklogView() {
   });
 
   const createSprint = useCreateSprint();
-  const startSprint = useStartSprint();
+  useStartSprint();
   const completeSprint = useCompleteSprint();
   const deleteIssue = useDeleteIssue();
   const updateIssue = useUpdateIssue();

@@ -14,7 +14,7 @@ import {
   Lock,
   Globe
 } from 'lucide-react';
-import { ClassificationBadge } from './ClassificationBadge';
+
 
 interface ComplianceStats {
   totalProjects: number;

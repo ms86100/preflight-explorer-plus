@@ -80,7 +80,7 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
 
   const { data: issue, isLoading, refetch } = useIssueById(issueId || '');
   const { data: priorities } = usePriorities();
-  const { data: statuses } = useStatuses();
+  useStatuses(); // Fetch statuses for potential use
   const { data: availableTransitions, isLoading: isLoadingTransitions } = useAvailableTransitions(issueId);
   const updateIssue = useUpdateIssue();
   const executeTransition = useExecuteTransition();

@@ -34,9 +34,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AppLayout } from '@/components/layout';
 import { ClassificationBadge } from '@/components/compliance/ClassificationBanner';
-import { CreateIssueModal, IssueDetailModal } from '@/features/issues';
+import { CreateIssueModal, IssueDetailModal, useIssuesByProject, useIssueTypes, usePriorities, useStatuses } from '@/features/issues';
 import { useProjects } from '@/features/projects';
-import { useIssuesByProject, useIssueTypes, usePriorities, useStatuses } from '@/features/issues';
 import { toast } from 'sonner';
 import type { ClassificationLevel } from '@/types/jira';
 

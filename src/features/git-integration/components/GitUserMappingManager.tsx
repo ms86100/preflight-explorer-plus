@@ -190,11 +190,6 @@ export function GitUserMappingManager() {
     },
   });
 
-  const getProfileName = (userId: string | null) => {
-    if (!userId) return null;
-    const profile = profiles?.find(p => p.id === userId);
-    return profile?.display_name || profile?.email || 'Unknown';
-  };
 
   const filteredMappings = mappings?.filter(m =>
     m.git_email.toLowerCase().includes(searchTerm.toLowerCase()) ||

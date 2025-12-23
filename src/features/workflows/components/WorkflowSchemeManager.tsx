@@ -75,7 +75,7 @@ export function WorkflowSchemeManager() {
   const [assignProjectId, setAssignProjectId] = useState<string>('');
   const [assignSchemeId, setAssignSchemeId] = useState<string>('');
 
-  const { data: schemeWithMappings, isLoading: mappingsLoading } = useWorkflowSchemeWithMappings(selectedSchemeId);
+  const { data: schemeWithMappings } = useWorkflowSchemeWithMappings(selectedSchemeId);
 
   const handleCreateScheme = () => {
     if (!newSchemeName.trim()) return;
