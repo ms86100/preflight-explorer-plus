@@ -7,8 +7,6 @@ import { Settings2 } from 'lucide-react';
 
 interface CustomFieldsFormProps {
   readonly issueId: string;
-  readonly projectId?: string;
-  readonly issueTypeId?: string;
   readonly disabled?: boolean;
 }
 

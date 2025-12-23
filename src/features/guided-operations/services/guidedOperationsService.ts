@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import type { GuidedOperation, OperationStep, OperationExecution } from '../types';
 
 // =============================================
@@ -48,7 +49,7 @@ export async function createOperation(operation: {
       name: operation.name,
       description: operation.description,
       category: operation.category || 'general',
-      steps: JSON.parse(JSON.stringify(operation.steps)),
+      steps: structuredClone(operation.steps) as unknown as Json,
       requires_approval: operation.requires_approval || false,
       created_by: user.user.id,
     }])

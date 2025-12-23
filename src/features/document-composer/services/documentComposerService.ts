@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import type { DocumentTemplate, ExportJob, ExportFormat, TemplateSchema } from '../types';
 
 // =============================================
@@ -47,10 +48,10 @@ export async function createTemplate(template: {
       name: template.name,
       description: template.description,
       format: template.format,
-      header_config: JSON.parse(JSON.stringify(template.schema.header || {})),
-      sections: JSON.parse(JSON.stringify(template.schema.sections || [])),
-      footer_config: JSON.parse(JSON.stringify(template.schema.footer || {})),
-      watermark_config: JSON.parse(JSON.stringify(template.schema.watermark || {})),
+      header_config: structuredClone(template.schema.header || {}) as unknown as Json,
+      sections: structuredClone(template.schema.sections || []) as unknown as Json,
+      footer_config: structuredClone(template.schema.footer || {}) as unknown as Json,
+      watermark_config: structuredClone(template.schema.watermark || {}) as unknown as Json,
       is_default: template.is_default || false,
       created_by: user.user.id,
     }])
@@ -132,8 +133,8 @@ export async function createExport(exportData: {
       template_id: exportData.templateId || null,
       name: exportData.name,
       format: exportData.format,
-      issue_ids: JSON.parse(JSON.stringify(exportData.issueIds)),
-      options: JSON.parse(JSON.stringify(exportData.options || {})),
+      issue_ids: structuredClone(exportData.issueIds) as unknown as Json,
+      options: structuredClone(exportData.options || {}) as unknown as Json,
       status: 'pending',
       created_by: user.user.id,
     }])

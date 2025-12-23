@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import type { DataBlockSchema, DataBlockInstance, ColumnDefinition, DataRow } from '../types';
 
 // =============================================
@@ -45,8 +46,8 @@ export async function createSchema(schema: {
     .insert([{
       name: schema.name,
       description: schema.description,
-      columns: JSON.parse(JSON.stringify(schema.columns)),
-      validation_rules: JSON.parse(JSON.stringify(schema.validation_rules || {})),
+      columns: structuredClone(schema.columns) as unknown as Json,
+      validation_rules: structuredClone(schema.validation_rules || {}) as unknown as Json,
       created_by: user.user.id,
     }])
     .select()

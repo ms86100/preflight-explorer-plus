@@ -98,7 +98,6 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
           // Clean up uploaded file
           await supabase.storage.from('attachments').remove([filePath]);
           toast.error(`Failed to save ${file.name}`);
-          continue;
         }
       }
 
