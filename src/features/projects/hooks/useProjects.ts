@@ -55,7 +55,6 @@ export function useCreateProject() {
       toast.success(`Project "${data.name}" created successfully!`);
     },
     onError: (error: Error & { code?: string; message?: string }) => {
-      console.error('Failed to create project:', error);
       // Check for unique constraint violation on project key
       const errorMessage = error?.message?.toLowerCase() || '';
       if (errorMessage.includes('duplicate') || errorMessage.includes('unique') || 
@@ -83,8 +82,7 @@ export function useUpdateProject() {
       queryClient.invalidateQueries({ queryKey: ['project', data.pkey] });
       toast.success('Project updated successfully!');
     },
-    onError: (error) => {
-      console.error('Failed to update project:', error);
+    onError: () => {
       toast.error('Failed to update project. Please try again.');
     },
   });
@@ -99,8 +97,7 @@ export function useArchiveProject() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success('Project archived successfully!');
     },
-    onError: (error) => {
-      console.error('Failed to archive project:', error);
+    onError: () => {
       toast.error('Failed to archive project. Please try again.');
     },
   });

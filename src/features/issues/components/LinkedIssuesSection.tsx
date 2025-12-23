@@ -92,8 +92,8 @@ export function LinkedIssuesSection({ issueId, projectId }: LinkedIssuesSectionP
       if (inError) throw inError;
 
       setLinkedIssues([...(outgoing || []), ...(incoming || [])]);
-    } catch (error) {
-      console.error('Error fetching linked issues:', error);
+    } catch {
+      toast.error('Failed to load linked issues');
     } finally {
       setIsLoading(false);
     }
@@ -116,8 +116,9 @@ export function LinkedIssuesSection({ issueId, projectId }: LinkedIssuesSectionP
 
       if (error) throw error;
       setSearchResults(data || []);
-    } catch (error) {
-      console.error('Error searching issues:', error);
+    } catch {
+      // Silent failure for search - user can retry
+      setSearchResults([]);
     }
   };
 
@@ -305,10 +306,12 @@ export function LinkedIssuesSection({ issueId, projectId }: LinkedIssuesSectionP
                   <p className="text-sm text-muted-foreground truncate">{linkedIssue.summary}</p>
                 </div>
                 <Button
+                  type="button"
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6 text-muted-foreground hover:text-destructive"
                   onClick={() => handleRemoveLink(link.id)}
+                  aria-label={`Remove link to ${linkedIssue.issue_key}`}
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>

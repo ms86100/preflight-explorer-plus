@@ -346,7 +346,7 @@ export default function ComponentsPage() {
                     <SelectItem key={member.id} value={member.id}>
                       <div className="flex items-center gap-2">
                         <Avatar className="h-5 w-5">
-                          <AvatarImage src={member.avatar_url || ''} />
+                          <AvatarImage src={member.avatar_url || ''} alt={`${member.display_name || 'Team member'} avatar`} />
                           <AvatarFallback className="text-xs">
                             {member.display_name?.charAt(0) || '?'}
                           </AvatarFallback>

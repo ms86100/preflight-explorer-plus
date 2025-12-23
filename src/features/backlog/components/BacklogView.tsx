@@ -697,7 +697,7 @@ export function BacklogView() {
                     }}
                   >
                     <Avatar className="h-8 w-8 mr-3">
-                      <AvatarImage src={member.avatar_url || ''} />
+                      <AvatarImage src={member.avatar_url || ''} alt={`${member.display_name || 'Team member'} avatar`} />
                       <AvatarFallback className="text-xs">
                         {member.display_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?'}
                       </AvatarFallback>

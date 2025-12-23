@@ -408,7 +408,7 @@ function TeamMembersPanel({
               >
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={member.profile?.avatar_url || undefined} />
+                    <AvatarImage src={member.profile?.avatar_url || undefined} alt={`${member.profile?.display_name || 'Team member'} avatar`} />
                     <AvatarFallback>
                       {(member.profile?.display_name || 'U')
                         .split(' ')

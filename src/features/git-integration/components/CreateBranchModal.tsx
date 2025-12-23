@@ -95,7 +95,6 @@ export function CreateBranchModal({
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
-      console.error('Failed to create branch:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to create branch');
     } finally {
       setLoading(false);

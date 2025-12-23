@@ -164,10 +164,12 @@ export function BoardColumn({
       {/* Add Issue Button */}
       <div className="p-2 border-t border-border/50">
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           className="w-full justify-start text-muted-foreground hover:text-foreground"
           onClick={onCreateIssue}
+          aria-label="Create new issue in this column"
         >
           <Plus className="h-4 w-4 mr-2" />
           Create issue

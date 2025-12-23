@@ -42,9 +42,8 @@ export function ExportHistory() {
     try {
       await downloadExport(exportJob);
       toast.success('Download started');
-    } catch (error) {
+    } catch {
       toast.error('Download failed');
-      console.error('Download error:', error);
     }
   };
 
@@ -150,24 +149,28 @@ export function ExportHistory() {
                 <div className="flex justify-end gap-1">
                   {exportJob.status === 'completed' && (
                     <Button 
+                      type="button"
                       variant="ghost" 
                       size="sm"
                       onClick={() => handleDownload(exportJob)}
+                      aria-label={`Download ${exportJob.name || 'export'}`}
                     >
                       <Download className="h-4 w-4" />
                     </Button>
                   )}
                   {exportJob.status === 'failed' && (
-                    <Button variant="ghost" size="sm">
+                    <Button type="button" variant="ghost" size="sm" aria-label="Retry export">
                       <RefreshCw className="h-4 w-4" />
                     </Button>
                   )}
                   <Button 
+                    type="button"
                     variant="ghost" 
                     size="sm" 
                     className="text-destructive hover:text-destructive"
                     onClick={() => deleteMutation.mutate(exportJob.id)}
                     disabled={deleteMutation.isPending}
+                    aria-label={`Delete ${exportJob.name || 'export'}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

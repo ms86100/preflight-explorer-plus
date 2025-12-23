@@ -52,8 +52,8 @@ export function LdapSyncPanel({ configId }: LdapSyncPanelProps) {
       setCachedUsers(status.cached_users);
       setLastSyncStatus(status.config_status?.last_sync_status || null);
       setLastSyncAt(status.config_status?.last_sync_at || null);
-    } catch (error) {
-      console.error('Failed to load sync status:', error);
+    } catch {
+      toast.error('Failed to load sync status');
     } finally {
       setIsLoading(false);
     }

@@ -126,7 +126,6 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('Failed to fetch comments:', error);
       return;
     }
 
@@ -139,9 +138,7 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
       const { data: profiles, error: profilesError } = await supabase
         .rpc('get_public_profiles', { _user_ids: authorIds });
 
-      if (profilesError) {
-        console.error('Failed to fetch comment authors:', profilesError);
-      } else {
+      if (!profilesError) {
         profileMap = new Map((profiles || []).map(p => [p.id, { display_name: p.display_name, avatar_url: p.avatar_url }]));
       }
     }

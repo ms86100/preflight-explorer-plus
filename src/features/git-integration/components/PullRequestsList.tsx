@@ -59,7 +59,7 @@ export function PullRequestsList({ pullRequests, onCreatePR, showCreateButton = 
           No pull requests linked yet
         </div>
         {showCreateButton && onCreatePR && (
-          <Button variant="outline" size="sm" onClick={onCreatePR} className="gap-1">
+          <Button type="button" variant="outline" size="sm" onClick={onCreatePR} className="gap-1">
             <Plus className="h-3 w-3" />
             Create pull request
           </Button>
@@ -74,7 +74,7 @@ export function PullRequestsList({ pullRequests, onCreatePR, showCreateButton = 
         <PullRequestItem key={pr.id} pullRequest={pr} />
       ))}
       {showCreateButton && onCreatePR && (
-        <Button variant="ghost" size="sm" onClick={onCreatePR} className="gap-1 w-full justify-center">
+        <Button type="button" variant="ghost" size="sm" onClick={onCreatePR} className="gap-1 w-full justify-center">
           <Plus className="h-3 w-3" />
           Create another PR
         </Button>

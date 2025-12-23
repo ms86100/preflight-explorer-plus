@@ -60,8 +60,7 @@ export function useCreateSprint() {
       queryClient.invalidateQueries({ queryKey: ['sprints'] });
       toast.success(`Sprint "${data.name}" created!`);
     },
-    onError: (error) => {
-      console.error('Failed to create sprint:', error);
+    onError: () => {
       toast.error('Failed to create sprint.');
     },
   });
@@ -78,8 +77,7 @@ export function useStartSprint() {
       queryClient.invalidateQueries({ queryKey: ['sprint', 'active'] });
       toast.success('Sprint started!');
     },
-    onError: (error) => {
-      console.error('Failed to start sprint:', error);
+    onError: () => {
       toast.error('Failed to start sprint.');
     },
   });
@@ -95,8 +93,7 @@ export function useCompleteSprint() {
       queryClient.invalidateQueries({ queryKey: ['sprint', 'active'] });
       toast.success('Sprint completed!');
     },
-    onError: (error) => {
-      console.error('Failed to complete sprint:', error);
+    onError: () => {
       toast.error('Failed to complete sprint.');
     },
   });
@@ -112,8 +109,7 @@ export function useUpdateSprint() {
       queryClient.invalidateQueries({ queryKey: ['sprints'] });
       toast.success(`Sprint "${data.name}" updated!`);
     },
-    onError: (error) => {
-      console.error('Failed to update sprint:', error);
+    onError: () => {
       toast.error('Failed to update sprint.');
     },
   });
@@ -128,8 +124,7 @@ export function useDeleteSprint() {
       queryClient.invalidateQueries({ queryKey: ['sprints'] });
       toast.success('Sprint deleted!');
     },
-    onError: (error) => {
-      console.error('Failed to delete sprint:', error);
+    onError: () => {
       toast.error('Failed to delete sprint.');
     },
   });
@@ -147,8 +142,7 @@ export function useMoveIssuesToBacklog() {
       queryClient.invalidateQueries({ queryKey: ['issues'] });
       toast.success('Issues moved to backlog!');
     },
-    onError: (error) => {
-      console.error('Failed to move issues:', error);
+    onError: () => {
       toast.error('Failed to move issues to backlog.');
     },
   });

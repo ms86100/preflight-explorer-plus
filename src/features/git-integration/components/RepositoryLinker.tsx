@@ -131,8 +131,7 @@ export function RepositoryLinker() {
 
       if (error) throw error;
       setDiscoveredRepos(data.repositories || []);
-    } catch (err) {
-      console.error('Failed to discover repositories:', err);
+    } catch {
       toast.error('Failed to fetch repositories from Git provider');
       setDiscoveredRepos([]);
     } finally {

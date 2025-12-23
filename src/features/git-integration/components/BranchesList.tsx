@@ -20,7 +20,7 @@ export function BranchesList({ branches, onCreateBranch, showCreateButton = true
           No branches linked yet
         </div>
         {showCreateButton && onCreateBranch && (
-          <Button variant="outline" size="sm" onClick={onCreateBranch} className="gap-1">
+          <Button type="button" variant="outline" size="sm" onClick={onCreateBranch} className="gap-1">
             <Plus className="h-3 w-3" />
             Create branch
           </Button>
@@ -35,7 +35,7 @@ export function BranchesList({ branches, onCreateBranch, showCreateButton = true
         <BranchItem key={branch.id} branch={branch} />
       ))}
       {showCreateButton && onCreateBranch && (
-        <Button variant="ghost" size="sm" onClick={onCreateBranch} className="gap-1 w-full justify-center">
+        <Button type="button" variant="ghost" size="sm" onClick={onCreateBranch} className="gap-1 w-full justify-center">
           <Plus className="h-3 w-3" />
           Create another branch
         </Button>

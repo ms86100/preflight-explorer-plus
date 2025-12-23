@@ -156,8 +156,7 @@ export function useUpdateIssue() {
       queryClient.invalidateQueries({ queryKey: ['issue', data.issue_key] });
       toast.success('Issue updated!');
     },
-    onError: (error) => {
-      console.error('Failed to update issue:', error);
+    onError: () => {
       toast.error('Failed to update issue.');
     },
   });
@@ -187,8 +186,7 @@ export function useUpdateIssueStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['issues'] });
     },
-    onError: (error) => {
-      console.error('Failed to update issue status:', error);
+    onError: () => {
       toast.error('Failed to update issue status.');
     },
   });
@@ -220,8 +218,7 @@ export function useDeleteIssue() {
       queryClient.invalidateQueries({ queryKey: ['issues'] });
       toast.success('Issue deleted!');
     },
-    onError: (error) => {
-      console.error('Failed to delete issue:', error);
+    onError: () => {
       toast.error('Failed to delete issue.');
     },
   });
@@ -277,8 +274,7 @@ export function useCloneIssue() {
       queryClient.invalidateQueries({ queryKey: ['issues'] });
       toast.success(`Issue cloned as ${data.issue_key}`);
     },
-    onError: (error) => {
-      console.error('Failed to clone issue:', error);
+    onError: () => {
       toast.error('Failed to clone issue.');
     },
   });
@@ -374,8 +370,7 @@ export function useCreateStatus() {
       queryClient.invalidateQueries({ queryKey: ['statuses'] });
       toast.success('Status created!');
     },
-    onError: (error) => {
-      console.error('Failed to create status:', error);
+    onError: () => {
       toast.error('Failed to create status.');
     },
   });

@@ -58,8 +58,8 @@ export function NotificationsList({ limit, showHeader = true }: NotificationsLis
 
       if (error) throw error;
       setNotifications(data || []);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
+    } catch {
+      toast.error('Failed to load notifications');
     } finally {
       setIsLoading(false);
     }
@@ -76,8 +76,8 @@ export function NotificationsList({ limit, showHeader = true }: NotificationsLis
       setNotifications(notifications.map(n => 
         n.id === id ? { ...n, is_read: true } : n
       ));
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
+    } catch {
+      // Silent failure for marking as read - non-critical operation
     }
   };
 
@@ -94,8 +94,7 @@ export function NotificationsList({ limit, showHeader = true }: NotificationsLis
       if (error) throw error;
       setNotifications(notifications.map(n => ({ ...n, is_read: true })));
       toast.success('All notifications marked as read');
-    } catch (error) {
-      console.error('Error marking all as read:', error);
+    } catch {
       toast.error('Failed to mark all as read');
     }
   };
@@ -109,8 +108,8 @@ export function NotificationsList({ limit, showHeader = true }: NotificationsLis
 
       if (error) throw error;
       setNotifications(notifications.filter(n => n.id !== id));
-    } catch (error) {
-      console.error('Error deleting notification:', error);
+    } catch {
+      toast.error('Failed to delete notification');
     }
   };
 

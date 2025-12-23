@@ -21,8 +21,8 @@ export function ImportHistory({ onViewJob }: ImportHistoryProps) {
       try {
         const history = await getImportHistory();
         setJobs(history);
-      } catch (error) {
-        console.error('Failed to load import history:', error);
+      } catch {
+        // Silent failure - empty state will be shown
       } finally {
         setIsLoading(false);
       }

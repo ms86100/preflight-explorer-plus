@@ -177,10 +177,8 @@ export default function BoardPage() {
       }
 
       refetchIssues();
-    } catch (error) {
-      console.error('Failed to add issue to active sprint:', error);
+    } catch {
       toast.error('Issue created but could not be added to the active sprint');
-      // Still refresh to reflect creation elsewhere
       refetchIssues();
     }
   };
@@ -193,8 +191,7 @@ export default function BoardPage() {
       } else {
         toast.error(result.error || 'Cannot move issue - transition not allowed by workflow');
       }
-    } catch (error) {
-      console.error('Failed to move issue:', error);
+    } catch {
       toast.error('Failed to move issue');
     }
   };
@@ -274,8 +271,8 @@ export default function BoardPage() {
       });
       setStartSprintOpen(false);
       setSprintToStart(null);
-    } catch (error) {
-      console.error('Failed to start sprint:', error);
+    } catch {
+      // Error is already handled by the mutation's onError handler
     }
   };
 

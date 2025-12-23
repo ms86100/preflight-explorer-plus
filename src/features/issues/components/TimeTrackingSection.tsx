@@ -62,8 +62,8 @@ export function TimeTrackingSection({
 
       if (error) throw error;
       setWorklogs((data || []) as unknown as Worklog[]);
-    } catch (error) {
-      console.error('Error fetching worklogs:', error);
+    } catch {
+      toast.error('Failed to load work logs');
     } finally {
       setIsLoading(false);
     }
@@ -105,8 +105,7 @@ export function TimeTrackingSection({
       setNewLog({ hours: '', minutes: '', description: '', date: new Date().toISOString().split('T')[0] });
       fetchWorklogs();
       onUpdate?.();
-    } catch (error) {
-      console.error('Error adding worklog:', error);
+    } catch {
       toast.error('Failed to add worklog');
     } finally {
       setIsAddingLog(false);
@@ -128,8 +127,7 @@ export function TimeTrackingSection({
       toast.success('Worklog deleted');
       fetchWorklogs();
       onUpdate?.();
-    } catch (error) {
-      console.error('Error deleting worklog:', error);
+    } catch {
       toast.error('Failed to delete worklog');
     }
   };
@@ -276,10 +274,12 @@ export function TimeTrackingSection({
                 </div>
                 {log.author_id === user?.id && (
                   <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 text-muted-foreground hover:text-destructive"
                     onClick={() => handleDeleteWorklog(log.id, log.time_spent)}
+                    aria-label="Delete work log entry"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
