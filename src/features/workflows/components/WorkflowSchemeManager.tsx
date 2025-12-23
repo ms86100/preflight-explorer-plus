@@ -171,16 +171,14 @@ export function WorkflowSchemeManager() {
               <CardContent>
                 <div className="space-y-2">
                   {schemes?.map(scheme => (
-                    <div
+                    <button
+                      type="button"
                       key={scheme.id}
                       className={cn(
-                        "p-3 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50",
+                        "p-3 rounded-lg border cursor-pointer transition-colors hover:bg-muted/50 w-full text-left",
                         selectedSchemeId === scheme.id ? "bg-muted border-primary" : "border-border"
                       )}
                       onClick={() => setSelectedSchemeId(scheme.id)}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedSchemeId(scheme.id); } }}
-                      tabIndex={0}
-                      role="button"
                       aria-label={`Select workflow scheme: ${scheme.name}`}
                       aria-pressed={selectedSchemeId === scheme.id}
                     >
@@ -201,7 +199,7 @@ export function WorkflowSchemeManager() {
                           {scheme.description}
                         </p>
                       )}
-                    </div>
+                    </button>
                   ))}
                   {schemes?.length === 0 && (
                     <div className="text-center py-8 text-muted-foreground">

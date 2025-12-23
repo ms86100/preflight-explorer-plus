@@ -91,7 +91,7 @@ export function sanitizeString(input: unknown): string {
     .replaceAll(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replaceAll(/javascript:/gi, '')
     .replaceAll(/on\w+\s*=/gi, '')
-    .replaceAll(/\0/g, '')
+    .replaceAll('\0', '')
     .trim();
 }
 

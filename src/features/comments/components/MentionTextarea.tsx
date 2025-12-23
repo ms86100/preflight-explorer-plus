@@ -188,7 +188,12 @@ export function MentionTextarea({
           aria-label="User mention suggestions"
           className="absolute z-50 bottom-full mb-1 left-0 w-64 bg-popover border border-border rounded-md shadow-lg overflow-hidden"
         >
-          <div className="py-1 max-h-48 overflow-y-auto" role="listbox" aria-label="Suggested users">
+          <select size={Math.min(suggestions.length, 6)} className="sr-only" aria-label="Suggested users" tabIndex={-1}>
+            {suggestions.map((user) => (
+              <option key={user.id} value={user.id}>{user.display_name}</option>
+            ))}
+          </select>
+          <div className="py-1 max-h-48 overflow-y-auto" aria-hidden="true">
             {suggestions.map((user, index) => (
               <button
                 type="button"
@@ -198,8 +203,7 @@ export function MentionTextarea({
                 }`}
                 onClick={() => insertMention(user)}
                 onMouseEnter={() => setSelectedIndex(index)}
-                role="option"
-                aria-selected={index === selectedIndex}
+                tabIndex={-1}
               >
                 <Avatar className="h-6 w-6">
                   <AvatarImage src={user.avatar_url || undefined} />

@@ -58,13 +58,12 @@ export function IssueCard({ issue, isDragging, onSelect }: IssueCardProps) {
   }, [issue.assignee?.display_name]);
 
   return (
-    <div
+    <button
+      type="button"
       onClick={onSelect}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
-      tabIndex={0}
-      role="button"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect?.(); } }}
       aria-label={`Issue ${issue.issue_key}: ${issue.summary}`}
-      className={`issue-card group relative ${
+      className={`issue-card group relative text-left w-full ${
         isDragging ? 'shadow-lg ring-2 ring-primary opacity-90' : ''
       }`}
     >
@@ -157,6 +156,6 @@ export function IssueCard({ issue, isDragging, onSelect }: IssueCardProps) {
           )}
         </div>
       </div>
-    </div>
+    </button>
   );
 }

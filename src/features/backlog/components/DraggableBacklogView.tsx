@@ -461,7 +461,8 @@ export function DraggableBacklogView() {
 
       const targetSprint = sprints?.find(s => s.id === targetSprintId);
       toast.success(`Moved ${draggedIssue.issue_key} to ${targetSprint?.name || 'sprint'}`);
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('Failed to move issue:', error);
       toast.error('Failed to move issue');
     }
   };
@@ -485,22 +486,13 @@ export function DraggableBacklogView() {
     const isDragging = draggedIssue?.id === issue.id;
 
     return (
-      <div
+      <li
         key={issue.id}
-        role="listitem"
-        tabIndex={0}
         aria-label={`Issue ${issue.issue_key}: ${issue.summary}`}
         draggable
         onDragStart={(e) => handleDragStart(e, issue)}
         onDragEnd={handleDragEnd}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            setSelectedIssueId(issue.id);
-            setIsDetailModalOpen(true);
-          }
-        }}
-        className={`group flex items-center gap-3 px-4 py-2 border-b border-border hover:bg-muted/50 transition-all cursor-grab active:cursor-grabbing ${
+        className={`group flex items-center gap-3 px-4 py-2 border-b border-border hover:bg-muted/50 transition-all cursor-grab active:cursor-grabbing list-none ${
           isSelected ? 'bg-primary/5' : ''
         } ${isDragging ? 'opacity-50 scale-95' : ''}`}
       >
@@ -620,7 +612,7 @@ export function DraggableBacklogView() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </li>
     );
   };
 

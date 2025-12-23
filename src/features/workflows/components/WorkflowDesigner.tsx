@@ -406,14 +406,13 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div 
+        <section 
           ref={canvasRef}
           className="relative bg-muted/30 rounded-lg border border-border overflow-hidden"
           style={{ height: 500, minWidth: 900 }}
           onClick={handleCanvasClick}
           onKeyDown={(e) => { if (e.key === 'Escape') { setConnectionState(null); } }}
           tabIndex={0}
-          role="application"
           aria-label="Workflow designer canvas"
         >
           {/* Grid pattern */}
@@ -638,7 +637,7 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
               <span className="text-muted-foreground">Click on a status to create a transition, or click anywhere to cancel</span>
             </div>
           )}
-        </div>
+        </section>
 
         <div className="mt-4 flex gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">

@@ -302,13 +302,11 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
             const FileIcon = getFileIcon(attachment.mime_type);
             const isImage = attachment.mime_type?.startsWith('image/');
             return (
-              <div
+              <button
+                type="button"
                 key={attachment.id}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer w-full text-left"
                 onClick={() => handlePreview(attachment)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePreview(attachment); } }}
-                tabIndex={0}
-                role="button"
                 aria-label={`Preview attachment: ${attachment.filename}`}
               >
                 <FileIcon className="h-8 w-8 text-muted-foreground flex-shrink-0" />
@@ -352,7 +350,7 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
                     </Button>
                   )}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>

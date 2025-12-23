@@ -120,15 +120,14 @@ export function LdapConfigurationList({ onSelect, onNew }: LdapConfigurationList
       ) : (
         <div className="grid gap-4">
           {configurations.map((config) => (
-            <Card 
-              key={config.id} 
-              className="cursor-pointer hover:border-primary/50 transition-colors"
+            <button
+              type="button"
+              key={config.id}
+              className="w-full text-left cursor-pointer hover:border-primary/50 transition-colors"
               onClick={() => onSelect(config)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(config); } }}
-              tabIndex={0}
-              role="button"
               aria-label={`Select ${config.name} configuration`}
             >
+              <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div>
@@ -175,6 +174,7 @@ export function LdapConfigurationList({ onSelect, onNew }: LdapConfigurationList
                 </div>
               </CardContent>
             </Card>
+            </button>
           ))}
         </div>
       )}

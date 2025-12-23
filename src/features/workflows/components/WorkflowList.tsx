@@ -230,17 +230,15 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
         ) : (
           <div className="space-y-2">
             {workflows?.map(workflow => (
-              <div
+              <button
+                type="button"
                 key={workflow.id}
                 className={`
-                  flex items-center justify-between p-3 rounded-lg border cursor-pointer
+                  flex items-center justify-between p-3 rounded-lg border cursor-pointer w-full text-left
                   transition-colors hover:bg-muted/50
                   ${selectedWorkflowId === workflow.id ? 'bg-muted border-primary' : 'border-border'}
                 `}
                 onClick={() => onSelectWorkflow(workflow.id)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectWorkflow(workflow.id); } }}
-                tabIndex={0}
-                role="button"
                 aria-label={`Select workflow: ${workflow.name}`}
                 aria-pressed={selectedWorkflowId === workflow.id}
               >
@@ -344,7 +342,7 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
+              </button>
             ))}
           </div>
         )}

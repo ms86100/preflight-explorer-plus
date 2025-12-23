@@ -140,11 +140,10 @@ export function BoardColumn({
       </div>
 
       {/* Issue List */}
-      <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-300px)]" role="list">
+      <ul className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-300px)]">
         {issues.map((issue) => (
-          <div
+          <li
             key={issue.id}
-            role="listitem"
             draggable
             onDragStart={(e) => handleDragStart(e, issue.id)}
           >
@@ -152,15 +151,15 @@ export function BoardColumn({
               issue={issue}
               onSelect={() => onIssueSelect?.(issue.id)}
             />
-          </div>
+          </li>
         ))}
 
         {issues.length === 0 && (
-          <div className="py-8 text-center text-sm text-muted-foreground">
+          <li className="py-8 text-center text-sm text-muted-foreground list-none">
             No issues
-          </div>
+          </li>
         )}
-      </div>
+      </ul>
 
       {/* Add Issue Button */}
       <div className="p-2 border-t border-border/50">
