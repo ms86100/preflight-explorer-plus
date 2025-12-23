@@ -86,12 +86,12 @@ export function isOneOf<T>(value: unknown, allowedValues: readonly T[]): value i
  */
 export function sanitizeString(input: unknown): string {
   if (typeof input !== 'string') return '';
-  
+
   return input
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/javascript:/gi, '')
-    .replace(/on\w+\s*=/gi, '')
-    .replace(/\0/g, '')
+    .replaceAll(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replaceAll(/javascript:/gi, '')
+    .replaceAll(/on\w+\s*=/gi, '')
+    .replaceAll(/\0/g, '')
     .trim();
 }
 

@@ -152,10 +152,12 @@ export function ExecutiveSummary({ projectId }: ExecutiveSummaryProps) {
   });
 
   if (isLoading) {
+    const skeletonCards = ['health', 'completion', 'throughput', 'cycle-time'] as const;
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...new Array(4)].map((_, i) => (
-          <Card key={`skeleton-${i}`}>
+        {skeletonCards.map((key) => (
+          <Card key={`skeleton-${key}`}>
             <CardContent className="p-6">
               <div className="h-20 animate-pulse bg-muted rounded" />
             </CardContent>
