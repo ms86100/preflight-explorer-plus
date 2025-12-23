@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCustomFieldDefinitions, useIssueCustomFieldValues, useSetCustomFieldValue } from '../hooks/useCustomFields';
 import { CustomFieldInput } from './CustomFieldInput';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Settings2 } from 'lucide-react';
 
 interface CustomFieldsFormProps {
-  issueId: string;
-  projectId?: string;
-  issueTypeId?: string;
-  disabled?: boolean;
+  readonly issueId: string;
+  readonly projectId?: string;
+  readonly issueTypeId?: string;
+  readonly disabled?: boolean;
 }
 
 export function CustomFieldsForm({ issueId, disabled }: CustomFieldsFormProps) {

@@ -345,13 +345,17 @@ export function TemplateEditor() {
                 </Button>
               </div>
               <div className="space-y-2">
-                {formData.sections.map((section, index) => (
+                {formData.sections.map((section, index) => {
+                  const sectionNameId = `section-name-${index}`;
+                  return (
                   <div
                     key={index}
                     className="flex items-center gap-2 p-3 border rounded-md bg-muted/30"
                   >
                     <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+                    <Label htmlFor={sectionNameId} className="sr-only">Section name</Label>
                     <Input
+                      id={sectionNameId}
                       value={section.name}
                       onChange={(e) => handleUpdateSection(index, { name: e.target.value })}
                       className="flex-1"
@@ -382,7 +386,8 @@ export function TemplateEditor() {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

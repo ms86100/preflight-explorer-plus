@@ -6,7 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { TrendingUp } from 'lucide-react';
 
 interface VelocityChartProps {
-  boardId: string;
+  readonly boardId: string;
 }
 
 interface VelocityData {

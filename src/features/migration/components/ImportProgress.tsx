@@ -9,9 +9,9 @@ import { getImportStatus } from "../services/importService";
 import type { ImportJob, ImportError } from "../types";
 
 interface ImportProgressProps {
-  jobId: string;
-  onComplete: () => void;
-  onViewResults: () => void;
+  readonly jobId: string;
+  readonly onComplete: () => void;
+  readonly onViewResults: () => void;
 }
 
 export function ImportProgress({ jobId, onComplete, onViewResults }: ImportProgressProps) {

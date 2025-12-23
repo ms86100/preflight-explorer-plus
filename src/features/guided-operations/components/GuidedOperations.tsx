@@ -129,31 +129,37 @@ export function GuidedOperations() {
             <CardTitle>{currentStep.name}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {currentStep.type === 'form' && currentStep.fields?.map((field) => (
-              <div key={field.key} className="space-y-2">
-                <Label>{field.label} {field.required && <span className="text-destructive">*</span>}</Label>
-                {field.type === 'textarea' ? (
-                  <Textarea
-                    value={String(formValues[field.key] || '')}
-                    onChange={(e) => setFormValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                  />
-                ) : field.type === 'select' ? (
-                  <select
-                    className="w-full border rounded-md p-2"
-                    value={String(formValues[field.key] || '')}
-                    onChange={(e) => setFormValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                  >
-                    <option value="">Select...</option>
-                    {field.options?.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-                  </select>
-                ) : (
-                  <Input
-                    value={String(formValues[field.key] || '')}
-                    onChange={(e) => setFormValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                  />
-                )}
-              </div>
-            ))}
+            {currentStep.type === 'form' && currentStep.fields?.map((field) => {
+              const fieldId = `guided-op-${field.key}`;
+              return (
+                <div key={field.key} className="space-y-2">
+                  <Label htmlFor={fieldId}>{field.label} {field.required && <span className="text-destructive">*</span>}</Label>
+                  {field.type === 'textarea' ? (
+                    <Textarea
+                      id={fieldId}
+                      value={String(formValues[field.key] || '')}
+                      onChange={(e) => setFormValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                    />
+                  ) : field.type === 'select' ? (
+                    <select
+                      id={fieldId}
+                      className="w-full border rounded-md p-2"
+                      value={String(formValues[field.key] || '')}
+                      onChange={(e) => setFormValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                    >
+                      <option value="">Select...</option>
+                      {field.options?.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  ) : (
+                    <Input
+                      id={fieldId}
+                      value={String(formValues[field.key] || '')}
+                      onChange={(e) => setFormValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                    />
+                  )}
+                </div>
+              );
+            })}
 
             {currentStep.type === 'approval' && (
               <div className="text-center py-8">

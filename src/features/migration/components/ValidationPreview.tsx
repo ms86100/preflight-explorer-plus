@@ -7,8 +7,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { ValidationResult } from "../types";
 
 interface ValidationPreviewProps {
-  result: ValidationResult;
-  fieldMappings: Record<string, string>;
+  readonly result: ValidationResult;
+  readonly fieldMappings: Readonly<Record<string, string>>;
 }
 
 export function ValidationPreview({ result, fieldMappings }: ValidationPreviewProps) {

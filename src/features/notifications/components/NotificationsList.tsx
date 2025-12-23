@@ -25,8 +25,8 @@ interface Notification {
 }
 
 interface NotificationsListProps {
-  limit?: number;
-  showHeader?: boolean;
+  readonly limit?: number;
+  readonly showHeader?: boolean;
 }
 
 export function NotificationsList({ limit, showHeader = true }: NotificationsListProps) {

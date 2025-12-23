@@ -6,7 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { TrendingDown } from 'lucide-react';
 
 interface BurndownChartProps {
-  sprintId: string;
+  readonly sprintId: string;
 }
 
 interface BurndownData {

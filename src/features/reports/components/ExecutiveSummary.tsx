@@ -17,7 +17,7 @@ import {
 import { differenceInDays, format, subDays } from 'date-fns';
 
 interface ExecutiveSummaryProps {
-  projectId: string;
+  readonly projectId: string;
 }
 
 interface ProjectMetrics {

@@ -23,7 +23,7 @@ import { FIELD_DEFINITIONS, type ImportType, type ValidationResult } from "../ty
 type WizardStep = 'select-type' | 'upload' | 'mapping' | 'validate' | 'import' | 'complete';
 
 interface ImportWizardProps {
-  onComplete: () => void;
+  readonly onComplete: () => void;
 }
 
 export function ImportWizard({ onComplete }: ImportWizardProps) {

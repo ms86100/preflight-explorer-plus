@@ -6,10 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { FIELD_DEFINITIONS, type ImportType } from "../types";
 
 interface FieldMapperProps {
-  importType: ImportType;
-  sourceHeaders: string[];
-  mappings: Record<string, string>;
-  onMappingChange: (targetField: string, sourceColumn: string) => void;
+  readonly importType: ImportType;
+  readonly sourceHeaders: readonly string[];
+  readonly mappings: Readonly<Record<string, string>>;
+  readonly onMappingChange: (targetField: string, sourceColumn: string) => void;
 }
 
 export function FieldMapper({
@@ -121,13 +121,13 @@ export function FieldMapper({
 }
 
 interface FieldMappingRowProps {
-  field: string;
-  label: string;
-  isRequired: boolean;
-  sourceHeaders: string[];
-  currentMapping: string;
-  suggestion?: string;
-  onMappingChange: (value: string) => void;
+  readonly field: string;
+  readonly label: string;
+  readonly isRequired: boolean;
+  readonly sourceHeaders: readonly string[];
+  readonly currentMapping: string;
+  readonly suggestion?: string;
+  readonly onMappingChange: (value: string) => void;
 }
 
 function FieldMappingRow({

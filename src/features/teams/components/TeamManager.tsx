@@ -45,8 +45,8 @@ import {
 import type { ProjectTeam, ProjectTeamMember } from '../types';
 
 interface TeamManagerProps {
-  projectId: string;
-  isProjectAdmin?: boolean;
+  readonly projectId: string;
+  readonly isProjectAdmin?: boolean;
 }
 
 export function TeamManager({ projectId, isProjectAdmin: isProjectAdminProp }: TeamManagerProps) {
@@ -252,16 +252,18 @@ export function TeamManager({ projectId, isProjectAdmin: isProjectAdminProp }: T
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Team Name</label>
+              <label htmlFor="create-team-name" className="text-sm font-medium">Team Name</label>
               <Input
+                id="create-team-name"
                 value={newTeamName}
                 onChange={(e) => setNewTeamName(e.target.value)}
                 placeholder="e.g., Frontend Team, QA Team"
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Description (optional)</label>
+              <label htmlFor="create-team-description" className="text-sm font-medium">Description (optional)</label>
               <Textarea
+                id="create-team-description"
                 value={newTeamDescription}
                 onChange={(e) => setNewTeamDescription(e.target.value)}
                 placeholder="What does this team work on?"
@@ -287,16 +289,18 @@ export function TeamManager({ projectId, isProjectAdmin: isProjectAdminProp }: T
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Team Name</label>
+              <label htmlFor="edit-team-name" className="text-sm font-medium">Team Name</label>
               <Input
+                id="edit-team-name"
                 value={newTeamName}
                 onChange={(e) => setNewTeamName(e.target.value)}
                 placeholder="Team name"
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Description</label>
+              <label htmlFor="edit-team-description" className="text-sm font-medium">Description</label>
               <Textarea
+                id="edit-team-description"
                 value={newTeamDescription}
                 onChange={(e) => setNewTeamDescription(e.target.value)}
                 placeholder="Description"
@@ -351,11 +355,11 @@ function TeamMembersPanel({
   team,
   isProjectAdmin,
   onAddMember,
-}: {
+}: Readonly<{
   team: ProjectTeam;
   isProjectAdmin: boolean;
   onAddMember: () => void;
-}) {
+}>) {
   const { data: members, isLoading } = useTeamMembers(team.id);
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveTeamMember();
@@ -462,12 +466,12 @@ function AddMemberDialog({
   onOpenChange,
   teamId,
   projectId,
-}: {
+}: Readonly<{
   open: boolean;
   onOpenChange: (open: boolean) => void;
   teamId: string;
   projectId: string;
-}) {
+}>) {
   const [users, setUsers] = useState<{ id: string; display_name: string; email: string | null }[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [role, setRole] = useState<'lead' | 'member'>('member');

@@ -135,7 +135,8 @@ export function WorkflowImportExport({
         if (parsed.workflow?.name) {
           setImportName(parsed.workflow.name + ' (Imported)');
         }
-      } catch {
+      } catch (parseError) {
+        console.debug('JSON parse failed:', parseError);
         setImportError('Invalid JSON file');
       }
     };

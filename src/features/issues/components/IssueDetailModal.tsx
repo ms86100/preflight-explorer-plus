@@ -65,9 +65,9 @@ const ISSUE_TYPE_ICONS: Record<string, typeof Bug> = {
 };
 
 interface IssueDetailModalProps {
-  issueId: string | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  readonly issueId: string | null;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
 interface Comment {

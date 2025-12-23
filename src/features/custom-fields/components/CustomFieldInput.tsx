@@ -19,15 +19,15 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface CustomFieldInputProps {
-  field: CustomFieldDefinition;
-  value?: CustomFieldValue;
-  onChange: (value: {
+  readonly field: CustomFieldDefinition;
+  readonly value?: CustomFieldValue;
+  readonly onChange: (value: {
     value_text?: string | null;
     value_number?: number | null;
     value_date?: string | null;
     value_json?: unknown | null;
   }) => void;
-  disabled?: boolean;
+  readonly disabled?: boolean;
 }
 
 export function CustomFieldInput({ field, value, onChange, disabled }: CustomFieldInputProps) {

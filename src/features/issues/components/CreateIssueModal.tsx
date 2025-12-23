@@ -45,12 +45,12 @@ const ISSUE_TYPE_ICONS: Record<string, typeof Bug> = {
 };
 
 interface CreateIssueModalProps {
-  projectId: string;
-  projectKey?: string;
-  statusId?: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess?: (issueKey: string) => void;
+  readonly projectId: string;
+  readonly projectKey?: string;
+  readonly statusId?: string;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onSuccess?: (issueKey: string) => void;
 }
 
 export function CreateIssueModal({

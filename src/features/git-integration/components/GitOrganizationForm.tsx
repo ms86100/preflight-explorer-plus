@@ -61,7 +61,7 @@ const PROVIDER_DEFAULTS: Record<string, string> = {
 };
 
 interface GitOrganizationFormProps {
-  onSuccess?: () => void;
+  readonly onSuccess?: () => void;
 }
 
 export function GitOrganizationForm({ onSuccess }: GitOrganizationFormProps) {
