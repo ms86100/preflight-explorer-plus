@@ -143,6 +143,8 @@ export function useMoveIssuesToBacklog() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sprints'] });
       queryClient.invalidateQueries({ queryKey: ['sprintIssues'] });
+      queryClient.invalidateQueries({ queryKey: ['all-sprint-issues'] });
+      queryClient.invalidateQueries({ queryKey: ['issues'] });
       toast.success('Issues moved to backlog!');
     },
     onError: (error) => {
@@ -159,7 +161,10 @@ export function useAddIssueToSprint() {
     mutationFn: ({ sprintId, issueId }: { sprintId: string; issueId: string }) =>
       sprintService.addIssue(sprintId, issueId),
     onSuccess: () => {
+      // Invalidate all sprint-issue related queries for real-time update
       queryClient.invalidateQueries({ queryKey: ['sprintIssues'] });
+      queryClient.invalidateQueries({ queryKey: ['all-sprint-issues'] });
+      queryClient.invalidateQueries({ queryKey: ['issues'] });
     },
   });
 }
@@ -171,7 +176,10 @@ export function useRemoveIssueFromSprint() {
     mutationFn: ({ sprintId, issueId }: { sprintId: string; issueId: string }) =>
       sprintService.removeIssue(sprintId, issueId),
     onSuccess: () => {
+      // Invalidate all sprint-issue related queries for real-time update
       queryClient.invalidateQueries({ queryKey: ['sprintIssues'] });
+      queryClient.invalidateQueries({ queryKey: ['all-sprint-issues'] });
+      queryClient.invalidateQueries({ queryKey: ['issues'] });
     },
   });
 }
