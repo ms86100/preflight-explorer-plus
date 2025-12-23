@@ -81,7 +81,7 @@ export const JIRA_HEADER_MAPPINGS: Record<string, string> = {
 
 function escapeCSVField(field: string): string {
   if (field.includes(',') || field.includes('"') || field.includes('\n')) {
-    return `"${field.replace(/"/g, '""')}"`;
+    return `"${field.split('"').join('""')}"`;
   }
   return field;
 }
@@ -129,7 +129,7 @@ export function downloadTemplate(importType: ImportType, includeExamples: boolea
   
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
+  link.remove();
   URL.revokeObjectURL(url);
 }
 
@@ -151,7 +151,7 @@ export function autoMapHeaders(csvHeaders: string[], importType: ImportType): Re
     }
     
     // Check exact match with our field names
-    const lowerHeader = normalizedHeader.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const lowerHeader = normalizedHeader.toLowerCase().split(/[^a-z0-9]/).join('_');
     if (allFields.includes(lowerHeader)) {
       mappings[normalizedHeader] = lowerHeader;
       return;
@@ -160,7 +160,7 @@ export function autoMapHeaders(csvHeaders: string[], importType: ImportType): Re
     // Check fuzzy match with field labels
     const metadata = fieldDefs.metadata as Record<string, { label: string }>;
     for (const [fieldKey, fieldMeta] of Object.entries(metadata)) {
-      const labelNormalized = fieldMeta.label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const labelNormalized = fieldMeta.label.toLowerCase().split(/[^a-z0-9]/).join('_');
       if (lowerHeader === labelNormalized || lowerHeader.includes(labelNormalized) || labelNormalized.includes(lowerHeader)) {
         mappings[normalizedHeader] = fieldKey;
         return;

@@ -160,11 +160,11 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
 
   useEffect(() => {
     if (dragState || connectionState) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      globalThis.addEventListener('mousemove', handleMouseMove);
+      globalThis.addEventListener('mouseup', handleMouseUp);
       return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
+        globalThis.removeEventListener('mousemove', handleMouseMove);
+        globalThis.removeEventListener('mouseup', handleMouseUp);
       };
     }
   }, [dragState, connectionState, handleMouseMove, handleMouseUp]);

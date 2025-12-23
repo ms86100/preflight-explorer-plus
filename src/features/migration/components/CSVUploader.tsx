@@ -42,16 +42,14 @@ export function CSVUploader({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      setFileName(file.name);
-      onFileLoad(content, file.name);
-    };
-    reader.onerror = () => {
-      setError('Failed to read file');
-    };
-    reader.readAsText(file);
+    file.text()
+      .then((content) => {
+        setFileName(file.name);
+        onFileLoad(content, file.name);
+      })
+      .catch(() => {
+        setError('Failed to read file');
+      });
   }, [maxSize, onFileLoad]);
 
   const handleDrop = useCallback((e: DragEvent) => {

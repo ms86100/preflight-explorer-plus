@@ -148,7 +148,7 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
       a.download = attachment.filename;
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      a.remove();
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading attachment:', error);

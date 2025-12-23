@@ -124,23 +124,24 @@ export function WorkflowImportExport({
     const file = event.target.files?.[0];
     if (!file) return;
     
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      setImportData(content);
-      setImportError(null);
-      
-      try {
-        const parsed = JSON.parse(content) as WorkflowExportData;
-        if (parsed.workflow?.name) {
-          setImportName(parsed.workflow.name + ' (Imported)');
+    file.text()
+      .then((content) => {
+        setImportData(content);
+        setImportError(null);
+        
+        try {
+          const parsed = JSON.parse(content) as WorkflowExportData;
+          if (parsed.workflow?.name) {
+            setImportName(parsed.workflow.name + ' (Imported)');
+          }
+        } catch (parseError) {
+          console.debug('JSON parse failed:', parseError);
+          setImportError('Invalid JSON file');
         }
-      } catch (parseError) {
-        console.debug('JSON parse failed:', parseError);
-        setImportError('Invalid JSON file');
-      }
-    };
-    reader.readAsText(file);
+      })
+      .catch(() => {
+        setImportError('Failed to read file');
+      });
   };
   
   // Import workflow from JSON

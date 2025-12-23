@@ -183,8 +183,8 @@ async function processExport(exportId: string, issueIds: string[], format: Expor
       const headers = ['Issue Key', 'Summary', 'Description', 'Created At'];
       const rows = issueData.map(issue => [
         issue.issue_key || '',
-        `"${(issue.summary as string || '').replace(/"/g, '""')}"`,
-        `"${(issue.description as string || '').replace(/"/g, '""')}"`,
+        `"${(issue.summary as string || '').split('"').join('""')}"`,
+        `"${(issue.description as string || '').split('"').join('""')}"`,
         issue.created_at || '',
       ]);
       fileContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -302,7 +302,7 @@ export async function downloadExport(exportJob: ExportJob): Promise<void> {
   a.download = `${data.name || 'export'}.${ext}`;
   document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
+  a.remove();
   URL.revokeObjectURL(url);
 }
 
