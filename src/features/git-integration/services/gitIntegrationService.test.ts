@@ -268,8 +268,8 @@ describe('Git Integration Types', () => {
           build_number: '123',
           status,
           started_at: '2024-01-15T10:00:00Z',
-          finished_at: status !== 'running' ? '2024-01-15T10:15:00Z' : null,
-          duration_seconds: status !== 'running' ? 900 : null,
+          finished_at: status === 'running' ? null : '2024-01-15T10:15:00Z',
+          duration_seconds: status === 'running' ? null : 900,
           web_url: null,
         };
         
@@ -324,8 +324,8 @@ describe('Git Integration Helpers', () => {
   function generateBranchName(issueKey: string, summary: string): string {
     const sanitized = summary
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
+      .split(/[^a-z0-9\s-]/).join('')
+      .split(/\s+/).join('-')
       .substring(0, 50);
     return `feature/${issueKey.toLowerCase()}-${sanitized}`;
   }

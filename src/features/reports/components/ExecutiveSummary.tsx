@@ -152,17 +152,28 @@ export function ExecutiveSummary({ projectId }: ExecutiveSummaryProps) {
   });
 
   if (isLoading) {
-    const skeletonCards = ['health', 'completion', 'throughput', 'cycle-time'] as const;
-
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {skeletonCards.map((key) => (
-          <Card key={`skeleton-${key}`}>
-            <CardContent className="p-6">
-              <div className="h-20 animate-pulse bg-muted rounded" />
-            </CardContent>
-          </Card>
-        ))}
+        <Card key="skeleton-health">
+          <CardContent className="p-6">
+            <div className="h-20 animate-pulse bg-muted rounded" />
+          </CardContent>
+        </Card>
+        <Card key="skeleton-completion">
+          <CardContent className="p-6">
+            <div className="h-20 animate-pulse bg-muted rounded" />
+          </CardContent>
+        </Card>
+        <Card key="skeleton-throughput">
+          <CardContent className="p-6">
+            <div className="h-20 animate-pulse bg-muted rounded" />
+          </CardContent>
+        </Card>
+        <Card key="skeleton-cycle-time">
+          <CardContent className="p-6">
+            <div className="h-20 animate-pulse bg-muted rounded" />
+          </CardContent>
+        </Card>
       </div>
     );
   }

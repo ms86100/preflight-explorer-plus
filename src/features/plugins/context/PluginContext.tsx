@@ -1,11 +1,11 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useEnabledPlugins } from '../hooks/usePlugins';
-import { FEATURE_PLUGIN_MAP, type Plugin, type PluginKey } from '../types';
+import { FEATURE_PLUGIN_MAP, type Plugin } from '../types';
 
 interface PluginContextValue {
   plugins: Plugin[];
-  enabledPluginKeys: Set<PluginKey>;
-  isPluginEnabled: (key: PluginKey) => boolean;
+  enabledPluginKeys: Set<string>;
+  isPluginEnabled: (key: string) => boolean;
   isFeatureEnabled: (featureKey: string) => boolean;
   isLoading: boolean;
   error: Error | null;
@@ -17,10 +17,10 @@ export function PluginProvider({ children }: { readonly children: ReactNode }) {
   const { data: plugins = [], isLoading, error } = useEnabledPlugins();
 
   const enabledPluginKeys = useMemo(() => {
-    return new Set(plugins.map((p) => p.key as PluginKey));
+    return new Set(plugins.map((p) => p.key));
   }, [plugins]);
 
-  const isPluginEnabled = (key: PluginKey): boolean => {
+  const isPluginEnabled = (key: string): boolean => {
     return enabledPluginKeys.has(key);
   };
 
@@ -66,7 +66,7 @@ export function useIsFeatureEnabled(featureKey: string): boolean {
   return isFeatureEnabled(featureKey);
 }
 
-export function useIsPluginEnabled(pluginKey: PluginKey): boolean {
+export function useIsPluginEnabled(pluginKey: string): boolean {
   const { isPluginEnabled, isLoading } = usePluginContext();
   if (isLoading) return true;
   return isPluginEnabled(pluginKey);

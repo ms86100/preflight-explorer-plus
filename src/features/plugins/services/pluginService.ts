@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
-import type { Plugin, PluginKey } from '../types';
+import type { Plugin } from '../types';
 
 export async function getPlugins(): Promise<Plugin[]> {
   const { data, error } = await supabase
@@ -13,7 +13,7 @@ export async function getPlugins(): Promise<Plugin[]> {
   return (data || []) as Plugin[];
 }
 
-export async function getPlugin(key: PluginKey): Promise<Plugin | null> {
+export async function getPlugin(key: string): Promise<Plugin | null> {
   const { data, error } = await supabase
     .from('plugins')
     .select('*')

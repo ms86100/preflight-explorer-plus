@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as pluginService from '../services/pluginService';
-import type { PluginKey } from '../types';
 
 export function usePlugins() {
   return useQuery({
@@ -11,7 +10,7 @@ export function usePlugins() {
   });
 }
 
-export function usePlugin(key: PluginKey) {
+export function usePlugin(key: string) {
   return useQuery({
     queryKey: ['plugin', key],
     queryFn: () => pluginService.getPlugin(key),

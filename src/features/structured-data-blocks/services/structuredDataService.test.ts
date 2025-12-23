@@ -5,6 +5,63 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
+/**
+ * Simple recursive descent parser for arithmetic expressions (module-level - S7721 fix).
+ * Handles +, -, *, /, and parentheses with correct precedence.
+ */
+function parseExpressionSafe(expr: string): number {
+  let pos = 0;
+
+  function parseNumber(): number {
+    let numStr = '';
+    while (pos < expr.length && /[\d.]/.test(expr[pos])) {
+      numStr += expr[pos++];
+    }
+    if (!numStr) throw new Error('Expected number');
+    return Number.parseFloat(numStr);
+  }
+
+  function parseFactor(): number {
+    if (expr[pos] === '(') {
+      pos++; // skip '('
+      const result = parseAddSub();
+      if (expr[pos] !== ')') throw new Error('Expected )');
+      pos++; // skip ')'
+      return result;
+    }
+    // Handle negative numbers
+    if (expr[pos] === '-') {
+      pos++;
+      return -parseFactor();
+    }
+    return parseNumber();
+  }
+
+  function parseMulDiv(): number {
+    let left = parseFactor();
+    while (pos < expr.length && (expr[pos] === '*' || expr[pos] === '/')) {
+      const op = expr[pos++];
+      const right = parseFactor();
+      left = op === '*' ? left * right : left / right;
+    }
+    return left;
+  }
+
+  function parseAddSub(): number {
+    let left = parseMulDiv();
+    while (pos < expr.length && (expr[pos] === '+' || expr[pos] === '-')) {
+      const op = expr[pos++];
+      const right = parseMulDiv();
+      left = op === '+' ? left + right : left - right;
+    }
+    return left;
+  }
+
+  const result = parseAddSub();
+  if (pos !== expr.length) throw new Error('Unexpected character');
+  return result;
+}
+
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -455,7 +512,7 @@ describe('Structured Data Helpers', () => {
     for (const column of columns) {
       const value = row.values[column.id];
       if (typeof value === 'number') {
-        evaluatable = evaluatable.replace(new RegExp(`\\b${column.id}\\b`, 'g'), String(value));
+        evaluatable = evaluatable.split(new RegExp(String.raw`\b${column.id}\b`, 'g')).join(String(value));
       }
     }
     
@@ -467,68 +524,12 @@ describe('Structured Data Helpers', () => {
     
     try {
       // Safe recursive descent parser for basic arithmetic
-      return parseExpression(evaluatable.replace(/\s/g, ''));
+      return parseExpressionSafe(evaluatable.split(/\s/).join(''));
     } catch {
       return null;
     }
   }
 
-  /**
-   * Simple recursive descent parser for arithmetic expressions.
-   * Handles +, -, *, /, and parentheses with correct precedence.
-   */
-  function parseExpression(expr: string): number {
-    let pos = 0;
-
-    function parseNumber(): number {
-      let numStr = '';
-      while (pos < expr.length && /[\d.]/.test(expr[pos])) {
-        numStr += expr[pos++];
-      }
-      if (!numStr) throw new Error('Expected number');
-      return Number.parseFloat(numStr);
-    }
-
-    function parseFactor(): number {
-      if (expr[pos] === '(') {
-        pos++; // skip '('
-        const result = parseAddSub();
-        if (expr[pos] !== ')') throw new Error('Expected )');
-        pos++; // skip ')'
-        return result;
-      }
-      // Handle negative numbers
-      if (expr[pos] === '-') {
-        pos++;
-        return -parseFactor();
-      }
-      return parseNumber();
-    }
-
-    function parseMulDiv(): number {
-      let left = parseFactor();
-      while (pos < expr.length && (expr[pos] === '*' || expr[pos] === '/')) {
-        const op = expr[pos++];
-        const right = parseFactor();
-        left = op === '*' ? left * right : left / right;
-      }
-      return left;
-    }
-
-    function parseAddSub(): number {
-      let left = parseMulDiv();
-      while (pos < expr.length && (expr[pos] === '+' || expr[pos] === '-')) {
-        const op = expr[pos++];
-        const right = parseMulDiv();
-        left = op === '+' ? left + right : left - right;
-      }
-      return left;
-    }
-
-    const result = parseAddSub();
-    if (pos !== expr.length) throw new Error('Unexpected character');
-    return result;
-  }
 
   describe('evaluateFormula', () => {
     const columns: LocalColumnDefinition[] = [

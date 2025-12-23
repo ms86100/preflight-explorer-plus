@@ -343,11 +343,11 @@ function suggestMapping(
   header: string,
   targetFields: string[]
 ): string | null {
-  const normalized = header.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normalized = header.toLowerCase().split(/[^a-z0-9]/).join('');
   
   // Direct match
   for (const field of targetFields) {
-    if (field.replace(/_/g, '') === normalized) {
+    if (field.split('_').join('') === normalized) {
       return field;
     }
   }

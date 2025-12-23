@@ -7,11 +7,10 @@
 // - 'com.jira.automation', 'com.jira.customfields', 'com.jira.reports'
 // - 'com.jira.admin', 'com.app.document-composer'
 // - 'com.app.structured-data-blocks', 'com.app.guided-operations'
-export type PluginKey = string;
 
 export interface Plugin {
   readonly id: string;
-  readonly key: PluginKey;
+  readonly key: string;
   readonly name: string;
   readonly description: string | null;
   readonly version: string;
@@ -29,7 +28,7 @@ export interface Plugin {
 
 // Feature-to-Plugin mapping
 // Maps feature identifiers to the plugin keys that provide them
-export const FEATURE_PLUGIN_MAP: Record<string, PluginKey[]> = {
+export const FEATURE_PLUGIN_MAP: Record<string, string[]> = {
   // Core features
   'issues': ['com.jira.core'],
   'projects': ['com.jira.core'],
