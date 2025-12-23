@@ -24,12 +24,12 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 interface CreateBranchModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  issueKey: string;
-  issueId: string;
-  projectId: string;
-  onSuccess?: () => void;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly issueKey: string;
+  readonly issueId: string;
+  readonly projectId: string;
+  readonly onSuccess?: () => void;
 }
 
 export function CreateBranchModal({

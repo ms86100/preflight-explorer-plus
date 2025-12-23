@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import type { GitDeployment, DeploymentEnvironment, DeploymentStatus } from '../types';
 
 interface DeploymentsListProps {
-  deployments: GitDeployment[];
+  readonly deployments: readonly GitDeployment[];
 }
 
 const envConfig: Record<DeploymentEnvironment, {

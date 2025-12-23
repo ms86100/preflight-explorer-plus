@@ -1,4 +1,3 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Trophy, Medal, Award } from 'lucide-react';
 
 interface ContributorPerformanceProps {
-  projectId: string;
+  readonly projectId: string;
 }
 
 interface ContributorStats {

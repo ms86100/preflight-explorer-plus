@@ -3,7 +3,7 @@
 // To be integrated into IssueDetailModal
 
 import { useState } from 'react';
-import { GitBranch, GitCommit, GitPullRequest, Rocket, Wrench, Loader2, Plus, Play } from 'lucide-react';
+import { GitBranch, GitCommit, GitPullRequest, Rocket, Loader2, Plus, Play } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,10 +18,10 @@ import { CreatePRModal } from './CreatePRModal';
 import { TriggerBuildModal } from './TriggerBuildModal';
 
 interface DevelopmentPanelProps {
-  issueId: string;
-  issueKey: string;
-  projectId: string;
-  onCreateBranch?: () => void;
+  readonly issueId: string;
+  readonly issueKey: string;
+  readonly projectId: string;
+  readonly onCreateBranch?: () => void;
 }
 
 export function DevelopmentPanel({ issueId, issueKey, projectId, onCreateBranch }: DevelopmentPanelProps) {

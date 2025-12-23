@@ -9,8 +9,8 @@ import { useState } from 'react';
 import type { GitCommit } from '../types';
 
 interface CommitsListProps {
-  commits: GitCommit[];
-  maxVisible?: number;
+  readonly commits: readonly GitCommit[];
+  readonly maxVisible?: number;
 }
 
 export function CommitsList({ commits, maxVisible = 3 }: CommitsListProps) {

@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import type { GitBranch } from '../types';
 
 interface BranchesListProps {
-  branches: GitBranch[];
-  onCreateBranch?: () => void;
-  showCreateButton?: boolean;
+  readonly branches: readonly GitBranch[];
+  readonly onCreateBranch?: () => void;
+  readonly showCreateButton?: boolean;
 }
 
 export function BranchesList({ branches, onCreateBranch, showCreateButton = true }: BranchesListProps) {

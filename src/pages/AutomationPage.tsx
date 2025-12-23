@@ -16,9 +16,9 @@ import { useProjects } from '@/features/projects';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import {
-  Zap, Plus, Play, Pause, Trash2, Edit, Copy, CheckCircle,
-  XCircle, Clock, AlertCircle, Loader2, Settings, GitBranch,
-  GitCommit, GitPullRequest, Rocket, AlertTriangle
+  Zap, Plus, Trash2, CheckCircle,
+  XCircle, Clock, Loader2, Settings, GitCommit,
+  GitPullRequest, Rocket
 } from 'lucide-react';
 
 interface AutomationRule {

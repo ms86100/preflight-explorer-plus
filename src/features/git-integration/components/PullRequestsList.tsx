@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import type { GitPullRequest, PullRequestStatus } from '../types';
 
 interface PullRequestsListProps {
-  pullRequests: GitPullRequest[];
-  onCreatePR?: () => void;
-  showCreateButton?: boolean;
+  readonly pullRequests: readonly GitPullRequest[];
+  readonly onCreatePR?: () => void;
+  readonly showCreateButton?: boolean;
 }
 
 const statusConfig: Record<PullRequestStatus, {

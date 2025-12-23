@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
-import { Bell, Check, Info, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-react';
+import { Bell, Info, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface Notification {
   id: string;

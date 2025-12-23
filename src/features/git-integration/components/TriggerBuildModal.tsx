@@ -24,11 +24,11 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 interface TriggerBuildModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  projectId: string;
-  branches?: GitBranch[];
-  onSuccess?: () => void;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly projectId: string;
+  readonly branches?: readonly GitBranch[];
+  readonly onSuccess?: () => void;
 }
 
 export function TriggerBuildModal({

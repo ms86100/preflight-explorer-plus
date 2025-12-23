@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,7 +32,7 @@ interface HistoryEntry {
 }
 
 interface IssueHistorySectionProps {
-  issueId: string;
+  readonly issueId: string;
 }
 
 const FIELD_ICONS: Record<string, typeof History> = {

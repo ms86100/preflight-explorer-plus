@@ -1,4 +1,3 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -7,7 +6,7 @@ import { Calendar } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 
 interface AgeingChartProps {
-  projectId: string;
+  readonly projectId: string;
 }
 
 const AGE_BUCKETS = [

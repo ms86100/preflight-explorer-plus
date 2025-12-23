@@ -1,4 +1,3 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -6,10 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Target } from 'lucide-react';
 import { useState } from 'react';
-import { differenceInDays, format, eachDayOfInterval, startOfDay } from 'date-fns';
+import { format, eachDayOfInterval, startOfDay } from 'date-fns';
 
 interface ReleaseBurndownProps {
-  projectId: string;
+  readonly projectId: string;
 }
 
 export function ReleaseBurndown({ projectId }: ReleaseBurndownProps) {

@@ -3,7 +3,7 @@ import { GripVertical, Bug, Bookmark, CheckSquare, Zap, Layers } from 'lucide-re
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ClassificationBadge } from '@/components/compliance/ClassificationBanner';
-import type { Issue, ClassificationLevel } from '@/types/jira';
+import type { ClassificationLevel } from '@/types/jira';
 
 interface IssueCardProps {
   readonly issue: {
