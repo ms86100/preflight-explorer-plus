@@ -161,7 +161,7 @@ export function CreateIssueModal({
 
             {/* Issue Type */}
             <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
-              <Label className="text-sm font-medium text-right pt-2 flex items-center justify-end gap-1">
+              <Label htmlFor="issue_type_select" className="text-sm font-medium text-right pt-2 flex items-center justify-end gap-1">
                 Issue Type<span className="text-destructive">*</span>
                 <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
               </Label>
@@ -209,7 +209,7 @@ export function CreateIssueModal({
 
             {/* Reporter */}
             <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
-              <Label className="text-sm font-medium text-right pt-2">Reporter<span className="text-destructive">*</span></Label>
+              <Label htmlFor="reporter_select" className="text-sm font-medium text-right pt-2">Reporter<span className="text-destructive">*</span></Label>
               <Select defaultValue="current">
                 <SelectTrigger className="h-9">
                   <SelectValue />
@@ -232,14 +232,14 @@ export function CreateIssueModal({
 
             {/* Component/s */}
             <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
-              <Label className="text-sm font-medium text-right pt-2">Component/s</Label>
-              <div className="text-sm text-muted-foreground pt-2">None</div>
+              <Label htmlFor="components_display" className="text-sm font-medium text-right pt-2">Component/s</Label>
+              <div id="components_display" className="text-sm text-muted-foreground pt-2">None</div>
             </div>
 
             {/* Attachment */}
             <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
-              <Label className="text-sm font-medium text-right pt-2">Attachment</Label>
-              <div className="border-2 border-dashed border-border rounded-sm p-4 text-center">
+              <Label htmlFor="attachment_drop" className="text-sm font-medium text-right pt-2">Attachment</Label>
+              <div id="attachment_drop" className="border-2 border-dashed border-border rounded-sm p-4 text-center">
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                   <Upload className="h-4 w-4" />
                   Drop files to attach, or <button type="button" className="text-primary hover:underline">browse</button>.
@@ -276,7 +276,7 @@ export function CreateIssueModal({
 
             {/* Priority */}
             <div className="grid grid-cols-[120px_1fr] gap-4 items-start">
-              <Label className="text-sm font-medium text-right pt-2">Priority</Label>
+              <Label htmlFor="priority_select" className="text-sm font-medium text-right pt-2">Priority</Label>
               <Select
                 value={watch('priority_id') || ''}
                 onValueChange={(v) => setValue('priority_id', v)}

@@ -123,6 +123,32 @@ export interface ValidationResult<T> {
 // Schema Validators
 // ============================================================================
 
+// Helper: validate UUID fields (S3776 fix)
+function validateUuidFields(
+  data: Record<string, unknown>,
+  fields: string[],
+  errors: ValidationError[]
+): void {
+  for (const field of fields) {
+    if (data[field] !== undefined && !isValidUuid(data[field])) {
+      errors.push({ field, message: 'Invalid UUID format' });
+    }
+  }
+}
+
+// Helper: validate string length fields (S3776 fix)
+function validateStringLengthFields(
+  data: Record<string, unknown>,
+  fieldLimits: Array<{ field: string; limit: number; message: string }>,
+  errors: ValidationError[]
+): void {
+  for (const { field, limit, message } of fieldLimits) {
+    if (data[field] !== undefined && !isWithinLength(data[field], limit)) {
+      errors.push({ field, message });
+    }
+  }
+}
+
 /**
  * Validates git-api request
  */
@@ -146,33 +172,16 @@ export function validateGitApiRequest(body: unknown): ValidationResult<{
 
   const data = body as Record<string, unknown>;
   
-  // Validate UUIDs if present
-  if (data.organization_id !== undefined && !isValidUuid(data.organization_id)) {
-    errors.push({ field: 'organization_id', message: 'Invalid UUID format' });
-  }
-  if (data.project_id !== undefined && !isValidUuid(data.project_id)) {
-    errors.push({ field: 'project_id', message: 'Invalid UUID format' });
-  }
-  if (data.repository_id !== undefined && !isValidUuid(data.repository_id)) {
-    errors.push({ field: 'repository_id', message: 'Invalid UUID format' });
-  }
-  if (data.issue_id !== undefined && !isValidUuid(data.issue_id)) {
-    errors.push({ field: 'issue_id', message: 'Invalid UUID format' });
-  }
+  // Validate UUIDs using helper
+  validateUuidFields(data, ['organization_id', 'project_id', 'repository_id', 'issue_id'], errors);
 
-  // Validate strings with length limits
-  if (data.owner !== undefined && !isWithinLength(data.owner, INPUT_LIMITS.SHORT_TEXT)) {
-    errors.push({ field: 'owner', message: 'Owner exceeds maximum length' });
-  }
-  if (data.repo !== undefined && !isWithinLength(data.repo, INPUT_LIMITS.SHORT_TEXT)) {
-    errors.push({ field: 'repo', message: 'Repo exceeds maximum length' });
-  }
-  if (data.title !== undefined && !isWithinLength(data.title, INPUT_LIMITS.MEDIUM_TEXT)) {
-    errors.push({ field: 'title', message: 'Title exceeds maximum length' });
-  }
-  if (data.body !== undefined && !isWithinLength(data.body, INPUT_LIMITS.LONG_TEXT)) {
-    errors.push({ field: 'body', message: 'Body exceeds maximum length' });
-  }
+  // Validate strings with length limits using helper
+  validateStringLengthFields(data, [
+    { field: 'owner', limit: INPUT_LIMITS.SHORT_TEXT, message: 'Owner exceeds maximum length' },
+    { field: 'repo', limit: INPUT_LIMITS.SHORT_TEXT, message: 'Repo exceeds maximum length' },
+    { field: 'title', limit: INPUT_LIMITS.MEDIUM_TEXT, message: 'Title exceeds maximum length' },
+    { field: 'body', limit: INPUT_LIMITS.LONG_TEXT, message: 'Body exceeds maximum length' },
+  ], errors);
 
   if (errors.length > 0) {
     return { success: false, errors };
@@ -538,6 +547,41 @@ export function validateGitDemoSeedRequest(body: unknown): ValidationResult<{
   };
 }
 
+// Helper: validate a single job object (S3776 fix)
+const VALID_JOB_TYPES = ['cleanup_rate_limits', 'send_notifications', 'generate_report', 'sync_sprint_metrics', 'archive_old_issues'] as const;
+
+function validateSingleJob(job: unknown, index: number, errors: ValidationError[]): void {
+  if (!job || typeof job !== 'object') {
+    errors.push({ field: `jobs[${index}]`, message: 'Job must be an object' });
+    return;
+  }
+  
+  const j = job as Record<string, unknown>;
+  
+  if (!isNonEmptyString(j.id)) {
+    errors.push({ field: `jobs[${index}].id`, message: 'Job ID is required' });
+  }
+  if (!isOneOf(j.type, VALID_JOB_TYPES)) {
+    errors.push({ field: `jobs[${index}].type`, message: 'Invalid job type' });
+  }
+}
+
+// Helper: validate jobs array (S3776 fix)
+function validateJobsArray(data: Record<string, unknown>, errors: ValidationError[]): void {
+  if (!Array.isArray(data.jobs) || data.jobs.length === 0) {
+    errors.push({ field: 'jobs', message: 'Jobs array is required and must not be empty' });
+    return;
+  }
+  
+  if (data.jobs.length > 100) {
+    errors.push({ field: 'jobs', message: 'Maximum 100 jobs per request' });
+  }
+
+  data.jobs.forEach((job: unknown, index: number) => {
+    validateSingleJob(job, index, errors);
+  });
+}
+
 /**
  * Validates background jobs request
  */
@@ -558,32 +602,7 @@ export function validateBackgroundJobsRequest(body: unknown): ValidationResult<{
 
   const data = body as Record<string, unknown>;
   
-  if (!Array.isArray(data.jobs) || data.jobs.length === 0) {
-    errors.push({ field: 'jobs', message: 'Jobs array is required and must not be empty' });
-  } else if (data.jobs.length > 100) {
-    errors.push({ field: 'jobs', message: 'Maximum 100 jobs per request' });
-  }
-
-  // Validate each job
-  if (Array.isArray(data.jobs)) {
-    const validJobTypes = ['cleanup_rate_limits', 'send_notifications', 'generate_report', 'sync_sprint_metrics', 'archive_old_issues'];
-    
-    data.jobs.forEach((job: unknown, index: number) => {
-      if (!job || typeof job !== 'object') {
-        errors.push({ field: `jobs[${index}]`, message: 'Job must be an object' });
-        return;
-      }
-      
-      const j = job as Record<string, unknown>;
-      
-      if (!isNonEmptyString(j.id)) {
-        errors.push({ field: `jobs[${index}].id`, message: 'Job ID is required' });
-      }
-      if (!isOneOf(j.type, validJobTypes)) {
-        errors.push({ field: `jobs[${index}].type`, message: 'Invalid job type' });
-      }
-    });
-  }
+  validateJobsArray(data, errors);
 
   if (errors.length > 0) {
     return { success: false, errors };

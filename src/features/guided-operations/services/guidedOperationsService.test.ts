@@ -453,8 +453,49 @@ function validateStep(
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
+// Operator evaluation helper (S3776 fix - extracted from evaluateConditions)
+type ConditionOperator = 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than';
+
+// Helper: safely convert value to string (S6551 fix)
+function safeToString(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
+function evaluateOperator(
+  operator: ConditionOperator,
+  fieldValue: unknown,
+  conditionValue: unknown
+): boolean {
+  switch (operator) {
+    case 'equals':
+      return fieldValue === conditionValue;
+    case 'not_equals':
+      return fieldValue !== conditionValue;
+    case 'contains':
+      return safeToString(fieldValue).includes(safeToString(conditionValue));
+    case 'greater_than':
+      return Number(fieldValue) > Number(conditionValue);
+    case 'less_than':
+      return Number(fieldValue) < Number(conditionValue);
+    default:
+      return false;
+  }
+}
+
+// Check single condition and return skip target if matches (S3776 fix)
+function checkCondition(
+  condition: { field: string; operator: ConditionOperator; value: unknown; skipToStep?: string },
+  data: Record<string, unknown>
+): string | null {
+  const fieldValue = data[condition.field];
+  const matches = evaluateOperator(condition.operator, fieldValue, condition.value);
+  return matches && condition.skipToStep ? condition.skipToStep : null;
+}
+
 /**
- * Evaluates conditions to determine next step.
+ * Evaluates conditions to determine next step. (Refactored for S3776)
  */
 function evaluateConditions(
   step: LocalOperationStep,
@@ -463,30 +504,8 @@ function evaluateConditions(
   if (!step.conditions) return null;
 
   for (const condition of step.conditions) {
-    const fieldValue = data[condition.field];
-    let matches = false;
-
-    switch (condition.operator) {
-      case 'equals':
-        matches = fieldValue === condition.value;
-        break;
-      case 'not_equals':
-        matches = fieldValue !== condition.value;
-        break;
-      case 'contains':
-        matches = String(fieldValue).includes(String(condition.value));
-        break;
-      case 'greater_than':
-        matches = Number(fieldValue) > Number(condition.value);
-        break;
-      case 'less_than':
-        matches = Number(fieldValue) < Number(condition.value);
-        break;
-    }
-
-    if (matches && condition.skipToStep) {
-      return condition.skipToStep;
-    }
+    const skipTo = checkCondition(condition, data);
+    if (skipTo) return skipTo;
   }
 
   return null;

@@ -333,9 +333,17 @@ describe('Document Composer Types', () => {
 // ============================================================================
 
 // Module-level helper functions
+
+// Helper: get per-issue processing time based on format (S3358 fix - extracted nested ternary)
+function getPerIssueMsForFormat(format: LocalExportFormat): number {
+  if (format === 'pdf') return 100;
+  if (format === 'docx') return 80;
+  return 20;
+}
+
 function estimateExportTime(issueCount: number, format: LocalExportFormat): number {
   const baseTimeMs = 500;
-  const perIssueMs = format === 'pdf' ? 100 : format === 'docx' ? 80 : 20;
+  const perIssueMs = getPerIssueMsForFormat(format);
   return baseTimeMs + issueCount * perIssueMs;
 }
 
@@ -364,6 +372,13 @@ function validateTemplateSchema(schema: LocalTemplateSchema): { valid: boolean; 
   return { valid: errors.length === 0, errors };
 }
 
+// Helper: safely stringify field value (S6551 fix)
+function safeStringifyField(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
 function generateCSV(
   issues: { issue_key: string; summary: string; status: string }[],
   fields: string[]
@@ -371,7 +386,8 @@ function generateCSV(
   const headers = fields.join(',');
   const rows = issues.map((issue) =>
     fields.map((field) => {
-      const value = String((issue as Record<string, unknown>)[field] || '');
+      const rawValue = (issue as Record<string, unknown>)[field];
+      const value = safeStringifyField(rawValue);
       if (value.includes(',') || value.includes('"') || value.includes('\n')) {
         return `"${value.split('"').join('""')}"`;
       }
