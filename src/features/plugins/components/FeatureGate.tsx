@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 interface FeatureGateProps {
-  feature: string;
-  children: ReactNode;
-  fallback?: ReactNode;
-  showDisabledMessage?: boolean;
+  readonly feature: string;
+  readonly children: ReactNode;
+  readonly fallback?: ReactNode;
+  readonly showDisabledMessage?: boolean;
 }
 
 /**

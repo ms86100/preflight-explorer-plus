@@ -30,8 +30,8 @@ export function ControlChart({ projectId }: ControlChartProps) {
       if (!issues?.length) return { points: [], avg: 0, stdDev: 0 };
 
       const points: DataPoint[] = issues.map(issue => {
-        const created = new Date(issue.created_at || issue.resolved_at);
-        const resolved = new Date(issue.resolved_at!);
+        const created = new Date(issue.created_at ?? issue.resolved_at ?? '');
+        const resolved = new Date(issue.resolved_at ?? '');
         const days = differenceInDays(resolved, created);
         
         return {

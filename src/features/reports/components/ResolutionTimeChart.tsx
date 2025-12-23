@@ -37,7 +37,7 @@ export function ResolutionTimeChart({ projectId }: ResolutionTimeChartProps) {
       };
 
       issues.forEach(issue => {
-        const days = differenceInDays(new Date(issue.resolved_at!), new Date(issue.created_at!));
+        const days = differenceInDays(new Date(issue.resolved_at ?? ''), new Date(issue.created_at ?? ''));
         
         if (days < 1) buckets['< 1 day']++;
         else if (days <= 3) buckets['1-3 days']++;
@@ -124,8 +124,8 @@ export function ResolutionTimeChart({ projectId }: ResolutionTimeChartProps) {
                   ]}
                 />
                 <Bar dataKey="count" name="Issues">
-                  {chartData?.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {chartData?.map((entry) => (
+                    <Cell key={entry.range} fill={COLORS[Object.keys({ '< 1 day': 0, '1-3 days': 1, '4-7 days': 2, '1-2 weeks': 3, '2-4 weeks': 4, '> 1 month': 5 })[entry.range] as unknown as number % COLORS.length] || COLORS[0]} />
                   ))}
                 </Bar>
               </BarChart>

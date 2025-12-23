@@ -84,16 +84,16 @@ function CommitItem({ commit }: { readonly commit: GitCommit }) {
         <p className="text-sm truncate mt-0.5">{message}</p>
         <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
           {timeAgo && <span>{timeAgo}</span>}
-          {commit.files_changed > 0 && (
+          {commit.files_changed !== undefined && commit.files_changed > 0 && (
             <span>
               {commit.files_changed} file{commit.files_changed !== 1 ? 's' : ''}
             </span>
           )}
-          {(commit.additions > 0 || commit.deletions > 0) && (
+          {((commit.additions !== undefined && commit.additions > 0) || (commit.deletions !== undefined && commit.deletions > 0)) && (
             <span>
-              <span className="text-green-600">+{commit.additions}</span>
+              <span className="text-green-600">+{commit.additions ?? 0}</span>
               {' / '}
-              <span className="text-red-600">-{commit.deletions}</span>
+              <span className="text-red-600">-{commit.deletions ?? 0}</span>
             </span>
           )}
         </div>

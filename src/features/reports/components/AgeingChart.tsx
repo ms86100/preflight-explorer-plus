@@ -110,8 +110,8 @@ export function AgeingChart({ projectId }: AgeingChartProps) {
                   formatter={(value: number) => [`${value} issues`, 'Count']}
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {chartData?.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  {chartData?.map((entry) => (
+                    <Cell key={entry.label} fill={entry.color} />
                   ))}
                 </Bar>
               </BarChart>

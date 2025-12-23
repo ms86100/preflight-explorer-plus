@@ -89,7 +89,7 @@ export function CustomFieldInput({ field, value, onChange, disabled }: CustomFie
             type="number"
             value={currentValue as string}
             onChange={(e) => onChange({ 
-              value_number: e.target.value ? parseFloat(e.target.value) : null 
+              value_number: e.target.value ? Number.parseFloat(e.target.value) : null 
             })}
             placeholder={field.description || `Enter ${field.name.toLowerCase()}`}
             disabled={disabled}
