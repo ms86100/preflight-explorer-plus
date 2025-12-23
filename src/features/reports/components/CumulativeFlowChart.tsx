@@ -1,4 +1,3 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Layers } from 'lucide-react';
 
 interface CumulativeFlowProps {
-  projectId: string;
+  readonly projectId: string;
 }
 
 export function CumulativeFlowChart({ projectId }: CumulativeFlowProps) {

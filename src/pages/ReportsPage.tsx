@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useProjects } from '@/features/projects';
 import { useBoardsByProject, useActiveSprint } from '@/features/boards';

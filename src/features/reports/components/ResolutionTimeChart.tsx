@@ -1,4 +1,3 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -7,7 +6,7 @@ import { Timer } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
 
 interface ResolutionTimeChartProps {
-  projectId: string;
+  readonly projectId: string;
 }
 
 interface ResolutionBucket {

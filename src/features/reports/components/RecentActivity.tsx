@@ -1,10 +1,8 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
   Activity, 
   Plus, 
@@ -16,7 +14,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 
 interface RecentActivityProps {
-  projectId: string;
+  readonly projectId: string;
 }
 
 interface ActivityItem {

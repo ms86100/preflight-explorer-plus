@@ -1,4 +1,3 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,16 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { 
   Calendar, 
-  CheckCircle2, 
   Clock, 
-  Target,
-  AlertCircle,
-  TrendingUp
+  Target
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 
 interface SprintReportProps {
-  sprintId: string;
+  readonly sprintId: string;
 }
 
 interface SprintStats {

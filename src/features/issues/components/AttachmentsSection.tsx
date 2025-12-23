@@ -20,7 +20,7 @@ interface Attachment {
 }
 
 interface AttachmentsSectionProps {
-  issueId: string;
+  readonly issueId: string;
 }
 
 export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {

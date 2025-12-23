@@ -1,13 +1,12 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Clock, TrendingDown } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { differenceInDays, format, subDays } from 'date-fns';
 
 interface LeadCycleTimeChartProps {
-  projectId: string;
+  readonly projectId: string;
 }
 
 interface TimeData {

@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +29,6 @@ import {
   Filter
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { useState } from 'react';
 
 interface AuditLog {
   id: string;
