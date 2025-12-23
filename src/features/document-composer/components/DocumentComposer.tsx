@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -92,7 +92,7 @@ interface ExportFormatCardProps {
   format: ExportFormat;
   title: string;
   description: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   onExport: () => void;
 }
 

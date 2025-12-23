@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { WorkflowList, WorkflowDesigner, WorkflowSchemeManager } from '@/features/workflows';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

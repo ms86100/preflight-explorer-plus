@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, type DragEvent, type ChangeEvent } from "react";
 import { Upload, FileText, X, AlertCircle, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,7 +54,7 @@ export function CSVUploader({
     reader.readAsText(file);
   }, [maxSize, onFileLoad]);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e: DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
 
@@ -64,17 +64,17 @@ export function CSVUploader({
     }
   }, [handleFile]);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
   }, []);
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = useCallback((e: DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
   }, []);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       handleFile(file);

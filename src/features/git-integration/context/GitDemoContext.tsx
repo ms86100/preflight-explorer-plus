@@ -1,7 +1,7 @@
 // Git Demo Mode Context
 // Provides demo mode state and controls for testing Git integration
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -15,7 +15,7 @@ interface GitDemoContextValue {
 
 const GitDemoContext = createContext<GitDemoContextValue | undefined>(undefined);
 
-export function GitDemoProvider({ children }: { readonly children: React.ReactNode }) {
+export function GitDemoProvider({ children }: { readonly children: ReactNode }) {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 

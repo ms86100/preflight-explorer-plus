@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -157,7 +157,7 @@ export function DataMatrixView({ schema, onBack }: DataMatrixViewProps) {
     return validationErrors.find((e) => e.columnKey === columnKey)?.message;
   };
 
-  const renderCellValue = (column: ColumnDefinition, value: unknown): React.ReactNode => {
+  const renderCellValue = (column: ColumnDefinition, value: unknown): ReactNode => {
     if (value === undefined || value === null || value === '') {
       return <span className="text-muted-foreground italic">—</span>;
     }
@@ -178,7 +178,7 @@ export function DataMatrixView({ schema, onBack }: DataMatrixViewProps) {
     }
   };
 
-  const renderInputField = (column: ColumnDefinition, value: unknown): React.ReactNode => {
+  const renderInputField = (column: ColumnDefinition, value: unknown): ReactNode => {
     const error = getErrorForColumn(column.key);
 
     switch (column.type) {

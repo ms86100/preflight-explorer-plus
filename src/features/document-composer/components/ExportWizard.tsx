@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -166,7 +166,7 @@ export function ExportWizard({ format, onClose, preselectedIssues = [] }: Export
     }
   };
 
-  const formatIcon: Record<string, React.ReactNode> = {
+  const formatIcon: Record<string, ReactNode> = {
     pdf: <FileText className="h-5 w-5 text-red-500" />,
     xlsx: <Table className="h-5 w-5 text-green-500" />,
     docx: <FileType className="h-5 w-5 text-blue-500" />,

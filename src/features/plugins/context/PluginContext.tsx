@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useEnabledPlugins } from '../hooks/usePlugins';
 import { FEATURE_PLUGIN_MAP, type Plugin, type PluginKey } from '../types';
 
@@ -13,7 +13,7 @@ interface PluginContextValue {
 
 const PluginContext = createContext<PluginContextValue | undefined>(undefined);
 
-export function PluginProvider({ children }: { readonly children: React.ReactNode }) {
+export function PluginProvider({ children }: { readonly children: ReactNode }) {
   const { data: plugins = [], isLoading, error } = useEnabledPlugins();
 
   const enabledPluginKeys = useMemo(() => {

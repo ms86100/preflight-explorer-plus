@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -120,7 +120,7 @@ export function WorkflowImportExport({
   };
   
   // Handle file upload
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     

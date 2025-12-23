@@ -1,4 +1,4 @@
-import React from 'react';
+import { type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Shield, Lock, AlertTriangle, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,7 +14,7 @@ interface ClassificationBadgeProps {
 
 const CLASSIFICATION_CONFIG: Record<ClassificationLevel, {
   label: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   className: string;
   description: string;
 }> = {

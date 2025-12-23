@@ -1,4 +1,4 @@
-import React from 'react';
+import { type ReactNode, type ComponentType } from 'react';
 import { useIsFeatureEnabled } from '../context/PluginContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Lock } from 'lucide-react';
@@ -7,8 +7,8 @@ import { useNavigate } from 'react-router-dom';
 
 interface FeatureGateProps {
   feature: string;
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
+  children: ReactNode;
+  fallback?: ReactNode;
   showDisabledMessage?: boolean;
 }
 
@@ -70,9 +70,9 @@ function FeatureDisabledMessage({ feature }: { feature: string }) {
  * Higher-order component version of FeatureGate
  */
 export function withFeatureGate<P extends object>(
-  WrappedComponent: React.ComponentType<P>,
+  WrappedComponent: ComponentType<P>,
   feature: string,
-  options?: { fallback?: React.ReactNode; showDisabledMessage?: boolean }
+  options?: { fallback?: ReactNode; showDisabledMessage?: boolean }
 ) {
   return function FeatureGatedComponent(props: P) {
     return (
