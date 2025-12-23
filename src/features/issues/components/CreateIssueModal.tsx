@@ -44,6 +44,30 @@ const ISSUE_TYPE_ICONS: Record<string, typeof Bug> = {
   'Sub-task': Layers,
 };
 
+// Jira DC issue type definitions with descriptions
+const ISSUE_TYPE_INFO: Record<string, { description: string; hint: string }> = {
+  Epic: {
+    description: 'A large body of work that spans multiple sprints',
+    hint: 'Use for major features or initiatives (e.g., "User Management System")',
+  },
+  Story: {
+    description: 'A user-facing feature or requirement',
+    hint: 'Use for user value (e.g., "As a user, I want to log in...")',
+  },
+  Task: {
+    description: 'Technical or administrative work',
+    hint: 'Use for work not directly tied to user requirements',
+  },
+  Bug: {
+    description: 'A defect or issue in existing functionality',
+    hint: 'Use to track problems that need fixing',
+  },
+  'Sub-task': {
+    description: 'A smaller piece of work within a parent issue',
+    hint: 'Use to break down Stories/Tasks into actionable steps',
+  },
+};
+
 interface CreateIssueModalProps {
   readonly projectId: string;
   readonly projectKey?: string;
@@ -165,30 +189,41 @@ export function CreateIssueModal({
                 Issue Type<span className="text-destructive">*</span>
                 <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
               </Label>
-              <Select
-                value={selectedTypeId}
-                onValueChange={(v) => setValue('issue_type_id', v)}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select issue type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {issueTypes?.filter((t) => !t.is_subtask).map((type) => {
-                    const Icon = ISSUE_TYPE_ICONS[type.name] || CheckSquare;
-                    return (
-                      <SelectItem key={type.id} value={type.id}>
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" style={{ color: type.color }} />
-                          {type.name}
+            <Select
+              value={selectedTypeId}
+              onValueChange={(v) => setValue('issue_type_id', v)}
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Select issue type" />
+              </SelectTrigger>
+              <SelectContent>
+                {issueTypes?.filter((t) => !t.is_subtask).map((type) => {
+                  const Icon = ISSUE_TYPE_ICONS[type.name] || CheckSquare;
+                  const info = ISSUE_TYPE_INFO[type.name];
+                  return (
+                    <SelectItem key={type.id} value={type.id}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4 shrink-0" style={{ color: type.color }} />
+                        <div className="flex flex-col">
+                          <span>{type.name}</span>
+                          {info && (
+                            <span className="text-xs text-muted-foreground">{info.description}</span>
+                          )}
                         </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-              {errors.issue_type_id && (
-                <p className="col-start-2 text-xs text-destructive">{errors.issue_type_id.message}</p>
-              )}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            {selectedType && ISSUE_TYPE_INFO[selectedType.name] && (
+              <p className="col-start-2 text-xs text-muted-foreground mt-1">
+                💡 {ISSUE_TYPE_INFO[selectedType.name].hint}
+              </p>
+            )}
+            {errors.issue_type_id && (
+              <p className="col-start-2 text-xs text-destructive">{errors.issue_type_id.message}</p>
+            )}
             </div>
 
             {/* Summary */}

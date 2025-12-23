@@ -54,9 +54,20 @@ export function useCreateProject() {
       ]);
       toast.success(`Project "${data.name}" created successfully!`);
     },
-    onError: (error) => {
+    onError: (error: Error & { code?: string; message?: string }) => {
       console.error('Failed to create project:', error);
-      toast.error('Failed to create project. Please try again.');
+      // Check for unique constraint violation on project key
+      const errorMessage = error?.message?.toLowerCase() || '';
+      if (errorMessage.includes('duplicate') || errorMessage.includes('unique') || 
+          errorMessage.includes('pkey') || errorMessage.includes('projects_pkey_key')) {
+        toast.error('A project with this key already exists', {
+          description: 'Please choose a different project key. The key may be in use by an active or archived project.',
+        });
+      } else {
+        toast.error('Failed to create project', {
+          description: 'Please check your input and try again.',
+        });
+      }
     },
   });
 }
