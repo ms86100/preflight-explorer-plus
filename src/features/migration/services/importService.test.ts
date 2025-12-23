@@ -33,7 +33,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 // Mock fetch for edge function calls
-global.fetch = vi.fn(() =>
+globalThis.fetch = vi.fn(() =>
   Promise.resolve({
     ok: true,
     json: () => Promise.resolve({ success: true }),

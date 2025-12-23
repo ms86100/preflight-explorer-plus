@@ -13,32 +13,90 @@ import {
   createPlugin,
 } from "./pluginService";
 
-// Mock Supabase client
+// Mock factory functions moved to module scope to avoid nested functions (S2004)
+function createSelectOrderOrderMock(resolvedValue: { data: unknown; error: unknown }) {
+  return {
+    select: vi.fn().mockReturnValue({
+      order: vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue(resolvedValue),
+      }),
+    }),
+  };
+}
+
+function createSelectEqSingleMock(resolvedValue: { data: unknown; error: unknown }) {
+  return {
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue(resolvedValue),
+      }),
+    }),
+  };
+}
+
+function createSelectEqOrderMock(resolvedValue: { data: unknown; error: unknown }) {
+  return {
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue(resolvedValue),
+      }),
+    }),
+  };
+}
+
+function createUpdateEqSelectSingleMock(resolvedValue: { data: unknown; error: unknown }) {
+  return {
+    update: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue(resolvedValue),
+        }),
+      }),
+    }),
+  };
+}
+
+function createInsertSelectSingleMock(resolvedValue: { data: unknown; error: unknown }) {
+  return {
+    insert: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue(resolvedValue),
+      }),
+    }),
+  };
+}
+
+// Default mock factory
+function createDefaultFromMock() {
+  return {
+    select: vi.fn().mockReturnValue({
+      order: vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      }),
+      eq: vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      }),
+    }),
+    insert: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: {}, error: null }),
+      }),
+    }),
+    update: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: {}, error: null }),
+        }),
+      }),
+    }),
+  };
+}
+
+// Mock Supabase client - flattened structure (S2004)
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        order: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        eq: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          single: vi.fn(() => Promise.resolve({ data: null, error: null })),
-        })),
-      })),
-      insert: vi.fn(() => ({
-        select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-        })),
-      })),
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-          })),
-        })),
-      })),
-    })),
+    from: vi.fn(() => createDefaultFromMock()),
   },
 }));
 
@@ -56,13 +114,9 @@ describe("pluginService", () => {
         { id: "2", key: "slack", name: "Slack", is_system: false },
       ];
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          order: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({ data: mockPlugins, error: null }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createSelectOrderOrderMock({ data: mockPlugins, error: null }) as ReturnType<typeof supabase.from>
+      );
 
       const result = await getPlugins();
 
@@ -71,13 +125,9 @@ describe("pluginService", () => {
     });
 
     it("should throw on error", async () => {
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          order: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({ data: null, error: { message: "Error" } }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createSelectOrderOrderMock({ data: null, error: { message: "Error" } }) as ReturnType<typeof supabase.from>
+      );
 
       await expect(getPlugins()).rejects.toEqual({ message: "Error" });
     });
@@ -87,13 +137,9 @@ describe("pluginService", () => {
     it("should fetch a single plugin by key", async () => {
       const mockPlugin = { id: "1", key: "git-integration", name: "Git Integration" };
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockPlugin, error: null }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createSelectEqSingleMock({ data: mockPlugin, error: null }) as ReturnType<typeof supabase.from>
+      );
 
       const result = await getPlugin("git-integration");
 
@@ -101,13 +147,9 @@ describe("pluginService", () => {
     });
 
     it("should return null for not found (PGRST116)", async () => {
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: null, error: { code: "PGRST116" } }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createSelectEqSingleMock({ data: null, error: { code: "PGRST116" } }) as ReturnType<typeof supabase.from>
+      );
 
       const result = await getPlugin("nonexistent");
 
@@ -121,13 +163,9 @@ describe("pluginService", () => {
         { id: "1", key: "git-integration", name: "Git Integration", is_enabled: true },
       ];
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({ data: mockPlugins, error: null }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createSelectEqOrderMock({ data: mockPlugins, error: null }) as ReturnType<typeof supabase.from>
+      );
 
       const result = await getEnabledPlugins();
 
@@ -139,15 +177,9 @@ describe("pluginService", () => {
     it("should enable a plugin", async () => {
       const mockPlugin = { id: "1", key: "slack", is_enabled: true };
 
-      vi.mocked(supabase.from).mockReturnValue({
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: mockPlugin, error: null }),
-            }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createUpdateEqSelectSingleMock({ data: mockPlugin, error: null }) as ReturnType<typeof supabase.from>
+      );
 
       const result = await togglePlugin("1", true);
 
@@ -157,15 +189,9 @@ describe("pluginService", () => {
     it("should disable a plugin", async () => {
       const mockPlugin = { id: "1", key: "slack", is_enabled: false };
 
-      vi.mocked(supabase.from).mockReturnValue({
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: mockPlugin, error: null }),
-            }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createUpdateEqSelectSingleMock({ data: mockPlugin, error: null }) as ReturnType<typeof supabase.from>
+      );
 
       const result = await togglePlugin("1", false);
 
@@ -177,15 +203,9 @@ describe("pluginService", () => {
     it("should update plugin configuration", async () => {
       const mockPlugin = { id: "1", key: "slack", config: { webhook_url: "https://hooks.slack.com/xxx" } };
 
-      vi.mocked(supabase.from).mockReturnValue({
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: mockPlugin, error: null }),
-            }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createUpdateEqSelectSingleMock({ data: mockPlugin, error: null }) as ReturnType<typeof supabase.from>
+      );
 
       const result = await updatePluginConfig("1", { webhook_url: "https://hooks.slack.com/xxx" });
 
@@ -202,13 +222,9 @@ describe("pluginService", () => {
         is_enabled: false,
       };
 
-      vi.mocked(supabase.from).mockReturnValue({
-        insert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockPlugin, error: null }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createInsertSelectSingleMock({ data: mockPlugin, error: null }) as ReturnType<typeof supabase.from>
+      );
 
       const result = await createPlugin({
         key: "custom-plugin",

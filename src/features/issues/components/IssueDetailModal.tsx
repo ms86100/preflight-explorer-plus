@@ -261,8 +261,8 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
 
   const handleStoryPointsBlur = async () => {
     if (!issueId) return;
-    const newPoints = storyPointsInput.trim() === '' ? null : parseInt(storyPointsInput, 10);
-    if (isNaN(newPoints as number) && storyPointsInput.trim() !== '') return;
+    const newPoints = storyPointsInput.trim() === '' ? null : Number.parseInt(storyPointsInput, 10);
+    if (Number.isNaN(newPoints as number) && storyPointsInput.trim() !== '') return;
     if (newPoints !== issue?.story_points) {
       await updateIssue.mutateAsync({ id: issueId, updates: { story_points: newPoints } });
       refetch();

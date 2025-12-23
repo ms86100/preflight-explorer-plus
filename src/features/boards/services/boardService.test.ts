@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { boardService, sprintService } from "./boardService";
 
-// Mock helper functions to reduce nesting complexity
+// Mock helper functions moved to module scope to reduce nesting complexity (S2004)
 function createSelectEqOrderMock(resolvedValue: { data: unknown; error: unknown }) {
   return {
     select: vi.fn().mockReturnValue({
@@ -93,34 +93,39 @@ function createInsertMock(resolvedValue: { error: unknown }) {
   } as ReturnType<typeof supabase.from>;
 }
 
-// Mock Supabase client
+// Mock factory function for default mock - prevents nested functions inside vi.mock (S2004)
+function createDefaultFromMock() {
+  return {
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      }),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+    }),
+    insert: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: {}, error: null }),
+      }),
+    }),
+    update: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: {}, error: null }),
+        }),
+      }),
+    }),
+    delete: vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    }),
+  };
+}
+
+// Mock Supabase client - flattened structure (S2004)
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          single: vi.fn(() => Promise.resolve({ data: null, error: null })),
-          maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
-        })),
-        order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-      })),
-      insert: vi.fn(() => ({
-        select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-        })),
-      })),
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-          })),
-        })),
-      })),
-      delete: vi.fn(() => ({
-        eq: vi.fn(() => Promise.resolve({ error: null })),
-      })),
-    })),
+    from: vi.fn(() => createDefaultFromMock()),
     rpc: vi.fn(() => Promise.resolve({ data: [], error: null })),
   },
 }));

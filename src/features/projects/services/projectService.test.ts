@@ -6,47 +6,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { projectService, type ProjectInsert, type ProjectRow } from './projectService';
 
-// Mock supabase client
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          order: vi.fn(() => ({
-            range: vi.fn(() => Promise.resolve({
-              data: mockProjects,
-              error: null,
-              count: mockProjects.length,
-            })),
-          })),
-          single: vi.fn(() => Promise.resolve({
-            data: mockProjects[0],
-            error: null,
-          })),
-        })),
-      })),
-      insert: vi.fn(() => ({
-        select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({
-            data: mockCreatedProject,
-            error: null,
-          })),
-        })),
-      })),
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({
-              data: { ...mockProjects[0], name: 'Updated Name' },
-              error: null,
-            })),
-          })),
-        })),
-      })),
-    })),
-  },
-}));
-
 const mockProjects: ProjectRow[] = [
   {
     id: 'proj-1',
@@ -88,6 +47,52 @@ const mockCreatedProject: ProjectRow = {
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
 };
+
+// Mock factory functions moved to module scope (S2004)
+function createDefaultFromMock() {
+  return {
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        order: vi.fn().mockReturnValue({
+          range: vi.fn().mockResolvedValue({
+            data: mockProjects,
+            error: null,
+            count: mockProjects.length,
+          }),
+        }),
+        single: vi.fn().mockResolvedValue({
+          data: mockProjects[0],
+          error: null,
+        }),
+      }),
+    }),
+    insert: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({
+          data: mockCreatedProject,
+          error: null,
+        }),
+      }),
+    }),
+    update: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { ...mockProjects[0], name: 'Updated Name' },
+            error: null,
+          }),
+        }),
+      }),
+    }),
+  };
+}
+
+// Mock supabase client - flattened structure (S2004)
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: vi.fn(() => createDefaultFromMock()),
+  },
+}));
 
 describe('projectService', () => {
   beforeEach(() => {

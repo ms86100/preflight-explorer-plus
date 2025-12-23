@@ -121,10 +121,10 @@ export function RecentActivity({ projectId }: RecentActivityProps) {
         }
       });
 
-      // Sort by timestamp and take top 15
-      return result
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 15);
+      // Sort by timestamp and take top 15 - create a sorted copy without mutating original (S4043)
+      const sortedResult = [...result];
+      sortedResult.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      return sortedResult.slice(0, 15);
     },
     enabled: !!projectId,
   });

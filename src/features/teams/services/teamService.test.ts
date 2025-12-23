@@ -6,32 +6,102 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { teamService } from "./teamService";
 
-// Mock Supabase client
+// Mock factory functions moved to module scope (S2004)
+function createSelectEqOrderMock(resolvedValue: { data: unknown; error: unknown }) {
+  return {
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue(resolvedValue),
+      }),
+    }),
+  };
+}
+
+function createSelectEqMock(resolvedValue: { data: unknown; error: unknown }) {
+  return {
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue(resolvedValue),
+    }),
+  };
+}
+
+function createSelectInMock(resolvedValue: { data: unknown; error: unknown }) {
+  return {
+    select: vi.fn().mockReturnValue({
+      in: vi.fn().mockResolvedValue(resolvedValue),
+    }),
+  };
+}
+
+function createInsertSelectSingleMock(resolvedValue: { data: unknown; error: unknown }) {
+  return {
+    insert: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue(resolvedValue),
+      }),
+    }),
+  };
+}
+
+function createUpdateEqSelectSingleMock(resolvedValue: { data: unknown; error: unknown }) {
+  return {
+    update: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue(resolvedValue),
+        }),
+      }),
+    }),
+  };
+}
+
+function createUpdateEqMock(resolvedValue: { error: unknown }) {
+  return {
+    update: vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue(resolvedValue),
+    }),
+  };
+}
+
+function createDeleteEqMock(resolvedValue: { error: unknown }) {
+  return {
+    delete: vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue(resolvedValue),
+    }),
+  };
+}
+
+// Default mock factory
+function createDefaultFromMock() {
+  return {
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      }),
+      in: vi.fn().mockResolvedValue({ data: [], error: null }),
+    }),
+    insert: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: {}, error: null }),
+      }),
+    }),
+    update: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: {}, error: null }),
+        }),
+      }),
+    }),
+    delete: vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    }),
+  };
+}
+
+// Mock Supabase client - flattened structure (S2004)
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        in: vi.fn(() => Promise.resolve({ data: [], error: null })),
-      })),
-      insert: vi.fn(() => ({
-        select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-        })),
-      })),
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-          })),
-        })),
-      })),
-      delete: vi.fn(() => ({
-        eq: vi.fn(() => Promise.resolve({ error: null })),
-      })),
-    })),
+    from: vi.fn(() => createDefaultFromMock()),
     rpc: vi.fn(() => Promise.resolve({ data: [], error: null })),
   },
 }));
@@ -50,13 +120,9 @@ describe("teamService", () => {
         { id: "2", name: "Team B", project_id: "proj-1" },
       ];
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({ data: mockTeams, error: null }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createSelectEqOrderMock({ data: mockTeams, error: null }) as ReturnType<typeof supabase.from>
+      );
 
       const result = await teamService.getTeamsByProject("proj-1");
 
@@ -65,13 +131,9 @@ describe("teamService", () => {
     });
 
     it("should throw on error", async () => {
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({ data: null, error: { message: "Error" } }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createSelectEqOrderMock({ data: null, error: { message: "Error" } }) as ReturnType<typeof supabase.from>
+      );
 
       await expect(teamService.getTeamsByProject("proj-1")).rejects.toEqual({ message: "Error" });
     });
@@ -79,11 +141,9 @@ describe("teamService", () => {
 
   describe("getTeamMembers", () => {
     it("should return empty array when no members", async () => {
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createSelectEqMock({ data: [], error: null }) as ReturnType<typeof supabase.from>
+      );
 
       const result = await teamService.getTeamMembers("team-1");
 
@@ -98,11 +158,9 @@ describe("teamService", () => {
         { id: "u1", display_name: "User One", avatar_url: null },
       ];
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({ data: mockMembers, error: null }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createSelectEqMock({ data: mockMembers, error: null }) as ReturnType<typeof supabase.from>
+      );
 
       vi.mocked(supabase.rpc).mockResolvedValue({ data: mockProfiles, error: null } as never);
 
@@ -118,13 +176,9 @@ describe("teamService", () => {
     it("should create a new team", async () => {
       const mockTeam = { id: "new-team", name: "New Team", project_id: "proj-1" };
 
-      vi.mocked(supabase.from).mockReturnValue({
-        insert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockTeam, error: null }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createInsertSelectSingleMock({ data: mockTeam, error: null }) as ReturnType<typeof supabase.from>
+      );
 
       const result = await teamService.createTeam("proj-1", "New Team", "Description", "user-1");
 
@@ -137,15 +191,9 @@ describe("teamService", () => {
     it("should update team name", async () => {
       const mockTeam = { id: "team-1", name: "Updated Name" };
 
-      vi.mocked(supabase.from).mockReturnValue({
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: mockTeam, error: null }),
-            }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createUpdateEqSelectSingleMock({ data: mockTeam, error: null }) as ReturnType<typeof supabase.from>
+      );
 
       const result = await teamService.updateTeam("team-1", { name: "Updated Name" });
 
@@ -155,11 +203,9 @@ describe("teamService", () => {
 
   describe("deleteTeam", () => {
     it("should delete a team", async () => {
-      vi.mocked(supabase.from).mockReturnValue({
-        delete: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({ error: null }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createDeleteEqMock({ error: null }) as ReturnType<typeof supabase.from>
+      );
 
       await expect(teamService.deleteTeam("team-1")).resolves.not.toThrow();
       expect(supabase.from).toHaveBeenCalledWith("project_teams");
@@ -170,13 +216,9 @@ describe("teamService", () => {
     it("should add a member to team", async () => {
       const mockMember = { id: "m1", team_id: "team-1", user_id: "u1", role: "member" };
 
-      vi.mocked(supabase.from).mockReturnValue({
-        insert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockMember, error: null }),
-          }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createInsertSelectSingleMock({ data: mockMember, error: null }) as ReturnType<typeof supabase.from>
+      );
 
       const result = await teamService.addTeamMember("team-1", "u1", "member", "admin-1");
 
@@ -186,11 +228,9 @@ describe("teamService", () => {
 
   describe("updateMemberRole", () => {
     it("should update member role", async () => {
-      vi.mocked(supabase.from).mockReturnValue({
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({ error: null }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createUpdateEqMock({ error: null }) as ReturnType<typeof supabase.from>
+      );
 
       await expect(teamService.updateMemberRole("m1", "lead")).resolves.not.toThrow();
     });
@@ -198,11 +238,9 @@ describe("teamService", () => {
 
   describe("removeTeamMember", () => {
     it("should remove member from team", async () => {
-      vi.mocked(supabase.from).mockReturnValue({
-        delete: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({ error: null }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createDeleteEqMock({ error: null }) as ReturnType<typeof supabase.from>
+      );
 
       await expect(teamService.removeTeamMember("m1")).resolves.not.toThrow();
     });
@@ -210,11 +248,9 @@ describe("teamService", () => {
 
   describe("getAllProjectMembers", () => {
     it("should return fallback profiles when no teams", async () => {
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
-        }),
-      } as ReturnType<typeof supabase.from>);
+      vi.mocked(supabase.from).mockReturnValue(
+        createSelectEqMock({ data: [], error: null }) as ReturnType<typeof supabase.from>
+      );
 
       const mockProfiles = [{ id: "u1", display_name: "User", avatar_url: null }];
       vi.mocked(supabase.rpc).mockResolvedValue({ data: mockProfiles, error: null } as never);

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -100,7 +99,7 @@ export function ExecutiveSummary({ projectId }: ExecutiveSummaryProps) {
 
       // This week's activity
       const createdThisWeek = issues.filter(i => 
-        new Date(i.created_at!) >= weekAgo
+        new Date(i.created_at as string) >= weekAgo
       ).length;
       const completedThisWeek = issues.filter(i => 
         i.resolved_at && new Date(i.resolved_at) >= weekAgo
@@ -110,7 +109,7 @@ export function ExecutiveSummary({ projectId }: ExecutiveSummaryProps) {
       const resolvedIssues = issues.filter(i => i.resolved_at && i.created_at);
       const avgCompletionTime = resolvedIssues.length > 0
         ? resolvedIssues.reduce((sum, i) => {
-            const days = differenceInDays(new Date(i.resolved_at!), new Date(i.created_at!));
+            const days = differenceInDays(new Date(i.resolved_at as string), new Date(i.created_at as string));
             return sum + days;
           }, 0) / resolvedIssues.length
         : 0;
@@ -155,8 +154,8 @@ export function ExecutiveSummary({ projectId }: ExecutiveSummaryProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i}>
+        {[...new Array(4)].map((_, i) => (
+          <Card key={`skeleton-${i}`}>
             <CardContent className="p-6">
               <div className="h-20 animate-pulse bg-muted rounded" />
             </CardContent>
