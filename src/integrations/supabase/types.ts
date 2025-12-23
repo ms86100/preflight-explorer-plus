@@ -2995,6 +2995,60 @@ export type Database = {
         }
         Relationships: []
       }
+      sprint_history: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          issue_id: string | null
+          issue_key: string | null
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          sprint_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          issue_id?: string | null
+          issue_key?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          sprint_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          issue_id?: string | null
+          issue_key?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          sprint_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sprint_history_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sprint_history_sprint_id_fkey"
+            columns: ["sprint_id"]
+            isOneToOne: false
+            referencedRelation: "sprints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sprint_issues: {
         Row: {
           added_at: string | null

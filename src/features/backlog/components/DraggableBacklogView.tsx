@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { SprintActivityFeed } from './SprintActivityFeed';
 import {
   Plus,
   Search,
@@ -787,6 +788,9 @@ export function DraggableBacklogView() {
             </div>
 
             <div className="flex items-center gap-2">
+              {boardId && (
+                <SprintActivityFeed boardId={boardId} projectKey={projectKey || ''} />
+              )}
               <Button variant="outline" size="sm" onClick={() => setIsSprintConfigOpen(true)}>
                 <Settings2 className="h-4 w-4 mr-2" />
                 Sprint Settings
