@@ -11,20 +11,20 @@ import { IssueCard } from './IssueCard';
 import type { ClassificationLevel } from '@/types/jira';
 
 interface BoardIssue {
-  id: string;
-  issue_key: string;
-  summary: string;
-  issue_type: 'Epic' | 'Story' | 'Task' | 'Bug' | 'Subtask';
-  priority: 'Highest' | 'High' | 'Medium' | 'Low' | 'Lowest';
-  assignee?: {
-    display_name: string;
-    avatar_url?: string;
+  readonly id: string;
+  readonly issue_key: string;
+  readonly summary: string;
+  readonly issue_type: 'Epic' | 'Story' | 'Task' | 'Bug' | 'Subtask';
+  readonly priority: 'Highest' | 'High' | 'Medium' | 'Low' | 'Lowest';
+  readonly assignee?: {
+    readonly display_name: string;
+    readonly avatar_url?: string;
   };
-  story_points?: number;
-  classification?: ClassificationLevel;
-  labels?: string[];
-  epic_name?: string;
-  epic_color?: string;
+  readonly story_points?: number;
+  readonly classification?: ClassificationLevel;
+  readonly labels?: readonly string[];
+  readonly epic_name?: string;
+  readonly epic_color?: string;
 }
 
 interface BoardColumnProps {
@@ -49,6 +49,12 @@ const STATUS_CATEGORY_DOT = {
   todo: 'bg-[hsl(var(--status-todo))]',
   in_progress: 'bg-[hsl(var(--status-in-progress))]',
   done: 'bg-[hsl(var(--status-done))]',
+};
+
+const getIssueLimitBadgeClass = (isOverLimit: boolean, isUnderLimit: boolean): string => {
+  if (isOverLimit) return 'bg-destructive/10 text-destructive';
+  if (isUnderLimit) return 'bg-warning/10 text-warning';
+  return 'bg-muted text-muted-foreground';
 };
 
 export function BoardColumn({
@@ -107,13 +113,7 @@ export function BoardColumn({
               {name}
             </h3>
             <span
-              className={`text-xs font-medium px-1.5 py-0.5 rounded ${
-                isOverLimit
-                  ? 'bg-destructive/10 text-destructive'
-                  : isUnderLimit
-                  ? 'bg-warning/10 text-warning'
-                  : 'bg-muted text-muted-foreground'
-              }`}
+              className={`text-xs font-medium px-1.5 py-0.5 rounded ${getIssueLimitBadgeClass(isOverLimit, isUnderLimit)}`}
             >
               {issueCount}
               {maxIssues !== undefined && ` / ${maxIssues}`}

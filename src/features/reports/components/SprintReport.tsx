@@ -15,17 +15,17 @@ interface SprintReportProps {
 }
 
 interface SprintStats {
-  name: string;
-  goal: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  state: string;
-  totalIssues: number;
-  completedIssues: number;
-  totalPoints: number;
-  completedPoints: number;
-  addedMidSprint: number;
-  removedMidSprint: number;
+  readonly name: string;
+  readonly goal: string | null;
+  readonly startDate: string | null;
+  readonly endDate: string | null;
+  readonly state: string;
+  readonly totalIssues: number;
+  readonly completedIssues: number;
+  readonly totalPoints: number;
+  readonly completedPoints: number;
+  readonly addedMidSprint: number;
+  readonly removedMidSprint: number;
 }
 
 export function SprintReport({ sprintId }: SprintReportProps) {

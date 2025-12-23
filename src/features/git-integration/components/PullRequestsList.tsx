@@ -40,6 +40,17 @@ const statusConfig: Record<PullRequestStatus, {
   },
 };
 
+const getPRStatusIconColor = (status: PullRequestStatus): string => {
+  switch (status) {
+    case 'merged':
+      return 'text-purple-600';
+    case 'open':
+      return 'text-green-600';
+    default:
+      return 'text-muted-foreground';
+  }
+};
+
 export function PullRequestsList({ pullRequests, onCreatePR, showCreateButton = true }: PullRequestsListProps) {
   if (pullRequests.length === 0) {
     return (
@@ -88,11 +99,7 @@ function PullRequestItem({ pullRequest }: { pullRequest: GitPullRequest }) {
   
   return (
     <div className="flex items-start gap-2 p-2 rounded-md hover:bg-muted/50 group">
-      <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${
-        pullRequest.status === 'merged' ? 'text-purple-600' :
-        pullRequest.status === 'open' ? 'text-green-600' :
-        'text-muted-foreground'
-      }`} />
+      <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${getPRStatusIconColor(pullRequest.status)}`} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium truncate flex-1">

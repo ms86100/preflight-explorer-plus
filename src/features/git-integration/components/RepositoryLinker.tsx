@@ -60,14 +60,14 @@ import { toast } from 'sonner';
 import type { GitRepository } from '../types';
 
 interface DiscoveredRepo {
-  id: string;
-  name: string;
-  full_name: string;
-  description?: string;
-  web_url: string;
-  clone_url?: string;
-  default_branch: string;
-  private: boolean;
+  readonly id: string;
+  readonly name: string;
+  readonly full_name: string;
+  readonly description?: string;
+  readonly web_url: string;
+  readonly clone_url?: string;
+  readonly default_branch: string;
+  readonly private: boolean;
 }
 
 const formSchema = z.object({

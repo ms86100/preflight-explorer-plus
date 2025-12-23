@@ -14,21 +14,21 @@ import { BoardColumn } from './BoardColumn';
 import type { ClassificationLevel } from '@/types/jira';
 
 interface BoardIssue {
-  id: string;
-  issue_key: string;
-  summary: string;
-  issue_type: 'Epic' | 'Story' | 'Task' | 'Bug' | 'Subtask';
-  priority: 'Highest' | 'High' | 'Medium' | 'Low' | 'Lowest';
-  status: string;
-  assignee?: {
-    display_name: string;
-    avatar_url?: string;
+  readonly id: string;
+  readonly issue_key: string;
+  readonly summary: string;
+  readonly issue_type: 'Epic' | 'Story' | 'Task' | 'Bug' | 'Subtask';
+  readonly priority: 'Highest' | 'High' | 'Medium' | 'Low' | 'Lowest';
+  readonly status: string;
+  readonly assignee?: {
+    readonly display_name: string;
+    readonly avatar_url?: string;
   };
-  story_points?: number;
-  classification?: ClassificationLevel;
-  labels?: string[];
-  created_at?: string;
-  updated_at?: string;
+  readonly story_points?: number;
+  readonly classification?: ClassificationLevel;
+  readonly labels?: readonly string[];
+  readonly created_at?: string;
+  readonly updated_at?: string;
 }
 
 interface KanbanBoardProps {
@@ -60,6 +60,17 @@ const DEFAULT_KANBAN_COLUMNS = [
   { id: 'review', name: 'In Review', statusCategory: 'in_progress' as const, maxIssues: 3 },
   { id: 'done', name: 'Done', statusCategory: 'done' as const },
 ];
+
+const getWipStatusClass = (wipStatus: 'normal' | 'warning' | 'exceeded'): string => {
+  switch (wipStatus) {
+    case 'exceeded':
+      return 'bg-destructive/20 text-destructive';
+    case 'warning':
+      return 'bg-yellow-500/20 text-yellow-700';
+    default:
+      return 'bg-muted text-muted-foreground';
+  }
+};
 
 export function KanbanBoard({
   projectKey = '',
@@ -258,11 +269,7 @@ export function KanbanBoard({
               <div key={column.id} className="flex flex-col">
                 {/* WIP Limit Header */}
                 {column.maxIssues && (
-                  <div className={`text-xs text-center py-1 mb-1 rounded ${
-                    wipStatus === 'exceeded' ? 'bg-destructive/20 text-destructive' :
-                    wipStatus === 'warning' ? 'bg-yellow-500/20 text-yellow-700' :
-                    'bg-muted text-muted-foreground'
-                  }`}>
+                  <div className={`text-xs text-center py-1 mb-1 rounded ${getWipStatusClass(wipStatus)}`}>
                     {issueCount}/{column.maxIssues} WIP
                   </div>
                 )}

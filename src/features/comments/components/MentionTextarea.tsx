@@ -4,9 +4,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MentionUser {
-  id: string;
-  display_name: string;
-  avatar_url: string | null;
+  readonly id: string;
+  readonly display_name: string;
+  readonly avatar_url: string | null;
 }
 
 interface MentionTextareaProps {

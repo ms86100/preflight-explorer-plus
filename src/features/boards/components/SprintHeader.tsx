@@ -16,6 +16,28 @@ import {
 } from '@/components/ui/collapsible';
 import type { SprintState } from '@/types/jira';
 
+const getSprintStateLozengeClass = (state: SprintState): string => {
+  switch (state) {
+    case 'active':
+      return 'lozenge-inprogress';
+    case 'closed':
+      return 'lozenge-success';
+    default:
+      return 'lozenge-default';
+  }
+};
+
+const getDaysRemainingClassName = (daysRemaining: number): string => {
+  if (daysRemaining < 0) return 'text-destructive';
+  if (daysRemaining <= 2) return 'text-warning';
+  return '';
+};
+
+const getDaysRemainingText = (daysRemaining: number): string => {
+  if (daysRemaining < 0) return `${Math.abs(daysRemaining)} days overdue`;
+  return `${daysRemaining} days left`;
+};
+
 interface SprintHeaderProps {
   readonly sprint: {
     readonly id: string;
@@ -90,13 +112,7 @@ export function SprintHeader({
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold">{sprint.name}</h2>
                   <span
-                    className={`lozenge ${
-                      sprint.state === 'active'
-                        ? 'lozenge-inprogress'
-                        : sprint.state === 'closed'
-                        ? 'lozenge-success'
-                        : 'lozenge-default'
-                    }`}
+                    className={`lozenge ${getSprintStateLozengeClass(sprint.state)}`}
                   >
                     {sprint.state}
                   </span>
@@ -119,20 +135,10 @@ export function SprintHeader({
 
                 {sprint.state === 'active' && daysRemaining !== null && (
                   <div
-                    className={`flex items-center gap-1.5 ${
-                      daysRemaining < 0
-                        ? 'text-destructive'
-                        : daysRemaining <= 2
-                        ? 'text-warning'
-                        : ''
-                    }`}
+                    className={`flex items-center gap-1.5 ${getDaysRemainingClassName(daysRemaining)}`}
                   >
                     <Clock className="h-4 w-4" />
-                    <span>
-                      {daysRemaining < 0
-                        ? `${Math.abs(daysRemaining)} days overdue`
-                        : `${daysRemaining} days left`}
-                    </span>
+                    <span>{getDaysRemainingText(daysRemaining)}</span>
                   </div>
                 )}
               </div>

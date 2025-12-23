@@ -15,20 +15,20 @@ import { BoardColumn } from './BoardColumn';
 import type { ClassificationLevel } from '@/types/jira';
 
 interface BoardIssue {
-  id: string;
-  issue_key: string;
-  summary: string;
-  issue_type: 'Epic' | 'Story' | 'Task' | 'Bug' | 'Subtask';
-  priority: 'Highest' | 'High' | 'Medium' | 'Low' | 'Lowest';
-  status: string;
-  assignee?: {
-    display_name: string;
-    avatar_url?: string;
+  readonly id: string;
+  readonly issue_key: string;
+  readonly summary: string;
+  readonly issue_type: 'Epic' | 'Story' | 'Task' | 'Bug' | 'Subtask';
+  readonly priority: 'Highest' | 'High' | 'Medium' | 'Low' | 'Lowest';
+  readonly status: string;
+  readonly assignee?: {
+    readonly display_name: string;
+    readonly avatar_url?: string;
   };
-  story_points?: number;
-  classification?: ClassificationLevel;
-  labels?: string[];
-  due_date?: string;
+  readonly story_points?: number;
+  readonly classification?: ClassificationLevel;
+  readonly labels?: readonly string[];
+  readonly due_date?: string;
 }
 
 interface BasicBoardProps {
