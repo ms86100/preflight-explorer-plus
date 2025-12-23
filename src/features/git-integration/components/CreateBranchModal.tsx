@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import type { GitRepository } from '../types';
+import { useGitModalRepositories } from '../hooks/useGitModalRepositories';
 
 const formSchema = z.object({
   repository_id: z.string().min(1, 'Repository is required'),
@@ -40,9 +40,8 @@ export function CreateBranchModal({
   projectId,
   onSuccess,
 }: CreateBranchModalProps) {
-  const [repositories, setRepositories] = useState<GitRepository[]>([]);
+  const { repositories, loading: loadingRepos, loadRepositories } = useGitModalRepositories();
   const [loading, setLoading] = useState(false);
-  const [loadingRepos, setLoadingRepos] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -53,30 +52,10 @@ export function CreateBranchModal({
     },
   });
 
-  // Load repositories when modal opens
-  const loadRepositories = async () => {
-    setLoadingRepos(true);
-    try {
-      const { data, error } = await supabase
-        .from('git_repositories')
-        .select('*, organization:git_organizations(*)')
-        .eq('project_id', projectId)
-        .eq('is_active', true);
-      
-      if (error) throw error;
-      setRepositories(data as unknown as GitRepository[]);
-    } catch (error) {
-      console.error('Failed to load repositories:', error);
-      toast.error('Failed to load repositories');
-    } finally {
-      setLoadingRepos(false);
-    }
-  };
-
   const handleOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
     if (isOpen) {
-      loadRepositories();
+      loadRepositories(projectId);
       form.reset({
         repository_id: '',
         branch_name: `feature/${issueKey.toLowerCase()}`,

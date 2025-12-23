@@ -252,7 +252,8 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
       </Dialog>
 
       {/* Drop Zone */}
-      <div
+      <section
+        aria-label="File upload drop zone"
         className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
           isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-muted-foreground/50'
         }`}
@@ -271,7 +272,7 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
             <p className="text-sm text-muted-foreground">
               Drag and drop files here, or{' '}
               <label className="text-primary cursor-pointer hover:underline">
-                browse
+                browse{' '}
                 <input
                   type="file"
                   multiple
@@ -283,7 +284,7 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
             <p className="text-xs text-muted-foreground mt-1">Max file size: 10MB</p>
           </>
         )}
-      </div>
+      </section>
 
       {/* Attachments List */}
       {isLoading ? (

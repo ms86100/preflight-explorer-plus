@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import type { GitRepository, GitBranch } from '../types';
+import { useGitModalRepositories } from '../hooks/useGitModalRepositories';
+import type { GitBranch } from '../types';
 
 const formSchema = z.object({
   repository_id: z.string().min(1, 'Repository is required'),
@@ -38,9 +39,8 @@ export function TriggerBuildModal({
   branches = [],
   onSuccess,
 }: TriggerBuildModalProps) {
-  const [repositories, setRepositories] = useState<GitRepository[]>([]);
+  const { repositories, loading: loadingRepos, loadRepositories } = useGitModalRepositories();
   const [loading, setLoading] = useState(false);
-  const [loadingRepos, setLoadingRepos] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -51,36 +51,16 @@ export function TriggerBuildModal({
     },
   });
 
-  // Load repositories when modal opens
-  const loadRepositories = async () => {
-    setLoadingRepos(true);
-    try {
-      const { data, error } = await supabase
-        .from('git_repositories')
-        .select('*, organization:git_organizations(*)')
-        .eq('project_id', projectId)
-        .eq('is_active', true);
-      
-      if (error) throw error;
-      setRepositories(data as unknown as GitRepository[]);
-    } catch (error) {
-      console.error('Failed to load repositories:', error);
-      toast.error('Failed to load repositories');
-    } finally {
-      setLoadingRepos(false);
-    }
-  };
-
   useEffect(() => {
     if (open) {
-      loadRepositories();
+      loadRepositories(projectId);
       form.reset({
         repository_id: '',
         ref: 'main',
         workflow_id: '',
       });
     }
-  }, [open]);
+  }, [open, projectId, loadRepositories, form]);
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);

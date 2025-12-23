@@ -188,17 +188,17 @@ export function MentionTextarea({
           aria-label="User mention suggestions"
           className="absolute z-50 bottom-full mb-1 left-0 w-64 bg-popover border border-border rounded-md shadow-lg overflow-hidden"
         >
-          <ul className="py-1 max-h-48 overflow-y-auto" role="listbox" aria-label="Suggested users">
+          <div className="py-1 max-h-48 overflow-y-auto" role="listbox" aria-label="Suggested users">
             {suggestions.map((user, index) => (
-              <li
+              <button
+                type="button"
                 key={user.id}
-                className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2 w-full text-left transition-colors ${
                   index === selectedIndex ? 'bg-accent' : 'hover:bg-muted'
                 }`}
                 onClick={() => insertMention(user)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); insertMention(user); } }}
                 onMouseEnter={() => setSelectedIndex(index)}
-                tabIndex={0}
+                role="option"
                 aria-selected={index === selectedIndex}
               >
                 <Avatar className="h-6 w-6">
@@ -208,9 +208,9 @@ export function MentionTextarea({
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium truncate">{user.display_name}</span>
-              </li>
+              </button>
             ))}
-          </ul>
+          </div>
           <div className="px-3 py-1.5 bg-muted/50 text-xs text-muted-foreground border-t">
             ↑↓ to navigate, Enter to select, Esc to close
           </div>

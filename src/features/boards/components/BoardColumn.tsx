@@ -140,10 +140,11 @@ export function BoardColumn({
       </div>
 
       {/* Issue List */}
-      <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-300px)]">
+      <div className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-300px)]" role="list">
         {issues.map((issue) => (
           <div
             key={issue.id}
+            role="listitem"
             draggable
             onDragStart={(e) => handleDragStart(e, issue.id)}
           >
