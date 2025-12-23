@@ -487,9 +487,19 @@ export function DraggableBacklogView() {
     return (
       <div
         key={issue.id}
+        role="listitem"
+        tabIndex={0}
+        aria-label={`Issue ${issue.issue_key}: ${issue.summary}`}
         draggable
         onDragStart={(e) => handleDragStart(e, issue)}
         onDragEnd={handleDragEnd}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setSelectedIssueId(issue.id);
+            setIsDetailModalOpen(true);
+          }
+        }}
         className={`group flex items-center gap-3 px-4 py-2 border-b border-border hover:bg-muted/50 transition-all cursor-grab active:cursor-grabbing ${
           isSelected ? 'bg-primary/5' : ''
         } ${isDragging ? 'opacity-50 scale-95' : ''}`}
@@ -621,8 +631,9 @@ export function DraggableBacklogView() {
     const isDropTarget = dragOverTarget === sprint.id;
 
     return (
-      <div 
-        key={sprint.id} 
+      <section 
+        key={sprint.id}
+        aria-label={`Sprint: ${sprint.name}`}
         className={`border rounded-lg mb-4 overflow-hidden transition-all ${
           isDropTarget ? 'ring-2 ring-primary border-primary bg-primary/5' : ''
         }`}
@@ -725,7 +736,7 @@ export function DraggableBacklogView() {
             </div>
           </CollapsibleContent>
         </Collapsible>
-      </div>
+      </section>
     );
   };
 
@@ -805,7 +816,8 @@ export function DraggableBacklogView() {
             {sprintSections.map(renderSprintSection)}
 
             {/* Backlog section */}
-            <div 
+            <section 
+              aria-label="Backlog items"
               className={`border rounded-lg overflow-hidden transition-all ${
                 dragOverTarget === 'backlog' ? 'ring-2 ring-primary border-primary bg-primary/5' : ''
               }`}
@@ -856,7 +868,7 @@ export function DraggableBacklogView() {
                   </div>
                 </CollapsibleContent>
               </Collapsible>
-            </div>
+            </section>
           </div>
         </div>
       </AppLayout>

@@ -96,7 +96,8 @@ export function BoardColumn({
   };
 
   return (
-    <div
+    <section
+      aria-label={`Board column: ${name}`}
       className={`flex flex-col min-w-[280px] max-w-[320px] bg-muted/30 rounded-lg ${
         isDragOver ? 'ring-2 ring-primary ring-offset-2' : ''
       }`}
@@ -172,6 +173,6 @@ export function BoardColumn({
           Create issue
         </Button>
       </div>
-    </div>
+    </section>
   );
 }
