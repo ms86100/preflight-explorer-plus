@@ -98,7 +98,7 @@ const CLEARANCE_HIERARCHY: ClassificationLevel[] = [
  */
 interface AuthProviderProps {
   /** Child components that will have access to auth context */
-  children: ReactNode;
+  readonly children: ReactNode;
 }
 
 /**

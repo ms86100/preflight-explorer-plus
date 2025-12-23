@@ -19,7 +19,6 @@ import {
   Trash2,
   Eye,
   UserPlus,
-  ArrowRight,
   Pencil,
   ArrowLeftRight,
   Settings2,
