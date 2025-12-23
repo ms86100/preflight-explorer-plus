@@ -22,11 +22,11 @@ import {
 } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { LdapSyncLog, SyncResult } from '../types';
-import { triggerSync, fetchSyncLogs, getSyncStatus } from '../services/ldapService';
+import { LdapSyncLog } from '../types';
+import { triggerSync, getSyncStatus } from '../services/ldapService';
 
 interface LdapSyncPanelProps {
-  configId: string;
+  readonly configId: string;
 }
 
 export function LdapSyncPanel({ configId }: LdapSyncPanelProps) {

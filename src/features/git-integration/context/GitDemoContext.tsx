@@ -15,7 +15,7 @@ interface GitDemoContextValue {
 
 const GitDemoContext = createContext<GitDemoContextValue | undefined>(undefined);
 
-export function GitDemoProvider({ children }: { children: React.ReactNode }) {
+export function GitDemoProvider({ children }: { readonly children: React.ReactNode }) {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 

@@ -356,8 +356,8 @@ function UnmappedAuthorRow({
   onMap,
   isLoading,
 }: {
-  author: UnmappedAuthor;
-  profiles: Profile[];
+  readonly author: UnmappedAuthor;
+  readonly profiles: readonly Profile[];
   onMap: (userId: string | null) => void;
   isLoading: boolean;
 }) {

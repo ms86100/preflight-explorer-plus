@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   FileText, Table, FileType, Download, Settings, 
-  Plus, Eye, Trash2, CheckCircle, Clock, AlertCircle 
+  Plus, Eye, Trash2
 } from 'lucide-react';
 import { ExportWizard } from './ExportWizard';
 import { TemplateEditor } from './TemplateEditor';

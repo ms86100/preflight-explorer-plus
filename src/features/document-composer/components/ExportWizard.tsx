@@ -18,9 +18,9 @@ import { createExport, downloadExport } from '../services/documentComposerServic
 import type { ExportFormat, ExportJob } from '../types';
 
 interface ExportWizardProps {
-  format: ExportFormat;
-  onClose: () => void;
-  preselectedIssues?: string[];
+  readonly format: ExportFormat;
+  readonly onClose: () => void;
+  readonly preselectedIssues?: string[];
 }
 
 type WizardStep = 'select-issues' | 'configure' | 'preview' | 'exporting' | 'complete';

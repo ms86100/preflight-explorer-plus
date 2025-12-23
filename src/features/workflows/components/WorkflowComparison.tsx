@@ -33,7 +33,7 @@ interface ComparisonResult {
   details?: string;
 }
 
-export function WorkflowComparison({ open, onOpenChange, initialWorkflowId }: WorkflowComparisonProps) {
+export function WorkflowComparison({ open, onOpenChange, initialWorkflowId }: Readonly<WorkflowComparisonProps>) {
   const [leftWorkflowId, setLeftWorkflowId] = useState<string>(initialWorkflowId || '');
   const [rightWorkflowId, setRightWorkflowId] = useState<string>('');
   

@@ -3,8 +3,7 @@
  * @module features/guided-operations/services/guidedOperationsService.test
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { GuidedOperation, OperationStep, OperationExecution } from '../types';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({

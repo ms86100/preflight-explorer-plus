@@ -111,10 +111,10 @@ export function parseTimeToMinutes(timeString: string): number {
   const hourMatch = timeString.match(/(\d+)h/i);
   const minuteMatch = timeString.match(/(\d+)m/i);
   
-  if (weekMatch) totalMinutes += parseInt(weekMatch[1]) * 5 * 8 * 60; // 5 days, 8 hours
-  if (dayMatch) totalMinutes += parseInt(dayMatch[1]) * 8 * 60; // 8 hours
-  if (hourMatch) totalMinutes += parseInt(hourMatch[1]) * 60;
-  if (minuteMatch) totalMinutes += parseInt(minuteMatch[1]);
+  if (weekMatch) totalMinutes += Number.parseInt(weekMatch[1]) * 5 * 8 * 60; // 5 days, 8 hours
+  if (dayMatch) totalMinutes += Number.parseInt(dayMatch[1]) * 8 * 60; // 8 hours
+  if (hourMatch) totalMinutes += Number.parseInt(hourMatch[1]) * 60;
+  if (minuteMatch) totalMinutes += Number.parseInt(minuteMatch[1]);
   
   return totalMinutes;
 }

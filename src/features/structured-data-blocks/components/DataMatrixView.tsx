@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -28,15 +28,15 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { 
-  ArrowLeft, Plus, Trash2, Pencil, Save, X, 
+  ArrowLeft, Plus, Trash2, Pencil, Save, 
   Download, Upload, AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { DataBlockSchema, DataRow, ColumnDefinition, ValidationError } from '../types';
 
 interface DataMatrixViewProps {
-  schema: DataBlockSchema;
-  onBack: () => void;
+  readonly schema: DataBlockSchema;
+  readonly onBack: () => void;
 }
 
 export function DataMatrixView({ schema, onBack }: DataMatrixViewProps) {

@@ -3,7 +3,7 @@
  * @module features/workflows/services/workflowService.test
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import type {
   WorkflowRow,
   WorkflowStepRow,

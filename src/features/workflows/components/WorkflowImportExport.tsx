@@ -42,9 +42,9 @@ interface WorkflowExportData {
 }
 
 interface WorkflowImportExportProps {
-  workflowId?: string;
-  workflowName?: string;
-  onImportComplete?: () => void;
+  readonly workflowId?: string;
+  readonly workflowName?: string;
+  readonly onImportComplete?: () => void;
 }
 
 export function WorkflowImportExport({ 

@@ -42,7 +42,7 @@ import {
   useUpdateMemberRole,
   useRemoveTeamMember,
 } from '../hooks/useTeams';
-import type { ProjectTeam, ProjectTeamMember } from '../types';
+import type { ProjectTeam } from '../types';
 
 interface TeamManagerProps {
   readonly projectId: string;

@@ -19,8 +19,8 @@ import { LdapConfiguration } from '../types';
 import { fetchLdapConfigurations, deleteLdapConfiguration } from '../services/ldapService';
 
 interface LdapConfigurationListProps {
-  onSelect: (config: LdapConfiguration) => void;
-  onNew: () => void;
+  readonly onSelect: (config: LdapConfiguration) => void;
+  readonly onNew: () => void;
 }
 
 export function LdapConfigurationList({ onSelect, onNew }: LdapConfigurationListProps) {

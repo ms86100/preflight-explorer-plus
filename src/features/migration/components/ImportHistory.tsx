@@ -9,7 +9,7 @@ import type { ImportJob } from "../types";
 import { formatDistanceToNow } from "date-fns";
 
 interface ImportHistoryProps {
-  onViewJob: (jobId: string) => void;
+  readonly onViewJob: (jobId: string) => void;
 }
 
 export function ImportHistory({ onViewJob }: ImportHistoryProps) {

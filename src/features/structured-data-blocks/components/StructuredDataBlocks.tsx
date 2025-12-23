@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Database, Plus, Settings } from 'lucide-react';
+import { Database, Plus } from 'lucide-react';
 import { SchemaEditor } from './SchemaEditor';
 import { DataMatrixView } from './DataMatrixView';
 import type { DataBlockSchema } from '../types';

@@ -13,10 +13,10 @@ import { supabase } from '@/integrations/supabase/client';
 import type { GitRepository } from '../types';
 
 interface RepositorySettingsModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  repository: GitRepository | null;
-  onSuccess?: () => void;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly repository: GitRepository | null;
+  readonly onSuccess?: () => void;
 }
 
 export function RepositorySettingsModal({

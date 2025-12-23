@@ -3,7 +3,7 @@
  * @module features/custom-fields/services/customFieldService.test
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import type { FieldType, CustomFieldDefinition, CustomFieldContext, CustomFieldValue, FieldOption } from './customFieldService';
 
 // Mock Supabase client

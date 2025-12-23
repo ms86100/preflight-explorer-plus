@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
 import { ImportType, ENHANCED_FIELD_DEFINITIONS } from "../types";
 
 interface CSVUploaderProps {
-  onFileLoad: (content: string, fileName: string) => void;
-  accept?: string;
-  maxSize?: number; // in MB
-  importType?: ImportType;
+  readonly onFileLoad: (content: string, fileName: string) => void;
+  readonly accept?: string;
+  readonly maxSize?: number; // in MB
+  readonly importType?: ImportType;
 }
 
 export function CSVUploader({ 

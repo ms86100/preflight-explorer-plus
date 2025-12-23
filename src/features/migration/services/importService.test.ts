@@ -3,7 +3,7 @@
  * @module features/migration/services/importService.test
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { parseCSVHeaders, countCSVRows } from './importService';
 
 // Mock Supabase client

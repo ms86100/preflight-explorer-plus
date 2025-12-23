@@ -3,8 +3,7 @@
  * @module features/structured-data-blocks/services/structuredDataService.test
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { DataBlockSchema, DataBlockInstance, ColumnDefinition, DataRow } from '../types';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({

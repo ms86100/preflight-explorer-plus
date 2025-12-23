@@ -44,9 +44,9 @@ const ldapConfigSchema = z.object({
 type FormValues = z.infer<typeof ldapConfigSchema>;
 
 interface LdapConfigurationFormProps {
-  config?: LdapConfiguration | null;
-  onSave: (config: LdapConfiguration) => void;
-  onCancel: () => void;
+  readonly config?: LdapConfiguration | null;
+  readonly onSave: (config: LdapConfiguration) => void;
+  readonly onCancel: () => void;
 }
 
 export function LdapConfigurationForm({ config, onSave, onCancel }: LdapConfigurationFormProps) {

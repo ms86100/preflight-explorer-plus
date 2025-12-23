@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
@@ -39,7 +38,7 @@ import { COLUMN_TYPE_LABELS } from '../types';
 // Helper function moved outside component to avoid nested function (S2004)
 const incrementSchemaVersion = (version: string): string => {
   const parts = version.split('.');
-  const minor = parseInt(parts[1] || '0', 10) + 1;
+  const minor = Number.parseInt(parts[1] || '0', 10) + 1;
   return `${parts[0]}.${minor}`;
 };
 

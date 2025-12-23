@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Trash2, Shield, CheckSquare, Zap } from 'lucide-react';
 import { useUpdateWorkflowTransition } from '../hooks/useWorkflows';
 import {
@@ -27,13 +27,13 @@ import {
   TransitionValidator,
   TransitionPostFunction,
 } from '../services/workflowService';
-import { toast } from 'sonner';
+
 
 interface TransitionEditorProps {
-  transition: WorkflowTransitionRow | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  workflowId: string;
+  readonly transition: WorkflowTransitionRow | null;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly workflowId: string;
 }
 
 // Condition type options

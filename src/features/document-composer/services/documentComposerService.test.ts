@@ -3,8 +3,7 @@
  * @module features/document-composer/services/documentComposerService.test
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { DocumentTemplate, ExportJob, ExportFormat, TemplateSchema } from '../types';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({

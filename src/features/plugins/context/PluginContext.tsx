@@ -13,7 +13,7 @@ interface PluginContextValue {
 
 const PluginContext = createContext<PluginContextValue | undefined>(undefined);
 
-export function PluginProvider({ children }: { children: React.ReactNode }) {
+export function PluginProvider({ children }: { readonly children: React.ReactNode }) {
   const { data: plugins = [], isLoading, error } = useEnabledPlugins();
 
   const enabledPluginKeys = useMemo(() => {

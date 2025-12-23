@@ -12,8 +12,8 @@ import { supabase } from '@/integrations/supabase/client';
 import type { GitOrganization } from '../types';
 
 interface SyncStatusIndicatorProps {
-  organization: GitOrganization;
-  onSyncComplete?: () => void;
+  readonly organization: GitOrganization;
+  readonly onSyncComplete?: () => void;
 }
 
 export function SyncStatusIndicator({ organization, onSyncComplete }: SyncStatusIndicatorProps) {
