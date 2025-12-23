@@ -4,3 +4,4 @@ export { DraggableBacklogView } from './components/DraggableBacklogView';
 export { SprintPlanningModal } from './components/SprintPlanningModal';
 export { SprintConfigModal } from './components/SprintConfigModal';
 export { SprintActivityFeed } from './components/SprintActivityFeed';
+export { SprintHistoryView } from './components/SprintHistoryView';

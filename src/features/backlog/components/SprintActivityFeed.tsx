@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   History,
   Plus,
@@ -33,7 +34,10 @@ import {
   Clock,
   Filter,
   Loader2,
+  Archive,
+  Activity,
 } from 'lucide-react';
+import { SprintHistoryView } from './SprintHistoryView';
 
 interface SprintHistoryEntry {
   id: string;
@@ -252,17 +256,23 @@ function ActivityEntry({ entry }: { readonly entry: SprintHistoryEntry }) {
   );
 }
 
-export function SprintActivityFeed({ boardId, projectKey }: SprintActivityFeedProps) {
-  const [open, setOpen] = useState(false);
-  const [actionFilter, setActionFilter] = useState<string>('all');
+function ActivityFeedContent({ 
+  boardId, 
+  actionFilter, 
+  setActionFilter 
+}: { 
+  readonly boardId: string; 
+  readonly actionFilter: string; 
+  readonly setActionFilter: (value: string) => void;
+}) {
   const { data: history, isLoading, refetch } = useSprintHistory(boardId, actionFilter);
 
   // Real-time subscription
   useEffect(() => {
-    if (!boardId || !open) return;
+    if (!boardId) return;
 
     const channel = supabase
-      .channel(`sprint-history-${boardId}`)
+      .channel(`sprint-history-feed-${boardId}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'sprint_history' },
@@ -275,68 +285,103 @@ export function SprintActivityFeed({ boardId, projectKey }: SprintActivityFeedPr
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [boardId, open, refetch]);
+  }, [boardId, refetch]);
+
+  return (
+    <>
+      <div className="flex items-center gap-2 py-4">
+        <Filter className="h-4 w-4 text-muted-foreground" />
+        <Select value={actionFilter} onValueChange={setActionFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by action" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Activities</SelectItem>
+            <SelectItem value="created">Sprint Created</SelectItem>
+            <SelectItem value="started">Sprint Started</SelectItem>
+            <SelectItem value="completed">Sprint Completed</SelectItem>
+            <SelectItem value="edited">Sprint Edited</SelectItem>
+            <SelectItem value="issue_added">Issue Added</SelectItem>
+            <SelectItem value="issue_removed">Issue Removed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Separator />
+
+      <ScrollArea className="flex-1 -mx-6 px-6">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : !history?.length ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <History className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            <p className="text-sm text-muted-foreground">No sprint activity yet</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Create a sprint to start tracking activity
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {history.map((entry) => (
+              <ActivityEntry key={entry.id} entry={entry} />
+            ))}
+          </div>
+        )}
+      </ScrollArea>
+    </>
+  );
+}
+
+export function SprintActivityFeed({ boardId, projectKey }: SprintActivityFeedProps) {
+  const [open, setOpen] = useState(false);
+  const [actionFilter, setActionFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<string>('sprints');
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <History className="h-4 w-4" />
-          Activity
+          History
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-[400px] sm:w-[540px] flex flex-col">
+      <SheetContent className="w-[500px] sm:w-[640px] flex flex-col">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <History className="h-5 w-5" />
-            Sprint Activity
+            Sprint History
           </SheetTitle>
           <SheetDescription>
-            Full history of sprint activities in {projectKey}
+            Complete history of all sprints in {projectKey}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex items-center gap-2 py-4">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <Select value={actionFilter} onValueChange={setActionFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by action" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Activities</SelectItem>
-              <SelectItem value="created">Sprint Created</SelectItem>
-              <SelectItem value="started">Sprint Started</SelectItem>
-              <SelectItem value="completed">Sprint Completed</SelectItem>
-              <SelectItem value="edited">Sprint Edited</SelectItem>
-              <SelectItem value="issue_added">Issue Added</SelectItem>
-              <SelectItem value="issue_removed">Issue Removed</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Separator />
-
-        <ScrollArea className="flex-1 -mx-6 px-6">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : !history?.length ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <History className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <p className="text-sm text-muted-foreground">No sprint activity yet</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Create a sprint to start tracking activity
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {history.map((entry) => (
-                <ActivityEntry key={entry.id} entry={entry} />
-              ))}
-            </div>
-          )}
-        </ScrollArea>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col mt-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="sprints" className="gap-2">
+              <Archive className="h-4 w-4" />
+              Past Sprints
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="gap-2">
+              <Activity className="h-4 w-4" />
+              Activity Feed
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="sprints" className="flex-1 flex flex-col mt-4">
+            <SprintHistoryView boardId={boardId} />
+          </TabsContent>
+          
+          <TabsContent value="activity" className="flex-1 flex flex-col mt-4">
+            <ActivityFeedContent 
+              boardId={boardId} 
+              actionFilter={actionFilter}
+              setActionFilter={setActionFilter}
+            />
+          </TabsContent>
+        </Tabs>
       </SheetContent>
     </Sheet>
   );
