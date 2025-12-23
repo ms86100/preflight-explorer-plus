@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { useStartSprint } from '@/features/boards';
+import { toast } from 'sonner';
 
 interface SprintPlanningModalProps {
   readonly sprintId: string;
@@ -44,9 +45,11 @@ export function SprintPlanningModal({
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
       });
+      toast.success('Sprint started successfully');
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to start sprint:', error);
+      toast.error('Failed to start sprint. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

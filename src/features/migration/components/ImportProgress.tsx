@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { CheckCircle, XCircle, Loader2, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 import { getImportStatus } from "../services/importService";
 import type { ImportJob, ImportError } from "../types";
 
@@ -18,6 +19,7 @@ export function ImportProgress({ jobId, onComplete, onViewResults }: ImportProgr
   const [job, setJob] = useState<ImportJob | null>(null);
   const [errors, setErrors] = useState<ImportError[]>([]);
   const [isPolling, setIsPolling] = useState(true);
+  const errorShownRef = useRef(false);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
@@ -34,6 +36,11 @@ export function ImportProgress({ jobId, onComplete, onViewResults }: ImportProgr
         }
       } catch (error) {
         console.error('Failed to get import status:', error);
+        // Show toast only once to avoid spamming during polling
+        if (!errorShownRef.current) {
+          errorShownRef.current = true;
+          toast.error('Unable to fetch import status. Will retry automatically.');
+        }
       }
     };
 

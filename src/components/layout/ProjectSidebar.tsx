@@ -62,7 +62,7 @@ export function ProjectSidebar({
                 {project.avatar_url ? (
                   <img 
                     src={project.avatar_url} 
-                    alt={project.name} 
+                    alt={`${project.name} project avatar`}
                     className="w-full h-full rounded-xl"
                   />
                 ) : (

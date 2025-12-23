@@ -204,6 +204,7 @@ export function LdapSyncPanel({ configId }: LdapSyncPanelProps) {
                         size="sm" 
                         variant="ghost" 
                         onClick={() => setSyncData(sampleData)}
+                        aria-label="Load sample JSON data"
                       >
                         <FileJson className="h-3 w-3 mr-1" />
                         Load Sample

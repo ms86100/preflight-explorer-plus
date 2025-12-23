@@ -180,8 +180,11 @@ function FieldMappingRow({
         </Select>
         {hasSuggestion && (
           <button
+            type="button"
             onClick={() => onMappingChange(suggestion)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onMappingChange(suggestion); } }}
             className="text-xs text-yellow-600 hover:underline mt-1"
+            aria-label={`Use suggested mapping: ${suggestion}`}
           >
             Use suggested: {suggestion}
           </button>

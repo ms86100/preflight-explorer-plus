@@ -380,8 +380,10 @@ export function DraggableBacklogView() {
         end_date: newSprintEndDate?.toISOString(),
       });
       setIsCreateSprintOpen(false);
+      toast.success('Sprint created successfully');
     } catch (error) {
       console.error('Failed to create sprint:', error);
+      toast.error('Failed to create sprint. Please try again.');
     }
   };
 

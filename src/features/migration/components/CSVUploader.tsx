@@ -103,7 +103,12 @@ export function CSVUploader({
                 <p className="text-sm text-muted-foreground">File loaded successfully</p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={clearFile}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={clearFile}
+              aria-label="Remove uploaded file"
+            >
               <X className="h-4 w-4" />
             </Button>
           </CardContent>

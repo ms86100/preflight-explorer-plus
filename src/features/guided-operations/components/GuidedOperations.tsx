@@ -143,11 +143,12 @@ export function GuidedOperations() {
                   ) : field.type === 'select' ? (
                     <select
                       id={fieldId}
-                      className="w-full border rounded-md p-2"
+                      aria-label={field.label}
+                      className="w-full border rounded-md p-2 bg-background text-foreground"
                       value={String(formValues[field.key] || '')}
                       onChange={(e) => setFormValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
                     >
-                      <option value="">Select...</option>
+                      <option value="">Select {field.label}...</option>
                       {field.options?.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   ) : (

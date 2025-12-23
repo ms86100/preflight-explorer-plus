@@ -5,7 +5,8 @@
 import type { ParsedSmartCommit, SmartCommitAction } from '../types';
 
 // Matches Jira issue keys like PROJ-123, ABC-1, TEST-9999
-const ISSUE_KEY_PATTERN = /\b([A-Z][A-Z0-9]+-\d+)\b/g;
+// Using bounded quantifiers to prevent ReDoS: project key 2-10 chars, issue number 1-8 digits
+const ISSUE_KEY_PATTERN = /\b([A-Z][A-Z0-9]{1,9}-\d{1,8})\b/g;
 
 // Smart commit command patterns - Optimized to prevent catastrophic backtracking (ReDoS)
 // Using explicit character classes instead of .+? and bounded quantifiers

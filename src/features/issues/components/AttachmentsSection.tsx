@@ -238,7 +238,7 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
             {previewUrl && (
               <img
                 src={previewUrl}
-                alt={previewAttachment?.filename || 'Preview'}
+                alt={previewAttachment?.filename ? `Preview of ${previewAttachment.filename}` : 'Attachment preview image'}
                 className="max-w-full max-h-[80vh] mx-auto object-contain rounded"
               />
             )}
