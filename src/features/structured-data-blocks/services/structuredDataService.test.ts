@@ -184,7 +184,11 @@ function validateRow(schema: LocalDataBlockSchema, row: LocalDataRow): { valid: 
 }
 
 function generateRowId(): string {
-  return `row-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+  // Use crypto.getRandomValues for cryptographically secure random ID generation
+  const array = new Uint32Array(2);
+  crypto.getRandomValues(array);
+  const randomPart = array[0].toString(36) + array[1].toString(36);
+  return `row-${Date.now()}-${randomPart.slice(0, 11)}`;
 }
 
 function createEmptyRow(columns: LocalColumnDefinition[]): LocalDataRow {
