@@ -63,9 +63,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AppLayout } from '@/components/layout';
 import { ClassificationBadge } from '@/components/compliance/ClassificationBanner';
-import { CreateIssueModal, IssueDetailModal } from '@/features/issues';
+import { CreateIssueModal, IssueDetailModal, useIssuesByProject, useStatuses, useDeleteIssue, useUpdateIssue } from '@/features/issues';
 import { useProject } from '@/features/projects';
-import { useIssuesByProject, useStatuses, useDeleteIssue, useUpdateIssue } from '@/features/issues';
 import { 
   useBoardsByProject, 
   useSprintsByBoard, 
@@ -495,26 +494,28 @@ export function DraggableBacklogView() {
           <TypeIcon className="h-4 w-4" style={{ color: issue.issue_type?.color }} />
         </div>
 
-        <span 
-          className="text-sm font-medium text-primary w-24 flex-shrink-0 cursor-pointer hover:underline"
+        <button 
+          type="button"
+          className="text-sm font-medium text-primary w-24 flex-shrink-0 cursor-pointer hover:underline text-left"
           onClick={() => {
             setSelectedIssueId(issue.id);
             setIsDetailModalOpen(true);
           }}
         >
           {issue.issue_key}
-        </span>
+        </button>
 
         <div className="flex-1 min-w-0">
-          <p 
-            className="text-sm truncate cursor-pointer hover:text-primary"
+          <button 
+            type="button"
+            className="text-sm truncate cursor-pointer hover:text-primary w-full text-left"
             onClick={() => {
               setSelectedIssueId(issue.id);
               setIsDetailModalOpen(true);
             }}
           >
             {issue.summary}
-          </p>
+          </button>
         </div>
 
         {issue.epic && (

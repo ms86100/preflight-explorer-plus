@@ -181,9 +181,9 @@ export function generateBranchName(
     // Sanitize description for branch name
     const sanitized = description
       .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
+      .split(/[^a-z0-9\s-]/).join('')
       .trim()
-      .replace(/\s+/g, '-')
+      .split(/\s+/).join('-')
       .substring(0, 50);
     
     if (sanitized) {

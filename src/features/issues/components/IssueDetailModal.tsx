@@ -44,7 +44,7 @@ import { LinkedIssuesSection } from './LinkedIssuesSection';
 import { IssueHistorySection } from './IssueHistorySection';
 import { CustomFieldsForm } from '@/features/custom-fields/components/CustomFieldsForm';
 import { MentionTextarea, renderMentions } from '@/features/comments';
-import { Jobs } from '@/lib/backgroundJobs';
+import { Jobs, submitJob } from '@/lib/backgroundJobs';
 import { DevelopmentPanel } from '@/features/git-integration';
 
 const ISSUE_TYPE_ICONS: Record<string, typeof Bug> = {
@@ -209,12 +209,12 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
         // Send notifications to mentioned users (excluding self)
         const usersToNotify = mentionedUserIds.filter(id => id !== user.id);
         if (usersToNotify.length > 0) {
-          await Jobs.sendNotifications(
+          await submitJob(Jobs.sendNotifications(
             usersToNotify,
             'You were mentioned in a comment',
             `${user.email || 'Someone'} mentioned you in ${issue?.issue_key || 'an issue'}`,
             'mention'
-          );
+          ));
         }
       }
       

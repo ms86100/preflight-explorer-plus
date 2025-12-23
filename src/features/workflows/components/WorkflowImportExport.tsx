@@ -106,10 +106,10 @@ export function WorkflowImportExport({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `workflow-${workflow.name.toLowerCase().replace(/\s+/g, '-')}.json`;
+      a.download = `workflow-${workflow.name.toLowerCase().split(/\s+/).join('-')}.json`;
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      a.remove();
       URL.revokeObjectURL(url);
       
       toast.success('Workflow exported successfully');
