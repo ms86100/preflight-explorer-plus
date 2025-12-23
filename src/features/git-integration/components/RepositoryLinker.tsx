@@ -337,19 +337,13 @@ export function RepositoryLinker() {
                                 {filteredRepos.map((repo) => {
                                   const linked = isRepoLinked(repo.id);
                                   return (
-                                    <div
+                                    <button
                                       key={repo.id}
-                                      role="button"
-                                      tabIndex={linked ? -1 : 0}
+                                      type="button"
+                                      disabled={linked}
                                       className={getRepoItemClassName(field.value === repo.id, linked)}
                                       onClick={() => {
                                         if (!linked) {
-                                          field.onChange(repo.id);
-                                        }
-                                      }}
-                                      onKeyDown={(e) => {
-                                        if ((e.key === 'Enter' || e.key === ' ') && !linked) {
-                                          e.preventDefault();
                                           field.onChange(repo.id);
                                         }
                                       }}
@@ -379,7 +373,7 @@ export function RepositoryLinker() {
                                           <ExternalLink className="h-4 w-4" />
                                         </a>
                                       )}
-                                    </div>
+                                    </button>
                                   );
                                 })}
                               </div>

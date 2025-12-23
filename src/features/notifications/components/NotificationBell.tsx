@@ -114,15 +114,13 @@ export function NotificationBell() {
           ) : (
             <div className="divide-y">
               {notifications.map((notification) => (
-                <div
+                <button
                   key={notification.id}
-                  className={`p-3 flex gap-3 hover:bg-accent cursor-pointer ${
+                  type="button"
+                  className={`p-3 flex gap-3 hover:bg-accent w-full text-left ${
                     notification.is_read ? '' : 'bg-primary/5'
                   }`}
                   onClick={() => markAsRead(notification.id)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); markAsRead(notification.id); } }}
-                  tabIndex={0}
-                  role="button"
                   aria-label={`Mark notification "${notification.title}" as read`}
                 >
                   <div className="mt-0.5">
@@ -142,7 +140,7 @@ export function NotificationBell() {
                   {!notification.is_read && (
                     <div className="w-2 h-2 rounded-full bg-primary mt-2" />
                   )}
-                </div>
+                </button>
               ))}
             </div>
           )}

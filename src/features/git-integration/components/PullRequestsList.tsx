@@ -87,13 +87,19 @@ function PullRequestItem({ pullRequest }: { readonly pullRequest: GitPullRequest
   const config = statusConfig[pullRequest.status];
   const Icon = config.icon;
   
-  const timeAgo = pullRequest.merged_at
-    ? `Merged ${formatDistanceToNow(new Date(pullRequest.merged_at), { addSuffix: true })}`
-    : pullRequest.updated_at
-      ? `Updated ${formatDistanceToNow(new Date(pullRequest.updated_at), { addSuffix: true })}`
-      : pullRequest.created_at
-        ? `Created ${formatDistanceToNow(new Date(pullRequest.created_at), { addSuffix: true })}`
-        : '';
+  const getTimeAgo = () => {
+    if (pullRequest.merged_at) {
+      return `Merged ${formatDistanceToNow(new Date(pullRequest.merged_at), { addSuffix: true })}`;
+    }
+    if (pullRequest.updated_at) {
+      return `Updated ${formatDistanceToNow(new Date(pullRequest.updated_at), { addSuffix: true })}`;
+    }
+    if (pullRequest.created_at) {
+      return `Created ${formatDistanceToNow(new Date(pullRequest.created_at), { addSuffix: true })}`;
+    }
+    return '';
+  };
+  const timeAgo = getTimeAgo();
   
   const repoName = pullRequest.repository?.name;
   

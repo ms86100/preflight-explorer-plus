@@ -45,11 +45,16 @@ export function BranchesList({ branches, onCreateBranch, showCreateButton = true
 }
 
 function BranchItem({ branch }: { readonly branch: GitBranch }) {
-  const timeAgo = branch.last_commit_at
-    ? formatDistanceToNow(new Date(branch.last_commit_at), { addSuffix: true })
-    : branch.created_at
-      ? formatDistanceToNow(new Date(branch.created_at), { addSuffix: true })
-      : '';
+  const getTimeAgo = () => {
+    if (branch.last_commit_at) {
+      return formatDistanceToNow(new Date(branch.last_commit_at), { addSuffix: true });
+    }
+    if (branch.created_at) {
+      return formatDistanceToNow(new Date(branch.created_at), { addSuffix: true });
+    }
+    return '';
+  };
+  const timeAgo = getTimeAgo();
   
   const repoName = branch.repository?.name;
   

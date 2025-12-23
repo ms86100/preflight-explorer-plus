@@ -334,24 +334,26 @@ export default function ProjectSettingsPage() {
                 <CardDescription>Set the security level for this project</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label id="classification-level-label">Classification Level</Label>
-                  <div className="grid gap-2 md:grid-cols-2">
+                <fieldset className="space-y-2">
+                  <legend className="text-sm font-medium">Classification Level</legend>
+                  <div className="grid gap-2 md:grid-cols-2" role="radiogroup" aria-label="Classification levels">
                     {CLASSIFICATION_LEVELS.map((level) => (
-                      <div
+                      <label
                         key={level}
                         className={`p-4 rounded-lg border cursor-pointer transition-all ${
                           formData.classification === level
                             ? getClassificationColor(level) + ' border-2'
                             : 'hover:bg-accent'
                         }`}
-                        onClick={() => setFormData({ ...formData, classification: level })}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setFormData({ ...formData, classification: level }); } }}
-                        tabIndex={0}
-                        role="radio"
-                        aria-checked={formData.classification === level}
-                        aria-label={`Classification level: ${level.replace('_', ' ')}`}
                       >
+                        <input
+                          type="radio"
+                          name="classification"
+                          value={level}
+                          checked={formData.classification === level}
+                          onChange={() => setFormData({ ...formData, classification: level })}
+                          className="sr-only"
+                        />
                         <p className="font-medium capitalize">{level.replace('_', ' ')}</p>
                         <p className="text-xs text-muted-foreground">
                           {level === 'public' && 'Visible to all users'}
@@ -359,10 +361,10 @@ export default function ProjectSettingsPage() {
                           {level === 'confidential' && 'Requires elevated clearance'}
                           {level === 'export_controlled' && 'Highest security level'}
                         </p>
-                      </div>
+                      </label>
                     ))}
                   </div>
-                </div>
+                </fieldset>
               </CardContent>
             </Card>
 
