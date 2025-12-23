@@ -3,16 +3,28 @@ import { useParams, Link } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { ScrumBoard, KanbanBoard, BasicBoard } from '@/features/boards';
 import { useProjects } from '@/features/projects/hooks/useProjects';
-import { useBoardsByProject, useBoardColumns, useActiveSprint, useSprintIssues } from '@/features/boards/hooks/useBoards';
+import { useBoardsByProject, useBoardColumns, useActiveSprint, useSprintIssues, useSprintsByBoard, useStartSprint } from '@/features/boards/hooks/useBoards';
 import { boardService } from '@/features/boards/services/boardService';
 import { CreateIssueModal } from '@/features/issues/components/CreateIssueModal';
 import { IssueDetailModal } from '@/features/issues/components/IssueDetailModal';
 import { useExecuteTransition } from '@/features/workflows';
 import { useIssuesByProject } from '@/features/issues';
-import { Loader2, LayoutList, ArrowRight } from 'lucide-react';
+import { Loader2, LayoutList, ArrowRight, Play, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { format, addDays } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 
 export default function BoardPage() {
   const { projectKey } = useParams<{ projectKey: string }>();
@@ -21,6 +33,12 @@ export default function BoardPage() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [isInitializingColumns, setIsInitializingColumns] = useState(false);
   const [didAttemptInitColumns, setDidAttemptInitColumns] = useState(false);
+  
+  // Start sprint modal state
+  const [startSprintOpen, setStartSprintOpen] = useState(false);
+  const [sprintToStart, setSprintToStart] = useState<{ id: string; name: string } | null>(null);
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 14));
 
   // Get project
   const { data: projects, isLoading: projectsLoading } = useProjects();
@@ -35,6 +53,11 @@ export default function BoardPage() {
 
   // Get active sprint (for Scrum only)
   const { data: activeSprint, isLoading: sprintLoading } = useActiveSprint(board?.id || '');
+  
+  // Get all sprints to check for future sprints
+  const { data: allSprints } = useSprintsByBoard(board?.id || '');
+  const futureSprints = (allSprints || []).filter(s => s.state === 'future');
+  const startSprintMutation = useStartSprint();
 
   // Get sprint issues for Scrum boards
   const { data: sprintIssues, isLoading: sprintIssuesLoading, refetch: refetchSprintIssues } = useSprintIssues(activeSprint?.id || '');
@@ -232,16 +255,74 @@ export default function BoardPage() {
     );
   }
 
-  // Render empty state for Scrum board when no active sprint
-  const renderScrumEmptyState = () => (
+  // Handle starting a sprint
+  const handleOpenStartSprint = (sprint: { id: string; name: string }) => {
+    setSprintToStart(sprint);
+    setStartDate(new Date());
+    setEndDate(addDays(new Date(), 14));
+    setStartSprintOpen(true);
+  };
+
+  const handleStartSprint = async () => {
+    if (!sprintToStart) return;
+    try {
+      await startSprintMutation.mutateAsync({
+        id: sprintToStart.id,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+      });
+      setStartSprintOpen(false);
+      setSprintToStart(null);
+    } catch (error) {
+      console.error('Failed to start sprint:', error);
+    }
+  };
+
+  // Render empty state for Scrum board when no active sprint but has future sprints
+  const renderFutureSprintsState = () => (
+    <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+        <Play className="h-8 w-8 text-primary" />
+      </div>
+      <h2 className="text-xl font-semibold mb-2">Ready to start a sprint?</h2>
+      <p className="text-muted-foreground mb-6 max-w-md">
+        You have {futureSprints.length} planned sprint{futureSprints.length > 1 ? 's' : ''} ready to go.
+        Start a sprint to see its issues on the board.
+      </p>
+      <div className="flex flex-col gap-3 w-full max-w-sm">
+        {futureSprints.slice(0, 3).map((sprint) => (
+          <Button
+            key={sprint.id}
+            onClick={() => handleOpenStartSprint({ id: sprint.id, name: sprint.name })}
+            className="w-full justify-between"
+          >
+            <span className="flex items-center gap-2">
+              <Play className="h-4 w-4" />
+              Start {sprint.name}
+            </span>
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        ))}
+        <Button variant="outline" asChild className="w-full">
+          <Link to={`/projects/${projectKey}/backlog`}>
+            <LayoutList className="h-4 w-4 mr-2" />
+            Manage Sprints in Backlog
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Render empty state for Scrum board when no sprints at all
+  const renderNoSprintsState = () => (
     <div className="flex flex-col items-center justify-center h-full p-8 text-center">
       <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
         <LayoutList className="h-8 w-8 text-muted-foreground" />
       </div>
-      <h2 className="text-xl font-semibold mb-2">No active sprint</h2>
+      <h2 className="text-xl font-semibold mb-2">No sprints yet</h2>
       <p className="text-muted-foreground mb-6 max-w-md">
         In Scrum, the board displays issues from your active sprint. 
-        Create issues in the backlog, then add them to a sprint and start it to see them here.
+        Go to the backlog to create a sprint, add issues, then start it.
       </p>
       <div className="flex gap-3">
         <Button asChild>
@@ -280,7 +361,11 @@ export default function BoardPage() {
       default:
         // Show empty state when no active sprint
         if (!activeSprint) {
-          return renderScrumEmptyState();
+          // Check if there are future sprints ready to start
+          if (futureSprints.length > 0) {
+            return renderFutureSprintsState();
+          }
+          return renderNoSprintsState();
         }
         return (
           <ScrumBoard 
@@ -322,6 +407,71 @@ export default function BoardPage() {
         open={detailModalOpen}
         onOpenChange={setDetailModalOpen}
       />
+
+      {/* Start Sprint Dialog */}
+      <Dialog open={startSprintOpen} onOpenChange={setStartSprintOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Start {sprintToStart?.name}</DialogTitle>
+            <DialogDescription>
+              Set the sprint duration and start working on the issues.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Start Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="justify-start text-left font-normal">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {format(startDate, 'PPP')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={startDate}
+                    onSelect={(date) => date && setStartDate(date)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid gap-2">
+              <Label>End Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="justify-start text-left font-normal">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {format(endDate, 'PPP')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={endDate}
+                    onSelect={(date) => date && setEndDate(date)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStartSprintOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleStartSprint} disabled={startSprintMutation.isPending}>
+              {startSprintMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Play className="h-4 w-4 mr-2" />
+              )}
+              Start Sprint
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
