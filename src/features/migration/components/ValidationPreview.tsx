@@ -82,9 +82,9 @@ export function ValidationPreview({ result, fieldMappings }: ValidationPreviewPr
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {result.preview.map((row, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{index + 1}</TableCell>
+                {result.preview.map((row, rowIndex) => (
+                  <TableRow key={`preview-row-${rowIndex}`}>
+                    <TableCell className="font-medium">{rowIndex + 1}</TableCell>
                     {mappedFields.map((field) => (
                       <TableCell key={field} className="max-w-[200px] truncate">
                         {String(row[field] || '-')}
@@ -110,9 +110,9 @@ export function ValidationPreview({ result, fieldMappings }: ValidationPreviewPr
           <CardContent>
             <ScrollArea className="h-[300px]">
               <div className="space-y-2">
-                {result.errors.map((error, index) => (
+                {result.errors.map((error) => (
                   <div
-                    key={index}
+                    key={`error-${error.row}-${error.field}`}
                     className="flex items-start gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20"
                   >
                     <Badge variant="outline" className="shrink-0">

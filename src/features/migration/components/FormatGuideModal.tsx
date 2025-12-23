@@ -102,17 +102,14 @@ function ImportTypeGuide({ importType }: { readonly importType: ImportType }) {
           Required Fields
         </h3>
         <div className="space-y-3">
-          {fieldDefs.required.map(fieldKey => {
-            const meta = fieldDefs.metadata[fieldKey as keyof typeof fieldDefs.metadata] as FieldMeta;
-            return (
-              <FieldCard 
-                key={fieldKey}
-                fieldKey={fieldKey}
-                metadata={meta}
-                required={true}
-              />
-            );
-          })}
+          {fieldDefs.required.map(fieldKey => (
+            <FieldCard 
+              key={fieldKey}
+              fieldKey={fieldKey}
+              metadata={fieldDefs.metadata[fieldKey as keyof typeof fieldDefs.metadata] as FieldMeta}
+              required
+            />
+          ))}
         </div>
       </div>
       
@@ -123,17 +120,14 @@ function ImportTypeGuide({ importType }: { readonly importType: ImportType }) {
           Optional Fields
         </h3>
         <div className="space-y-3">
-          {fieldDefs.optional.map(fieldKey => {
-            const meta = fieldDefs.metadata[fieldKey as keyof typeof fieldDefs.metadata] as FieldMeta;
-            return (
-              <FieldCard 
-                key={fieldKey}
-                fieldKey={fieldKey}
-                metadata={meta}
-                required={false}
-              />
-            );
-          })}
+          {fieldDefs.optional.map(fieldKey => (
+            <FieldCard 
+              key={fieldKey}
+              fieldKey={fieldKey}
+              metadata={fieldDefs.metadata[fieldKey as keyof typeof fieldDefs.metadata] as FieldMeta}
+              required={false}
+            />
+          ))}
         </div>
       </div>
     </div>

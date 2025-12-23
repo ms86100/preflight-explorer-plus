@@ -152,30 +152,25 @@ export function ImportWizard({ onComplete }: ImportWizardProps) {
       {/* Step Indicator */}
       <div className="mb-8">
         <div className="flex items-center justify-center gap-2">
-          {['select-type', 'upload', 'mapping', 'validate', 'import'].map((s, i) => (
-            <div key={s} className="flex items-center">
-              <div className={`
-                w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                ${step === s ? 'bg-primary text-primary-foreground' : 
-                  ['complete'].includes(step) || 
-                  ['select-type', 'upload', 'mapping', 'validate', 'import'].indexOf(step) > i
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-muted text-muted-foreground'}
-              `}>
-                {['complete'].includes(step) || 
-                 ['select-type', 'upload', 'mapping', 'validate', 'import'].indexOf(step) > i
-                  ? <Check className="h-4 w-4" />
-                  : i + 1}
+          {['select-type', 'upload', 'mapping', 'validate', 'import'].map((s) => {
+            const stepIndex = ['select-type', 'upload', 'mapping', 'validate', 'import'].indexOf(s);
+            const currentStepIndex = ['select-type', 'upload', 'mapping', 'validate', 'import'].indexOf(step);
+            const isComplete = step === 'complete' || currentStepIndex > stepIndex;
+            return (
+              <div key={s} className="flex items-center">
+                <div className={`
+                  w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+                  ${step === s ? 'bg-primary text-primary-foreground' : 
+                    isComplete ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'}
+                `}>
+                  {isComplete ? <Check className="h-4 w-4" /> : stepIndex + 1}
+                </div>
+                {stepIndex < 4 && (
+                  <div className={`w-12 h-0.5 ${isComplete ? 'bg-green-500' : 'bg-muted'}`} />
+                )}
               </div>
-              {i < 4 && (
-                <div className={`w-12 h-0.5 ${
-                  ['select-type', 'upload', 'mapping', 'validate', 'import'].indexOf(step) > i
-                    ? 'bg-green-500'
-                    : 'bg-muted'
-                }`} />
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="flex justify-center gap-6 mt-2 text-xs text-muted-foreground">
           <span>Type</span>

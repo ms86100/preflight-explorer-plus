@@ -346,8 +346,8 @@ export function DataMatrixView({ schema, onBack }: DataMatrixViewProps) {
                   <span>Please fix the following errors:</span>
                 </div>
                 <ul className="mt-2 text-sm text-destructive list-disc pl-6">
-                  {validationErrors.map((err, i) => (
-                    <li key={i}>{err.message}</li>
+                  {validationErrors.map((err) => (
+                    <li key={`${err.columnKey}-${err.rowId}`}>{err.message}</li>
                   ))}
                 </ul>
               </Card>

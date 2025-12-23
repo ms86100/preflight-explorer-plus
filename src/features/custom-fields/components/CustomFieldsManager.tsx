@@ -133,10 +133,10 @@ export function CustomFieldsManager() {
     }
   };
 
-  const handleRemoveOption = (index: number) => {
+  const handleRemoveOption = (value: string) => {
     setFormData(prev => ({
       ...prev,
-      options: prev.options.filter((_, i) => i !== index),
+      options: prev.options.filter((opt) => opt.value !== value),
     }));
   };
 
@@ -245,8 +245,8 @@ export function CustomFieldsManager() {
                 <div className="space-y-2">
                   <Label htmlFor="field-options">Options</Label>
                   <div className="space-y-2">
-                    {formData.options.map((opt, index) => (
-                      <div key={index} className="flex items-center gap-2">
+                    {formData.options.map((opt) => (
+                      <div key={opt.value} className="flex items-center gap-2">
                         <Badge variant="secondary" className="flex-1 justify-between">
                           {opt.label} ({opt.value})
                           <Button
@@ -254,7 +254,7 @@ export function CustomFieldsManager() {
                             variant="ghost"
                             size="icon"
                             className="h-4 w-4 ml-2"
-                            onClick={() => handleRemoveOption(index)}
+                            onClick={() => handleRemoveOption(opt.value)}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>

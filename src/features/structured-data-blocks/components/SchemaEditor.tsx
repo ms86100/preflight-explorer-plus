@@ -260,7 +260,7 @@ export function SchemaEditor({ schemas, onSchemaCreated, onSchemaUpdated, onSche
               
               {formData.columns.length > 0 && (
                 <div className="space-y-2">
-                  {formData.columns.map((col, index) => (
+                  {formData.columns.map((col) => (
                     <div
                       key={col.key}
                       className="flex items-center gap-2 p-3 border rounded-md bg-muted/30"
