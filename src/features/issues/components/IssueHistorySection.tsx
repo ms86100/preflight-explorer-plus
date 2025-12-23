@@ -131,7 +131,7 @@ export function IssueHistorySection({ issueId }: IssueHistorySectionProps) {
                 return (
                   <div key={entry.id} className="flex gap-3">
                     <Avatar className="h-8 w-8 flex-shrink-0">
-                      <AvatarImage src={entry.changer?.avatar_url || ''} />
+                      <AvatarImage src={entry.changer?.avatar_url || ''} alt={`${changerName} avatar`} />
                       <AvatarFallback className="text-xs">{changerInitials}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">

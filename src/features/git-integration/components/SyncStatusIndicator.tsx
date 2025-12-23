@@ -31,8 +31,7 @@ export function SyncStatusIndicator({ organization, onSyncComplete }: SyncStatus
 
       toast.success('Sync completed successfully');
       onSyncComplete?.();
-    } catch (error) {
-      console.error('Sync failed:', error);
+    } catch {
       toast.error('Sync failed. Check the organization connection.');
     } finally {
       setSyncing(false);

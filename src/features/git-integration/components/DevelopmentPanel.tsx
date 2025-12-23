@@ -77,8 +77,11 @@ export function DevelopmentPanel({ issueId, issueKey, projectId, onCreateBranch 
             No development activity linked to this issue yet
           </p>
           <button
+            type="button"
             onClick={handleCreateBranchClick}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCreateBranchClick(); } }}
             className="text-sm text-primary hover:underline"
+            aria-label="Create a new branch for this issue"
           >
             Create a branch to get started
           </button>

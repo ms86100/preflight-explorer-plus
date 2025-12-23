@@ -33,8 +33,7 @@ export function useGitModalRepositories(): UseGitModalRepositoriesResult {
       
       if (error) throw error;
       setRepositories(data as unknown as GitRepository[]);
-    } catch (error) {
-      console.error('Failed to load repositories:', error);
+    } catch {
       toast.error('Failed to load repositories');
     } finally {
       setLoading(false);

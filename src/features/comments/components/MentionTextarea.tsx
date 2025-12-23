@@ -206,7 +206,7 @@ export function MentionTextarea({
                 tabIndex={-1}
               >
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={user.avatar_url || undefined} />
+                  <AvatarImage src={user.avatar_url || undefined} alt={`${user.display_name} avatar`} />
                   <AvatarFallback className="text-xs">
                     {user.display_name.slice(0, 2).toUpperCase()}
                   </AvatarFallback>

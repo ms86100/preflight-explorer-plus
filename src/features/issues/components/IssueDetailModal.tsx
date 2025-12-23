@@ -436,7 +436,7 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
                             {issue.assignee ? (
                               <>
                                 <Avatar className="h-5 w-5">
-                                  <AvatarImage src={issue.assignee.avatar_url || ''} />
+                                  <AvatarImage src={issue.assignee.avatar_url || ''} alt={`${issue.assignee.display_name || 'Assignee'} avatar`} />
                                   <AvatarFallback className="text-[10px]">
                                     {issue.assignee.display_name?.slice(0, 2).toUpperCase()}
                                   </AvatarFallback>
@@ -457,7 +457,7 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
                           <SelectItem key={member.id} value={member.id}>
                             <div className="flex items-center gap-2">
                               <Avatar className="h-5 w-5">
-                                <AvatarImage src={member.avatar_url || ''} />
+                                <AvatarImage src={member.avatar_url || ''} alt={`${member.display_name || 'Team member'} avatar`} />
                                 <AvatarFallback className="text-[10px]">
                                   {member.display_name?.slice(0, 2).toUpperCase()}
                                 </AvatarFallback>
@@ -476,7 +476,7 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
                       {issue.reporter && (
                         <>
                           <Avatar className="h-6 w-6">
-                            <AvatarImage src={issue.reporter.avatar_url || ''} />
+                            <AvatarImage src={issue.reporter.avatar_url || ''} alt={`${issue.reporter.display_name || 'Reporter'} avatar`} />
                             <AvatarFallback className="text-xs">
                               {issue.reporter.display_name?.slice(0, 2).toUpperCase()}
                             </AvatarFallback>
@@ -565,7 +565,7 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
                     comments.map((comment) => (
                       <div key={comment.id} className="flex gap-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={comment.author?.avatar_url || ''} />
+                          <AvatarImage src={comment.author?.avatar_url || ''} alt={`${comment.author?.display_name || 'Comment author'} avatar`} />
                           <AvatarFallback className="text-xs">
                             {comment.author?.display_name?.slice(0, 2).toUpperCase()}
                           </AvatarFallback>

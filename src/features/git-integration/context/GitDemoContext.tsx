@@ -32,8 +32,7 @@ export function GitDemoProvider({ children }: { readonly children: ReactNode }) 
       toast.success('Demo mode enabled', {
         description: `Created ${data.data?.commits || 0} commits, ${data.data?.branches || 0} branches, ${data.data?.pull_requests || 0} PRs`,
       });
-    } catch (error) {
-      console.error('Failed to enable demo mode:', error);
+    } catch {
       toast.error('Failed to enable demo mode');
     } finally {
       setIsLoading(false);
@@ -53,8 +52,7 @@ export function GitDemoProvider({ children }: { readonly children: ReactNode }) 
       toast.success('Demo mode disabled', {
         description: 'All demo data has been removed',
       });
-    } catch (error) {
-      console.error('Failed to disable demo mode:', error);
+    } catch {
       toast.error('Failed to disable demo mode');
     } finally {
       setIsLoading(false);
