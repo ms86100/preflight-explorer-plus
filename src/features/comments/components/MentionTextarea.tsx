@@ -128,6 +128,14 @@ export function MentionTextarea({
     }, 0);
   }, [value, onChange, mentionStartPos, mentionQuery, allUsers, onMentions]);
 
+  // Helper to handle selection (used by Enter and Tab)
+  const handleSelectSuggestion = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showSuggestions && suggestions[selectedIndex]) {
+      e.preventDefault();
+      insertMention(suggestions[selectedIndex]);
+    }
+  }, [showSuggestions, suggestions, selectedIndex, insertMention]);
+
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (!showSuggestions || suggestions.length === 0) return;
 
@@ -141,23 +149,15 @@ export function MentionTextarea({
         setSelectedIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
         break;
       case 'Enter':
-        if (showSuggestions && suggestions[selectedIndex]) {
-          e.preventDefault();
-          insertMention(suggestions[selectedIndex]);
-        }
+      case 'Tab':
+        handleSelectSuggestion(e);
         break;
       case 'Escape':
         e.preventDefault();
         setShowSuggestions(false);
         break;
-      case 'Tab':
-        if (showSuggestions && suggestions[selectedIndex]) {
-          e.preventDefault();
-          insertMention(suggestions[selectedIndex]);
-        }
-        break;
     }
-  }, [showSuggestions, suggestions, selectedIndex, insertMention]);
+  }, [showSuggestions, suggestions, selectedIndex, handleSelectSuggestion]);
 
   // Click outside to close
   useEffect(() => {
@@ -183,13 +183,14 @@ export function MentionTextarea({
       />
       
       {showSuggestions && suggestions.length > 0 && (
-        <div 
+        <section 
           ref={suggestionsRef}
+          aria-label="User mention suggestions"
           className="absolute z-50 bottom-full mb-1 left-0 w-64 bg-popover border border-border rounded-md shadow-lg overflow-hidden"
         >
-          <div className="py-1 max-h-48 overflow-y-auto">
+          <ul className="py-1 max-h-48 overflow-y-auto" role="listbox" aria-label="Suggested users">
             {suggestions.map((user, index) => (
-              <div
+              <li
                 key={user.id}
                 className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${
                   index === selectedIndex ? 'bg-accent' : 'hover:bg-muted'
@@ -198,7 +199,6 @@ export function MentionTextarea({
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); insertMention(user); } }}
                 onMouseEnter={() => setSelectedIndex(index)}
                 tabIndex={0}
-                role="option"
                 aria-selected={index === selectedIndex}
               >
                 <Avatar className="h-6 w-6">
@@ -208,13 +208,13 @@ export function MentionTextarea({
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium truncate">{user.display_name}</span>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
           <div className="px-3 py-1.5 bg-muted/50 text-xs text-muted-foreground border-t">
             ↑↓ to navigate, Enter to select, Esc to close
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
@@ -223,14 +223,16 @@ export function MentionTextarea({
 // Helper to render comment body with highlighted mentions
 export function renderMentions(body: string): React.ReactNode {
   const parts = body.split(/(@[^\s@]+)/g);
-  return parts.map((part, i) => {
+  return parts.map((part) => {
     if (part.startsWith('@')) {
+      // Use the mention text itself as a stable key (unique within this context)
       return (
-        <span key={i} className="text-primary font-medium bg-primary/10 rounded px-0.5">
+        <span key={`mention-${part}`} className="text-primary font-medium bg-primary/10 rounded px-0.5">
           {part}
         </span>
       );
     }
-    return part;
+    // For plain text parts, use content-based key with position indicator
+    return <span key={`text-${part.slice(0, 20)}-${part.length}`}>{part}</span>;
   });
 }
