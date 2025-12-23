@@ -31,56 +31,61 @@ export function extractIssueKeys(message: string): string[] {
 /**
  * Parse smart commit commands from a commit message
  */
+// Helper: Add action for all issue keys (reduces nested loops in main function)
+function addActionsForAllIssues(
+  actions: SmartCommitAction[],
+  issueKeys: string[],
+  type: SmartCommitAction['type'],
+  value: string
+): void {
+  for (const issueKey of issueKeys) {
+    actions.push({ type, value, issueKey });
+  }
+}
+
+// Helper: Parse comment commands (S3776 fix - extract loop)
+function parseCommentCommands(message: string, issueKeys: string[], actions: SmartCommitAction[]): void {
+  const commentMatches = message.matchAll(COMMENT_PATTERN);
+  for (const match of commentMatches) {
+    const commentText = match[1].trim();
+    if (commentText) {
+      addActionsForAllIssues(actions, issueKeys, 'comment', commentText);
+    }
+  }
+}
+
+// Helper: Parse time commands (S3776 fix - extract loop)
+function parseTimeCommands(message: string, issueKeys: string[], actions: SmartCommitAction[]): void {
+  const timeMatches = message.matchAll(TIME_PATTERN);
+  for (const match of timeMatches) {
+    const timeValue = match[0].replace('#time', '').trim();
+    if (timeValue) {
+      addActionsForAllIssues(actions, issueKeys, 'time', timeValue);
+    }
+  }
+}
+
+// Helper: Parse transition commands (S3776 fix - extract loop)
+function parseTransitionCommands(message: string, issueKeys: string[], actions: SmartCommitAction[]): void {
+  for (const [transitionName, pattern] of Object.entries(TRANSITION_PATTERNS)) {
+    if (pattern.test(message)) {
+      addActionsForAllIssues(actions, issueKeys, 'transition', transitionName);
+      pattern.lastIndex = 0; // Reset regex lastIndex for next use
+    }
+  }
+}
+
+/**
+ * Parse smart commit commands from a commit message
+ */
 export function parseSmartCommitActions(message: string, issueKeys: string[]): SmartCommitAction[] {
   const actions: SmartCommitAction[] = [];
   
   if (issueKeys.length === 0) return actions;
   
-  // Parse #comment commands
-  const commentMatches = message.matchAll(COMMENT_PATTERN);
-  for (const match of commentMatches) {
-    const commentText = match[1].trim();
-    if (commentText) {
-      // Apply comment to all mentioned issues
-      for (const issueKey of issueKeys) {
-        actions.push({
-          type: 'comment',
-          value: commentText,
-          issueKey,
-        });
-      }
-    }
-  }
-  
-  // Parse #time commands
-  const timeMatches = message.matchAll(TIME_PATTERN);
-  for (const match of timeMatches) {
-    const timeValue = match[0].replace('#time', '').trim();
-    if (timeValue) {
-      for (const issueKey of issueKeys) {
-        actions.push({
-          type: 'time',
-          value: timeValue,
-          issueKey,
-        });
-      }
-    }
-  }
-  
-  // Parse transition commands
-  for (const [transitionName, pattern] of Object.entries(TRANSITION_PATTERNS)) {
-    if (pattern.test(message)) {
-      for (const issueKey of issueKeys) {
-        actions.push({
-          type: 'transition',
-          value: transitionName,
-          issueKey,
-        });
-      }
-      // Reset regex lastIndex for next use
-      pattern.lastIndex = 0;
-    }
-  }
+  parseCommentCommands(message, issueKeys, actions);
+  parseTimeCommands(message, issueKeys, actions);
+  parseTransitionCommands(message, issueKeys, actions);
   
   return actions;
 }

@@ -593,40 +593,117 @@ async function handleBitbucketWebhook(supabase: any, orgId: string, payload: any
   }
 }
 
-async function handlePushEvent(supabase: any, orgId: string, provider: string, payload: any) {
-  let repoSlug = '';
-  let commits: any[] = [];
-  let repoWebUrl = '';
-  let repoName = '';
-  let remoteId = '';
+// ==================== PAYLOAD NORMALIZERS (S3776 fix) ====================
 
-  // Normalize payload based on provider
-  if (provider === 'gitlab') {
-    repoSlug = payload.project?.path_with_namespace || payload.repository?.name || '';
-    repoName = payload.project?.name || payload.repository?.name || '';
-    repoWebUrl = payload.project?.web_url || payload.repository?.homepage || '';
-    remoteId = String(payload.project?.id || payload.project_id || '');
-    commits = payload.commits || [];
-  } else if (provider === 'github') {
-    repoSlug = payload.repository?.full_name || '';
-    repoName = payload.repository?.name || '';
-    repoWebUrl = payload.repository?.html_url || '';
-    remoteId = String(payload.repository?.id || '');
-    commits = payload.commits || [];
-  } else if (provider === 'bitbucket') {
-    repoSlug = payload.repository?.full_name || '';
-    repoName = payload.repository?.name || '';
-    repoWebUrl = payload.repository?.links?.html?.href || '';
-    remoteId = payload.repository?.uuid || '';
-    commits = payload.push?.changes?.[0]?.commits || [];
+interface NormalizedRepoInfo {
+  repoSlug: string;
+  repoName: string;
+  repoWebUrl: string;
+  remoteId: string;
+  commits: any[];
+}
+
+function normalizeRepoInfoFromGitLab(payload: any): NormalizedRepoInfo {
+  return {
+    repoSlug: payload.project?.path_with_namespace || payload.repository?.name || '',
+    repoName: payload.project?.name || payload.repository?.name || '',
+    repoWebUrl: payload.project?.web_url || payload.repository?.homepage || '',
+    remoteId: String(payload.project?.id || payload.project_id || ''),
+    commits: payload.commits || [],
+  };
+}
+
+function normalizeRepoInfoFromGitHub(payload: any): NormalizedRepoInfo {
+  return {
+    repoSlug: payload.repository?.full_name || '',
+    repoName: payload.repository?.name || '',
+    repoWebUrl: payload.repository?.html_url || '',
+    remoteId: String(payload.repository?.id || ''),
+    commits: payload.commits || [],
+  };
+}
+
+function normalizeRepoInfoFromBitbucket(payload: any): NormalizedRepoInfo {
+  return {
+    repoSlug: payload.repository?.full_name || '',
+    repoName: payload.repository?.name || '',
+    repoWebUrl: payload.repository?.links?.html?.href || '',
+    remoteId: payload.repository?.uuid || '',
+    commits: payload.push?.changes?.[0]?.commits || [],
+  };
+}
+
+function normalizeRepoInfo(provider: string, payload: any): NormalizedRepoInfo {
+  switch (provider) {
+    case 'gitlab': return normalizeRepoInfoFromGitLab(payload);
+    case 'github': return normalizeRepoInfoFromGitHub(payload);
+    case 'bitbucket': return normalizeRepoInfoFromBitbucket(payload);
+    default: return { repoSlug: '', repoName: '', repoWebUrl: '', remoteId: '', commits: [] };
   }
+}
+
+interface NormalizedCommitInfo {
+  commitHash: string;
+  authorName: string;
+  authorEmail: string;
+  message: string;
+  committedAt: string;
+  webUrl: string;
+}
+
+function normalizeCommitFromGitLab(commit: any): NormalizedCommitInfo {
+  return {
+    commitHash: commit.id || '',
+    authorName: commit.author?.name || '',
+    authorEmail: commit.author?.email || '',
+    message: commit.message || '',
+    committedAt: commit.timestamp || '',
+    webUrl: commit.url || '',
+  };
+}
+
+function normalizeCommitFromGitHub(commit: any): NormalizedCommitInfo {
+  return {
+    commitHash: commit.id || '',
+    authorName: commit.author?.name || '',
+    authorEmail: commit.author?.email || '',
+    message: commit.message || '',
+    committedAt: commit.timestamp || '',
+    webUrl: commit.url || '',
+  };
+}
+
+function normalizeCommitFromBitbucket(commit: any): NormalizedCommitInfo {
+  return {
+    commitHash: commit.hash || '',
+    authorName: commit.author?.user?.display_name || commit.author?.raw || '',
+    authorEmail: commit.author?.user?.email || '',
+    message: commit.message || '',
+    committedAt: commit.date || '',
+    webUrl: commit.links?.html?.href || '',
+  };
+}
+
+function normalizeCommit(provider: string, commit: any): NormalizedCommitInfo {
+  switch (provider) {
+    case 'gitlab': return normalizeCommitFromGitLab(commit);
+    case 'github': return normalizeCommitFromGitHub(commit);
+    case 'bitbucket': return normalizeCommitFromBitbucket(commit);
+    default: return { commitHash: '', authorName: '', authorEmail: '', message: '', committedAt: '', webUrl: '' };
+  }
+}
+
+// ==================== PUSH EVENT HANDLER (refactored for S3776) ====================
+
+async function handlePushEvent(supabase: any, orgId: string, provider: string, payload: any) {
+  const { repoSlug, remoteId, commits } = normalizeRepoInfo(provider, payload);
 
   if (!repoSlug) {
     return { processed: false, message: 'Could not determine repository' };
   }
 
   // Find or create repository
-  let { data: repo, error: repoError } = await supabase
+  const { data: repo, error: repoError } = await supabase
     .from('git_repositories')
     .select('id, project_id, smartcommits_enabled')
     .eq('organization_id', orgId)
@@ -634,137 +711,19 @@ async function handlePushEvent(supabase: any, orgId: string, provider: string, p
     .single();
 
   if (repoError || !repo) {
-    // Repository not linked yet - just log and skip
     console.log('Repository not linked:', repoSlug);
     return { processed: false, message: 'Repository not linked to any project' };
   }
 
   let processedCount = 0;
-  let linkedIssues: string[] = [];
+  const linkedIssues: string[] = [];
 
   for (const commit of commits) {
-    // Normalize commit data
-    let commitHash = '';
-    let authorName = '';
-    let authorEmail = '';
-    let message = '';
-    let committedAt = '';
-    let webUrl = '';
+    const commitInfo = normalizeCommit(provider, commit);
+    if (!commitInfo.commitHash) continue;
 
-    if (provider === 'gitlab') {
-      commitHash = commit.id || '';
-      authorName = commit.author?.name || '';
-      authorEmail = commit.author?.email || '';
-      message = commit.message || '';
-      committedAt = commit.timestamp || '';
-      webUrl = commit.url || '';
-    } else if (provider === 'github') {
-      commitHash = commit.id || '';
-      authorName = commit.author?.name || '';
-      authorEmail = commit.author?.email || '';
-      message = commit.message || '';
-      committedAt = commit.timestamp || '';
-      webUrl = commit.url || '';
-    } else if (provider === 'bitbucket') {
-      commitHash = commit.hash || '';
-      authorName = commit.author?.user?.display_name || commit.author?.raw || '';
-      authorEmail = commit.author?.user?.email || '';
-      message = commit.message || '';
-      committedAt = commit.date || '';
-      webUrl = commit.links?.html?.href || '';
-    }
-
-    if (!commitHash) continue;
-
-    // Insert or update commit
-    const { data: commitData, error: commitError } = await supabase
-      .from('git_commits')
-      .upsert({
-        repository_id: repo.id,
-        commit_hash: commitHash,
-        author_name: authorName,
-        author_email: authorEmail,
-        message: message,
-        committed_at: committedAt,
-        web_url: webUrl,
-      }, { onConflict: 'commit_hash' })
-      .select('id')
-      .single();
-
-    if (commitError) {
-      console.error('Error inserting commit:', commitError);
-      continue;
-    }
-
-    // Extract issue keys from commit message
-    const issueKeys = extractIssueKeys(message || '');
-    
-    for (const issueKey of issueKeys) {
-      // Find issue by key
-      const { data: issue } = await supabase
-        .from('issues')
-        .select('id')
-        .eq('issue_key', issueKey)
-        .single();
-
-      if (issue) {
-        // Link commit to issue
-        await supabase
-          .from('git_commit_issues')
-          .upsert({
-            commit_id: commitData.id,
-            issue_id: issue.id,
-            issue_key: issueKey,
-            smartcommit_processed: false,
-          }, { onConflict: 'commit_id,issue_id' });
-
-        linkedIssues.push(issueKey);
-
-        // Process smart commits if enabled
-        if (repo.smartcommits_enabled) {
-          const actions = parseSmartCommits(message || '');
-          
-          for (const action of actions) {
-            if (action.type === 'comment') {
-              // Add comment to issue
-              await supabase.from('comments').insert({
-                issue_id: issue.id,
-                author_id: null, // System comment
-                body: `[Git commit ${commitHash.slice(0, 7)}] ${action.value}`,
-              });
-            } else if (action.type === 'transition') {
-              // Find status by category
-              const statusCategory = action.value === 'done' ? 'done' 
-                : action.value === 'in_progress' ? 'in_progress' 
-                : 'todo';
-              
-              const { data: status } = await supabase
-                .from('issue_statuses')
-                .select('id')
-                .eq('category', statusCategory)
-                .limit(1)
-                .single();
-
-              if (status) {
-                await supabase
-                  .from('issues')
-                  .update({ status_id: status.id })
-                  .eq('id', issue.id);
-              }
-            }
-          }
-
-          // Mark as processed
-          await supabase
-            .from('git_commit_issues')
-            .update({ smartcommit_processed: true })
-            .eq('commit_id', commitData.id)
-            .eq('issue_id', issue.id);
-        }
-      }
-    }
-
-    processedCount++;
+    const processResult = await processCommit(supabase, repo, commitInfo, linkedIssues);
+    if (processResult) processedCount++;
   }
 
   // Update repository last commit time
@@ -799,6 +758,142 @@ async function handlePushEvent(supabase: any, orgId: string, provider: string, p
     processed: true, 
     message: `Processed ${processedCount} commits, linked to issues: ${[...new Set(linkedIssues)].join(', ') || 'none'}` 
   };
+}
+
+// ==================== COMMIT PROCESSING HELPERS (S3776 fix) ====================
+
+async function processCommit(
+  supabase: any,
+  repo: { id: string; project_id: string; smartcommits_enabled: boolean },
+  commitInfo: NormalizedCommitInfo,
+  linkedIssues: string[]
+): Promise<boolean> {
+  const { commitHash, authorName, authorEmail, message, committedAt, webUrl } = commitInfo;
+
+  // Insert or update commit
+  const { data: commitData, error: commitError } = await supabase
+    .from('git_commits')
+    .upsert({
+      repository_id: repo.id,
+      commit_hash: commitHash,
+      author_name: authorName,
+      author_email: authorEmail,
+      message: message,
+      committed_at: committedAt,
+      web_url: webUrl,
+    }, { onConflict: 'commit_hash' })
+    .select('id')
+    .single();
+
+  if (commitError) {
+    console.error('Error inserting commit:', commitError);
+    return false;
+  }
+
+  // Extract issue keys from commit message
+  const issueKeys = extractIssueKeys(message || '');
+  
+  for (const issueKey of issueKeys) {
+    await linkCommitToIssue(supabase, repo, commitData.id, commitHash, issueKey, message, linkedIssues);
+  }
+
+  return true;
+}
+
+async function linkCommitToIssue(
+  supabase: any,
+  repo: { id: string; project_id: string; smartcommits_enabled: boolean },
+  commitId: string,
+  commitHash: string,
+  issueKey: string,
+  message: string,
+  linkedIssues: string[]
+): Promise<void> {
+  // Find issue by key
+  const { data: issue } = await supabase
+    .from('issues')
+    .select('id')
+    .eq('issue_key', issueKey)
+    .single();
+
+  if (!issue) return;
+
+  // Link commit to issue
+  await supabase
+    .from('git_commit_issues')
+    .upsert({
+      commit_id: commitId,
+      issue_id: issue.id,
+      issue_key: issueKey,
+      smartcommit_processed: false,
+    }, { onConflict: 'commit_id,issue_id' });
+
+  linkedIssues.push(issueKey);
+
+  // Process smart commits if enabled
+  if (repo.smartcommits_enabled) {
+    await processSmartCommitActions(supabase, issue.id, commitId, commitHash, message);
+  }
+}
+
+async function processSmartCommitActions(
+  supabase: any,
+  issueId: string,
+  commitId: string,
+  commitHash: string,
+  message: string
+): Promise<void> {
+  const actions = parseSmartCommits(message || '');
+  
+  for (const action of actions) {
+    await executeSmartCommitAction(supabase, issueId, commitHash, action);
+  }
+
+  // Mark as processed
+  await supabase
+    .from('git_commit_issues')
+    .update({ smartcommit_processed: true })
+    .eq('commit_id', commitId)
+    .eq('issue_id', issueId);
+}
+
+async function executeSmartCommitAction(
+  supabase: any,
+  issueId: string,
+  commitHash: string,
+  action: { type: string; value: string }
+): Promise<void> {
+  if (action.type === 'comment') {
+    await supabase.from('comments').insert({
+      issue_id: issueId,
+      author_id: null,
+      body: `[Git commit ${commitHash.slice(0, 7)}] ${action.value}`,
+    });
+    return;
+  }
+
+  if (action.type === 'transition') {
+    const statusCategory = getStatusCategoryFromAction(action.value);
+    const { data: status } = await supabase
+      .from('issue_statuses')
+      .select('id')
+      .eq('category', statusCategory)
+      .limit(1)
+      .single();
+
+    if (status) {
+      await supabase
+        .from('issues')
+        .update({ status_id: status.id })
+        .eq('id', issueId);
+    }
+  }
+}
+
+function getStatusCategoryFromAction(actionValue: string): string {
+  if (actionValue === 'done') return 'done';
+  if (actionValue === 'in_progress') return 'in_progress';
+  return 'todo';
 }
 
 async function handleMergeRequestEvent(supabase: any, orgId: string, provider: string, payload: any) {

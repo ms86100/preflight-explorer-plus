@@ -355,57 +355,83 @@ describe('Guided Operations Types', () => {
 // Validation Tests
 // ============================================================================
 
+// Type-specific validators (extracted to reduce S3776 cognitive complexity)
+type ValidationResult = { valid: boolean; error?: string };
+
+function validateRequired(field: StepInputField, value: unknown): ValidationResult | null {
+  if (field.required && (value === undefined || value === null || value === '')) {
+    return { valid: false, error: `${field.label} is required` };
+  }
+  return null;
+}
+
+function isEmpty(value: unknown): boolean {
+  return value === undefined || value === null || value === '';
+}
+
+function validateNumberField(field: StepInputField, value: unknown): ValidationResult {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return { valid: false, error: `${field.label} must be a number` };
+  }
+  if (field.validation?.min !== undefined && value < field.validation.min) {
+    return { valid: false, error: `${field.label} must be at least ${field.validation.min}` };
+  }
+  if (field.validation?.max !== undefined && value > field.validation.max) {
+    return { valid: false, error: `${field.label} must be at most ${field.validation.max}` };
+  }
+  return { valid: true };
+}
+
+function validateTextField(field: StepInputField, value: unknown): ValidationResult {
+  if (typeof value !== 'string') {
+    return { valid: false, error: `${field.label} must be text` };
+  }
+  if (field.validation?.pattern) {
+    const regex = new RegExp(field.validation.pattern);
+    if (!regex.test(value)) {
+      return { valid: false, error: field.validation.message || `${field.label} format is invalid` };
+    }
+  }
+  return { valid: true };
+}
+
+function validateSelectField(field: StepInputField, value: unknown): ValidationResult {
+  if (!field.options?.find((o) => o.value === value)) {
+    return { valid: false, error: `${field.label} must be a valid option` };
+  }
+  return { valid: true };
+}
+
+// Type-specific validation dispatcher
+function validateByFieldType(field: StepInputField, value: unknown): ValidationResult {
+  switch (field.type) {
+    case 'number':
+      return validateNumberField(field, value);
+    case 'text':
+      return validateTextField(field, value);
+    case 'select':
+      return validateSelectField(field, value);
+    default:
+      return { valid: true };
+  }
+}
+
 /**
- * Validates input value against field definition.
+ * Validates input value against field definition. (Refactored for S3776)
  */
 function validateInput(
   field: StepInputField,
   value: unknown
 ): { valid: boolean; error?: string } {
-  // Check required
-  if (field.required && (value === undefined || value === null || value === '')) {
-    return { valid: false, error: `${field.label} is required` };
-  }
+  // Early return for required check
+  const requiredResult = validateRequired(field, value);
+  if (requiredResult) return requiredResult;
 
-  // Skip validation for empty non-required fields
-  if (value === undefined || value === null || value === '') {
-    return { valid: true };
-  }
+  // Early return for empty non-required fields
+  if (isEmpty(value)) return { valid: true };
 
-  // Type-specific validation
-  switch (field.type) {
-    case 'number':
-      if (typeof value !== 'number' || Number.isNaN(value)) {
-        return { valid: false, error: `${field.label} must be a number` };
-      }
-      if (field.validation?.min !== undefined && value < field.validation.min) {
-        return { valid: false, error: `${field.label} must be at least ${field.validation.min}` };
-      }
-      if (field.validation?.max !== undefined && value > field.validation.max) {
-        return { valid: false, error: `${field.label} must be at most ${field.validation.max}` };
-      }
-      break;
-
-    case 'text':
-      if (typeof value !== 'string') {
-        return { valid: false, error: `${field.label} must be text` };
-      }
-      if (field.validation?.pattern) {
-        const regex = new RegExp(field.validation.pattern);
-        if (!regex.test(value)) {
-          return { valid: false, error: field.validation.message || `${field.label} format is invalid` };
-        }
-      }
-      break;
-
-    case 'select':
-      if (!field.options?.find((o) => o.value === value)) {
-        return { valid: false, error: `${field.label} must be a valid option` };
-      }
-      break;
-  }
-
-  return { valid: true };
+  // Delegate to type-specific validator
+  return validateByFieldType(field, value);
 }
 
 /**
