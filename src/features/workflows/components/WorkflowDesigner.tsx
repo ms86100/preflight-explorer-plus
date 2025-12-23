@@ -511,9 +511,10 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
             return (
               <ContextMenu key={step.id}>
                 <ContextMenuTrigger asChild>
-                  <div
+                  <button
+                    type="button"
                     className={cn(
-                      "absolute select-none",
+                      "absolute select-none text-left",
                       "w-40 rounded-lg border-2 shadow-lg",
                       getCategoryColor(step.status?.category),
                       connectionState && connectionState.fromStepId !== step.id && "ring-2 ring-primary ring-offset-2",
@@ -528,9 +529,6 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
                     }}
                     onMouseDown={(e) => handleStepMouseDown(step, e)}
                     onClick={() => handleStepClick(step)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleStepClick(step); } }}
-                    tabIndex={0}
-                    role="button"
                     aria-label={`Workflow step: ${step.status?.name}`}
                   >
                     <div className="flex items-center gap-2 p-3">
@@ -595,7 +593,7 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
                         </DropdownMenu>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 </ContextMenuTrigger>
                 <ContextMenuContent>
                   <ContextMenuItem

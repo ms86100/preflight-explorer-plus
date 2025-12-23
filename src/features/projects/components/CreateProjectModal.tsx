@@ -160,24 +160,26 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
           </TabsList>
 
           <TabsContent value="template" className="mt-6">
-            <div className="grid gap-4">
-              <Label className="text-sm font-medium">Choose a project template</Label>
-              <div className="grid gap-3">
+            <fieldset className="grid gap-4">
+              <legend className="text-sm font-medium mb-2">Choose a project template</legend>
+              <div className="grid gap-3" role="radiogroup" aria-label="Project templates">
                 {TEMPLATES.map((template) => (
-                  <div
+                  <label
                     key={template.id}
-                    onClick={() => setValue('template', template.id)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setValue('template', template.id); } }}
-                    tabIndex={0}
-                    role="radio"
-                    aria-checked={selectedTemplate === template.id}
-                    aria-label={`Select template: ${template.name}`}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                       selectedTemplate === template.id
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50 hover:bg-muted/50'
                     }`}
                   >
+                    <input
+                      type="radio"
+                      name="template"
+                      value={template.id}
+                      checked={selectedTemplate === template.id}
+                      onChange={() => setValue('template', template.id)}
+                      className="sr-only"
+                    />
                     <div className="flex items-start gap-4">
                       <div className={`p-3 rounded-lg ${
                         selectedTemplate === template.id ? 'bg-primary/10' : 'bg-muted'
@@ -203,10 +205,10 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </label>
                 ))}
               </div>
-            </div>
+            </fieldset>
           </TabsContent>
 
           <TabsContent value="details" className="mt-6 space-y-4">

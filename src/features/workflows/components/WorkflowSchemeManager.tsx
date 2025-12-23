@@ -122,10 +122,12 @@ export function WorkflowSchemeManager() {
   // Get unassigned issue types (not yet mapped in this scheme)
   const getUnmappedIssueTypes = () => {
     if (!issueTypes || !schemeWithMappings) return issueTypes || [];
-    const mappedTypeIds = schemeWithMappings.mappings
-      .filter(m => m.issue_type_id)
-      .map(m => m.issue_type_id);
-    return issueTypes.filter(it => !mappedTypeIds.includes(it.id));
+    const mappedTypeIds = new Set(
+      schemeWithMappings.mappings
+        .filter(m => m.issue_type_id)
+        .map(m => m.issue_type_id)
+    );
+    return issueTypes.filter(it => !mappedTypeIds.has(it.id));
   };
 
   if (schemesLoading) {

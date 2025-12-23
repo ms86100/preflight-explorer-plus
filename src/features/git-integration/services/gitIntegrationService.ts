@@ -233,9 +233,10 @@ export async function getIssueDevelopmentInfo(issueId: string, issueKey: string)
   // Calculate summary
   const openPRs = pullRequests.filter(pr => pr.status === 'open');
   const mergedPRs = pullRequests.filter(pr => pr.status === 'merged');
-  const latestBuild = builds.sort((a, b) => 
+  const sortedBuilds = [...builds].sort((a, b) => 
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  )[0];
+  );
+  const latestBuild = sortedBuilds[0];
   const deployedEnvs = [...new Set(
     deployments
       .filter(d => d.status === 'success')

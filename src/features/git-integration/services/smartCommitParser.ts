@@ -111,10 +111,10 @@ export function parseSmartCommit(message: string): ParsedSmartCommit {
 export function parseTimeToMinutes(timeString: string): number {
   let totalMinutes = 0;
   
-  const weekMatch = timeString.match(/(\d+)w/i);
-  const dayMatch = timeString.match(/(\d+)d/i);
-  const hourMatch = timeString.match(/(\d+)h/i);
-  const minuteMatch = timeString.match(/(\d+)m/i);
+  const weekMatch = /(\d+)w/i.exec(timeString);
+  const dayMatch = /(\d+)d/i.exec(timeString);
+  const hourMatch = /(\d+)h/i.exec(timeString);
+  const minuteMatch = /(\d+)m/i.exec(timeString);
   
   if (weekMatch) totalMinutes += Number.parseInt(weekMatch[1]) * 5 * 8 * 60; // 5 days, 8 hours
   if (dayMatch) totalMinutes += Number.parseInt(dayMatch[1]) * 8 * 60; // 8 hours

@@ -218,21 +218,19 @@ export function ExportWizard({ format, onClose, preselectedIssues = [] }: Export
                 ) : (
                   <div className="space-y-2">
                     {filteredIssues.map((issue) => (
-                      <div
+                      <label
                         key={issue.id}
                         className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors ${
                           selectedIssues.includes(issue.id)
                             ? 'bg-primary/10 border border-primary/30'
                             : 'hover:bg-muted'
                         }`}
-                        onClick={() => handleToggleIssue(issue.id)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggleIssue(issue.id); } }}
-                        tabIndex={0}
-                        role="checkbox"
-                        aria-checked={selectedIssues.includes(issue.id)}
-                        aria-label={`Select issue ${issue.key}: ${issue.summary}`}
                       >
-                        <Checkbox checked={selectedIssues.includes(issue.id)} />
+                        <Checkbox 
+                          checked={selectedIssues.includes(issue.id)} 
+                          onCheckedChange={() => handleToggleIssue(issue.id)}
+                          aria-label={`Select issue ${issue.key}: ${issue.summary}`}
+                        />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
@@ -249,7 +247,7 @@ export function ExportWizard({ format, onClose, preselectedIssues = [] }: Export
                             </Badge>
                           </div>
                         </div>
-                      </div>
+                      </label>
                     ))}
                   </div>
                 )}

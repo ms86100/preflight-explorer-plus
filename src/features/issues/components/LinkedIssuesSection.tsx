@@ -229,20 +229,18 @@ export function LinkedIssuesSection({ issueId, projectId }: LinkedIssuesSectionP
               {searchResults.length > 0 && (
                 <div className="border rounded-md max-h-[200px] overflow-y-auto">
                   {searchResults.map((issue) => (
-                    <div
+                    <button
                       key={issue.id}
-                      className={`p-2 cursor-pointer hover:bg-accent ${
+                      type="button"
+                      className={`p-2 w-full text-left hover:bg-accent ${
                         selectedIssue === issue.id ? 'bg-accent' : ''
                       }`}
                       onClick={() => setSelectedIssue(issue.id)}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedIssue(issue.id); } }}
-                      tabIndex={0}
-                      role="option"
-                      aria-selected={selectedIssue === issue.id}
+                      aria-pressed={selectedIssue === issue.id}
                     >
                       <span className="font-medium text-primary">{issue.issue_key}</span>
                       <span className="text-sm text-muted-foreground ml-2">{issue.summary}</span>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}

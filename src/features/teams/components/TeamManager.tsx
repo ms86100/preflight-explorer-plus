@@ -539,16 +539,14 @@ function AddMemberDialog({
               </div>
             ) : (
               filteredUsers.map((user) => (
-                <div
+                <button
                   key={user.id}
-                  className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-muted transition-colors ${
+                  type="button"
+                  className={`flex items-center gap-3 p-3 w-full text-left hover:bg-muted transition-colors ${
                     selectedUser === user.id ? 'bg-muted' : ''
                   }`}
                   onClick={() => setSelectedUser(user.id)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedUser(user.id); } }}
-                  tabIndex={0}
-                  role="option"
-                  aria-selected={selectedUser === user.id}
+                  aria-pressed={selectedUser === user.id}
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarFallback>
@@ -563,7 +561,7 @@ function AddMemberDialog({
                     <div className="font-medium text-sm">{user.display_name || 'Unknown'}</div>
                     <div className="text-xs text-muted-foreground">{user.email}</div>
                   </div>
-                </div>
+                </button>
               ))
             )}
           </div>
