@@ -185,14 +185,17 @@ export function BasicBoard({
 
               return (
                 <button
+                  type="button"
                   key={member.id}
                   onClick={() => toggleAssignee(member.display_name)}
+                  aria-label={`Filter by ${member.display_name}`}
+                  aria-pressed={isSelected}
                   className={`rounded-full transition-all ${
                     isSelected ? 'ring-2 ring-primary ring-offset-2' : 'opacity-60 hover:opacity-100'
                   }`}
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={member.avatar_url} />
+                    <AvatarImage src={member.avatar_url} alt={`${member.display_name} avatar`} />
                     <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                   </Avatar>
                 </button>

@@ -467,8 +467,7 @@ export function DraggableBacklogView() {
 
       const targetSprint = sprints?.find(s => s.id === targetSprintId);
       toast.success(`Moved ${draggedIssue.issue_key} to ${targetSprint?.name || 'sprint'}`);
-    } catch (error: unknown) {
-      console.error('Failed to move issue:', error);
+    } catch {
       toast.error('Failed to move issue');
     }
   };

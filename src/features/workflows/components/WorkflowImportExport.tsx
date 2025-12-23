@@ -113,9 +113,8 @@ export function WorkflowImportExport({
       URL.revokeObjectURL(url);
       
       toast.success('Workflow exported successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to export workflow');
-      console.error(error);
     }
   };
   
@@ -134,8 +133,7 @@ export function WorkflowImportExport({
           if (parsed.workflow?.name) {
             setImportName(parsed.workflow.name + ' (Imported)');
           }
-        } catch (parseError) {
-          console.debug('JSON parse failed:', parseError);
+        } catch {
           setImportError('Invalid JSON file');
         }
       })

@@ -147,7 +147,7 @@ export function IssueCard({ issue, isDragging, onSelect }: IssueCardProps) {
             <Tooltip>
               <TooltipTrigger>
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={issue.assignee.avatar_url} />
+                  <AvatarImage src={issue.assignee.avatar_url} alt={`${issue.assignee.display_name} avatar`} />
                   <AvatarFallback className="text-xs bg-muted">{initials}</AvatarFallback>
                 </Avatar>
               </TooltipTrigger>

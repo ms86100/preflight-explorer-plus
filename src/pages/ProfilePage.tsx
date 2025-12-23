@@ -89,8 +89,7 @@ export default function ProfilePage() {
           nationality: '',
         });
       }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
+    } catch {
       toast.error('Failed to load profile');
     } finally {
       setIsLoading(false);
@@ -118,8 +117,7 @@ export default function ProfilePage() {
       if (error) throw error;
       toast.success('Profile updated successfully');
       fetchProfile();
-    } catch (error) {
-      console.error('Error updating profile:', error);
+    } catch {
       toast.error('Failed to update profile');
     } finally {
       setIsSaving(false);
@@ -176,7 +174,7 @@ export default function ProfilePage() {
               <div className="flex justify-center mb-4">
                 <div className="relative">
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src={profile?.avatar_url || undefined} />
+                    <AvatarImage src={profile?.avatar_url || undefined} alt={`${formData.display_name || 'User'} profile picture`} />
                     <AvatarFallback className="text-2xl bg-primary/10 text-primary">
                       {getInitials(formData.display_name || 'U')}
                     </AvatarFallback>

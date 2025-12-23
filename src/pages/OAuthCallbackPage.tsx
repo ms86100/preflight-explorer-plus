@@ -74,7 +74,6 @@ export default function OAuthCallbackPage() {
         setStatus('success');
         sessionStorage.removeItem('git_oauth_params');
       } catch (err) {
-        console.error('OAuth callback error:', err);
         setStatus('error');
         setErrorMessage(err instanceof Error ? err.message : 'Failed to complete OAuth');
         sessionStorage.removeItem('git_oauth_params');

@@ -255,7 +255,7 @@ export default function ComponentsPage() {
                       {component.lead ? (
                         <div className="flex items-center gap-2">
                           <Avatar className="h-6 w-6">
-                            <AvatarImage src={component.lead.avatar_url || ''} />
+                            <AvatarImage src={component.lead.avatar_url || ''} alt={`${component.lead.display_name || 'Component lead'} avatar`} />
                             <AvatarFallback className="text-xs">
                               {component.lead.display_name?.charAt(0) || '?'}
                             </AvatarFallback>

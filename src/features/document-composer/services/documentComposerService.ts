@@ -250,8 +250,7 @@ async function processExport(exportId: string, issueIds: string[], format: Expor
         options: { content: base64Content, mimeType, originalFormat: format },
       })
       .eq('id', exportId);
-  } catch (err) {
-    console.error('Export processing error:', err);
+  } catch {
     await supabase
       .from('document_exports')
       .update({ 

@@ -458,7 +458,7 @@ export function IssueSearchView() {
                           {issue.assignee ? (
                             <div className="flex items-center gap-2">
                               <Avatar className="h-6 w-6">
-                                <AvatarImage src={issue.assignee.avatar_url || ''} />
+                                <AvatarImage src={issue.assignee.avatar_url || ''} alt={`${issue.assignee.display_name} avatar`} />
                                 <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                               </Avatar>
                               <span className="text-sm truncate max-w-[100px]">

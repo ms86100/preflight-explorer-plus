@@ -320,7 +320,7 @@ export function BacklogView() {
 
         {issue.assignee ? (
           <Avatar className="h-6 w-6">
-            <AvatarImage src={issue.assignee.avatar_url || ''} />
+            <AvatarImage src={issue.assignee.avatar_url || ''} alt={`${issue.assignee.display_name || 'Assignee'} avatar`} />
             <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>
         ) : (

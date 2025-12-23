@@ -147,8 +147,7 @@ export function ExportWizard({ format, onClose, preselectedIssues = [] }: Export
       setStep('complete');
       queryClient.invalidateQueries({ queryKey: ['document-exports'] });
       toast.success(`Export completed! ${selectedIssues.length} items exported to ${format.toUpperCase()}`);
-    } catch (error) {
-      console.error('Export error:', error);
+    } catch {
       toast.error('Export failed. Please try again.');
       setStep('preview');
     }
@@ -160,8 +159,7 @@ export function ExportWizard({ format, onClose, preselectedIssues = [] }: Export
     try {
       await downloadExport(createdExport);
       toast.success('Download started');
-    } catch (error) {
-      console.error('Download error:', error);
+    } catch {
       toast.error('Download failed');
     }
   };
