@@ -71,7 +71,9 @@ export default function BoardPage() {
     const init = async () => {
       setIsInitializingColumns(true);
       try {
-        await boardService.createDefaultColumns(board.id);
+        // Pass the template to create appropriate columns
+        const templateType = template === 'kanban' ? 'kanban' : template === 'basic' ? 'basic' : 'scrum';
+        await boardService.createDefaultColumns(board.id, templateType);
         await refetchColumns();
       } catch (error) {
         console.error('Failed to initialize board columns:', error);
@@ -85,7 +87,7 @@ export default function BoardPage() {
     return () => {
       cancelled = true;
     };
-  }, [board?.id, columnsLoading, columns?.length, didAttemptInitColumns, refetchColumns]);
+  }, [board?.id, columnsLoading, columns?.length, didAttemptInitColumns, refetchColumns, template]);
 
   // Real-time subscription for issues - refetch when issues change
   useEffect(() => {

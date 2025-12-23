@@ -191,7 +191,18 @@ export const boardService = {
    * await boardService.createDefaultColumns(newBoard.id);
    * ```
    */
-  async createDefaultColumns(boardId: string) {
+  /**
+   * Creates default columns for a board based on project template.
+   * 
+   * @param boardId - The board ID to create columns for
+   * @param template - The project template ('scrum', 'kanban', 'basic')
+   * 
+   * Template-specific column configurations:
+   * - Scrum: To Do, In Progress (WIP 5), Done - Sprint-focused workflow
+   * - Kanban: Backlog, Selected, In Progress (WIP 5), Review (WIP 3), Done - Flow-based with WIP limits
+   * - Basic: To Do, In Progress, Done - Simple task tracking
+   */
+  async createDefaultColumns(boardId: string, template: 'scrum' | 'kanban' | 'basic' = 'scrum') {
     // Get all statuses
     const { data: statuses } = await supabase
       .from('issue_statuses')
@@ -200,16 +211,51 @@ export const boardService = {
 
     if (!statuses) return;
 
-    // Group by category for default column setup
+    // Group by category for column setup
     const todoStatuses = statuses.filter(s => s.category === 'todo');
     const inProgressStatuses = statuses.filter(s => s.category === 'in_progress');
     const doneStatuses = statuses.filter(s => s.category === 'done');
 
-    const columns = [
-      { name: 'To Do', position: 0, statuses: todoStatuses },
-      { name: 'In Progress', position: 1, statuses: inProgressStatuses, max_issues: 5 },
-      { name: 'Done', position: 2, statuses: doneStatuses },
-    ];
+    // Template-specific column configurations (like Jira Data Center)
+    let columns: Array<{
+      name: string;
+      position: number;
+      statuses: typeof todoStatuses;
+      max_issues?: number;
+      min_issues?: number;
+    }>;
+
+    switch (template) {
+      case 'kanban':
+        // Kanban: Flow-based workflow with WIP limits and more stages
+        columns = [
+          { name: 'Backlog', position: 0, statuses: todoStatuses },
+          { name: 'Selected for Development', position: 1, statuses: todoStatuses, max_issues: 10 },
+          { name: 'In Progress', position: 2, statuses: inProgressStatuses, max_issues: 5 },
+          { name: 'In Review', position: 3, statuses: inProgressStatuses, max_issues: 3 },
+          { name: 'Done', position: 4, statuses: doneStatuses },
+        ];
+        break;
+      
+      case 'basic':
+        // Basic: Simple 3-column workflow without WIP limits
+        columns = [
+          { name: 'To Do', position: 0, statuses: todoStatuses },
+          { name: 'In Progress', position: 1, statuses: inProgressStatuses },
+          { name: 'Done', position: 2, statuses: doneStatuses },
+        ];
+        break;
+      
+      case 'scrum':
+      default:
+        // Scrum: Sprint-focused workflow with WIP limits on in-progress
+        columns = [
+          { name: 'To Do', position: 0, statuses: todoStatuses },
+          { name: 'In Progress', position: 1, statuses: inProgressStatuses, max_issues: 5 },
+          { name: 'Done', position: 2, statuses: doneStatuses },
+        ];
+        break;
+    }
 
     for (const col of columns) {
       const { data: column } = await supabase
@@ -219,6 +265,7 @@ export const boardService = {
           name: col.name,
           position: col.position,
           max_issues: col.max_issues,
+          min_issues: col.min_issues,
         })
         .select()
         .single();

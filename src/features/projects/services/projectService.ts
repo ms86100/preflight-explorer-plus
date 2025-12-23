@@ -23,6 +23,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { boardService } from '@/features/boards/services/boardService';
 import type { ClassificationLevel, ProjectTemplate, ProjectType } from '@/types/jira';
 import {
   type PaginationParams,
@@ -261,13 +262,27 @@ export const projectService = {
       });
     }
 
-    // Create default board
-    await supabase.from('boards').insert({
+    // Create default board with template-appropriate type
+    const template = project.template || 'scrum';
+    // Map all templates to the three core board types
+    const getBoardType = (t: string): 'scrum' | 'kanban' | 'basic' => {
+      if (t === 'kanban') return 'kanban';
+      if (t === 'basic' || t === 'task_management' || t === 'process_management') return 'basic';
+      return 'scrum'; // scrum, project_management
+    };
+    const boardType = getBoardType(template);
+    
+    const { data: boardData } = await supabase.from('boards').insert({
       name: `${project.name} Board`,
       project_id: projectData.id,
-      board_type: project.template === 'kanban' ? 'kanban' : 'scrum',
+      board_type: boardType === 'basic' ? 'scrum' : boardType, // DB only supports scrum/kanban
       owner_id: userId,
-    });
+    }).select().single();
+
+    // Create template-specific columns immediately so board is ready
+    if (boardData) {
+      await boardService.createDefaultColumns(boardData.id, boardType);
+    }
 
     return projectData as ProjectRow;
   },

@@ -35,8 +35,23 @@ export function useCreateProject() {
       if (!user?.id) throw new Error('User not authenticated');
       return projectService.create(project, user.id);
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    onSuccess: async (data) => {
+      // Invalidate and wait for refetch to complete before navigation can proceed
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
+      // Also prefetch the specific project and its boards to ensure data is available
+      await Promise.all([
+        queryClient.prefetchQuery({
+          queryKey: ['project', data.pkey],
+          queryFn: () => projectService.getByKey(data.pkey),
+        }),
+        queryClient.prefetchQuery({
+          queryKey: ['boards', 'project', data.id],
+          queryFn: async () => {
+            const { boardService } = await import('@/features/boards/services/boardService');
+            return boardService.getByProject(data.id);
+          },
+        }),
+      ]);
       toast.success(`Project "${data.name}" created successfully!`);
     },
     onError: (error) => {
