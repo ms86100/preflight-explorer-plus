@@ -127,7 +127,7 @@ export function SyncStatusIndicator({ organization, onSyncComplete }: SyncStatus
 }
 
 // Compact version for table/list views
-export function SyncStatusBadge({ organization }: { organization: GitOrganization }) {
+export function SyncStatusBadge({ organization }: { readonly organization: GitOrganization }) {
   const lastSyncAt = organization.last_sync_at;
   const lastSyncError = organization.last_sync_error;
   

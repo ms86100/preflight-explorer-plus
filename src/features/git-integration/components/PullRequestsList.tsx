@@ -83,7 +83,7 @@ export function PullRequestsList({ pullRequests, onCreatePR, showCreateButton = 
   );
 }
 
-function PullRequestItem({ pullRequest }: { pullRequest: GitPullRequest }) {
+function PullRequestItem({ pullRequest }: { readonly pullRequest: GitPullRequest }) {
   const config = statusConfig[pullRequest.status];
   const Icon = config.icon;
   

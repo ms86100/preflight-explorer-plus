@@ -34,14 +34,14 @@ export function PluginProvider({ children }: { readonly children: ReactNode }) {
     return requiredPlugins.some((pluginKey) => enabledPluginKeys.has(pluginKey));
   };
 
-  const value: PluginContextValue = {
+  const value = useMemo<PluginContextValue>(() => ({
     plugins,
     enabledPluginKeys,
     isPluginEnabled,
     isFeatureEnabled,
     isLoading,
     error: error as Error | null,
-  };
+  }), [plugins, enabledPluginKeys, isPluginEnabled, isFeatureEnabled, isLoading, error]);
 
   return (
     <PluginContext.Provider value={value}>

@@ -9,7 +9,7 @@ import {
   useUpdateWorkflow
 } from '../hooks/useWorkflows';
 import { useStatuses, useCreateStatus } from '@/features/issues/hooks/useIssues';
-import { WorkflowStepRow, WorkflowTransitionRow } from '../services/workflowService';
+import type { WorkflowStepRow } from '../services/workflowService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -48,13 +48,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+// Select imports removed - unused (S1128)
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 

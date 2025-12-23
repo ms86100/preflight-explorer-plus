@@ -12,8 +12,8 @@ import { ImportType } from '../types';
 import { downloadTemplate } from '../services/templateService';
 
 interface TemplateDownloadProps {
-  importType: ImportType;
-  variant?: 'default' | 'compact';
+  readonly importType: ImportType;
+  readonly variant?: 'default' | 'compact';
 }
 
 const TYPE_LABELS: Record<ImportType, string> = {

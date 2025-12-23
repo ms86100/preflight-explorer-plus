@@ -507,9 +507,9 @@ function ProjectWorkflowRow({
   schemes,
   onAssign 
 }: { 
-  project: { id: string; name: string; pkey: string }; 
-  schemes: { id: string; name: string; is_default: boolean }[];
-  onAssign: (schemeId: string) => void;
+  readonly project: { readonly id: string; readonly name: string; readonly pkey: string }; 
+  readonly schemes: readonly { readonly id: string; readonly name: string; readonly is_default: boolean }[];
+  readonly onAssign: (schemeId: string) => void;
 }) {
   const { data: projectScheme, isLoading } = useProjectWorkflowScheme(project.id);
   

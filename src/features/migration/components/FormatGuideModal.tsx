@@ -30,9 +30,9 @@ interface FieldMeta {
 }
 
 function FieldCard({ fieldKey, metadata, required }: { 
-  fieldKey: string; 
-  metadata: FieldMeta;
-  required: boolean;
+  readonly fieldKey: string; 
+  readonly metadata: FieldMeta;
+  readonly required: boolean;
 }) {
   return (
     <div className="border rounded-lg p-4 space-y-3">
@@ -90,7 +90,7 @@ function FieldCard({ fieldKey, metadata, required }: {
   );
 }
 
-function ImportTypeGuide({ importType }: { importType: ImportType }) {
+function ImportTypeGuide({ importType }: { readonly importType: ImportType }) {
   const fieldDefs = ENHANCED_FIELD_DEFINITIONS[importType];
   
   return (

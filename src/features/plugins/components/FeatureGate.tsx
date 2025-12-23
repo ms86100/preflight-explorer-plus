@@ -44,7 +44,7 @@ export function FeatureGate({
   return null;
 }
 
-function FeatureDisabledMessage({ feature }: { feature: string }) {
+function FeatureDisabledMessage({ feature }: { readonly feature: string }) {
   const navigate = useNavigate();
   
   return (
