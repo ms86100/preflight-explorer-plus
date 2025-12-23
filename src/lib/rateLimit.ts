@@ -19,6 +19,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { RATE_LIMITS, FALLBACK_RATE_LIMIT } from "./constants";
 
 /**
  * Result of a rate limit check.
@@ -95,9 +96,9 @@ export async function checkRateLimit(
       // On error, allow the request (fail open)
       return {
         allowed: true,
-        remaining: 100,
-        resetAt: new Date(Date.now() + 60000).toISOString(),
-        limit: 100,
+        remaining: FALLBACK_RATE_LIMIT.REMAINING,
+        resetAt: new Date(Date.now() + FALLBACK_RATE_LIMIT.WINDOW_MS).toISOString(),
+        limit: FALLBACK_RATE_LIMIT.LIMIT,
       };
     }
 
@@ -107,9 +108,9 @@ export async function checkRateLimit(
     // On error, allow the request (fail open)
     return {
       allowed: true,
-      remaining: 100,
-      resetAt: new Date(Date.now() + 60000).toISOString(),
-      limit: 100,
+      remaining: FALLBACK_RATE_LIMIT.REMAINING,
+      resetAt: new Date(Date.now() + FALLBACK_RATE_LIMIT.WINDOW_MS).toISOString(),
+      limit: FALLBACK_RATE_LIMIT.LIMIT,
     };
   }
 }
@@ -182,30 +183,7 @@ export function withRateLimit<T extends unknown[], R>(
  * console.log(`Login allows ${loginLimit.maxRequests} attempts per ${loginLimit.windowMinutes} minute(s)`);
  * ```
  */
-export const RATE_LIMIT_CONFIGS = {
-  /** Login attempts: Strict limit to prevent brute force */
-  "auth/login": { maxRequests: 10, windowMinutes: 1, description: "Login attempts" },
-  /** Signup attempts: Prevent mass account creation */
-  "auth/signup": { maxRequests: 5, windowMinutes: 1, description: "Signup attempts" },
-  /** Password reset: Prevent email spam */
-  "auth/reset": { maxRequests: 3, windowMinutes: 1, description: "Password reset" },
-  /** Read operations: Higher limit for data fetching */
-  "api/read": { maxRequests: 200, windowMinutes: 1, description: "Read operations" },
-  /** List operations: Moderate limit for bulk reads */
-  "api/list": { maxRequests: 100, windowMinutes: 1, description: "List operations" },
-  /** Write operations: Lower limit to prevent spam */
-  "api/write": { maxRequests: 60, windowMinutes: 1, description: "Write operations" },
-  /** Update operations: Same as write */
-  "api/update": { maxRequests: 60, windowMinutes: 1, description: "Update operations" },
-  /** Delete operations: Lowest limit for destructive actions */
-  "api/delete": { maxRequests: 30, windowMinutes: 1, description: "Delete operations" },
-  /** File uploads: Limited due to resource intensity */
-  "api/upload": { maxRequests: 20, windowMinutes: 1, description: "File uploads" },
-  /** Search queries: Moderate limit for database-intensive operations */
-  "api/search": { maxRequests: 50, windowMinutes: 1, description: "Search queries" },
-  /** Default fallback limit */
-  "default": { maxRequests: 100, windowMinutes: 1, description: "Default limit" },
-} as const;
+export const RATE_LIMIT_CONFIGS = RATE_LIMITS;
 
 /**
  * Type for endpoint names.
