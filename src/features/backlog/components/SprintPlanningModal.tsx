@@ -18,10 +18,10 @@ import { format, addDays } from 'date-fns';
 import { useStartSprint } from '@/features/boards';
 
 interface SprintPlanningModalProps {
-  sprintId: string;
-  sprintName: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  readonly sprintId: string;
+  readonly sprintName: string;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
 export function SprintPlanningModal({

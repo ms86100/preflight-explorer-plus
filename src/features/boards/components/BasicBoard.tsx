@@ -32,22 +32,22 @@ interface BoardIssue {
 }
 
 interface BasicBoardProps {
-  projectKey: string;
-  projectName: string;
-  columns: {
-    id: string;
-    name: string;
-    statusCategory: 'todo' | 'in_progress' | 'done';
+  readonly projectKey: string;
+  readonly projectName: string;
+  readonly columns: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly statusCategory: 'todo' | 'in_progress' | 'done';
   }[];
-  issues: BoardIssue[];
-  teamMembers?: {
-    id: string;
-    display_name: string;
-    avatar_url?: string;
+  readonly issues: readonly BoardIssue[];
+  readonly teamMembers?: readonly {
+    readonly id: string;
+    readonly display_name: string;
+    readonly avatar_url?: string;
   }[];
-  onIssueMove?: (issueId: string, newStatus: string) => void;
-  onIssueSelect?: (issueId: string) => void;
-  onCreateIssue?: (status?: string) => void;
+  readonly onIssueMove?: (issueId: string, newStatus: string) => void;
+  readonly onIssueSelect?: (issueId: string) => void;
+  readonly onCreateIssue?: (status?: string) => void;
 }
 
 // Simple default columns for basic/business projects

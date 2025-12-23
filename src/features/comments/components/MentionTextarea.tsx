@@ -10,13 +10,13 @@ interface MentionUser {
 }
 
 interface MentionTextareaProps {
-  value: string;
-  onChange: (value: string) => void;
-  onMentions?: (userIds: string[]) => void;
-  placeholder?: string;
-  rows?: number;
-  projectId?: string;
-  disabled?: boolean;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly onMentions?: (userIds: string[]) => void;
+  readonly placeholder?: string;
+  readonly rows?: number;
+  readonly projectId?: string;
+  readonly disabled?: boolean;
 }
 
 export function MentionTextarea({

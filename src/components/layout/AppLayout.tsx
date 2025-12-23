@@ -7,9 +7,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
-  children?: React.ReactNode;
-  showSidebar?: boolean;
-  projectKey?: string;
+  readonly children?: React.ReactNode;
+  readonly showSidebar?: boolean;
+  readonly projectKey?: string;
 }
 
 export function AppLayout({ children, showSidebar = true, projectKey }: AppLayoutProps) {

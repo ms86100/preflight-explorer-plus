@@ -6,24 +6,24 @@ import { ClassificationBadge } from '@/components/compliance/ClassificationBanne
 import type { Issue, ClassificationLevel } from '@/types/jira';
 
 interface IssueCardProps {
-  issue: {
-    id: string;
-    issue_key: string;
-    summary: string;
-    issue_type: 'Epic' | 'Story' | 'Task' | 'Bug' | 'Subtask';
-    priority: 'Highest' | 'High' | 'Medium' | 'Low' | 'Lowest';
-    assignee?: {
-      display_name: string;
-      avatar_url?: string;
+  readonly issue: {
+    readonly id: string;
+    readonly issue_key: string;
+    readonly summary: string;
+    readonly issue_type: 'Epic' | 'Story' | 'Task' | 'Bug' | 'Subtask';
+    readonly priority: 'Highest' | 'High' | 'Medium' | 'Low' | 'Lowest';
+    readonly assignee?: {
+      readonly display_name: string;
+      readonly avatar_url?: string;
     };
-    story_points?: number;
-    classification?: ClassificationLevel;
-    labels?: string[];
-    epic_name?: string;
-    epic_color?: string;
+    readonly story_points?: number;
+    readonly classification?: ClassificationLevel;
+    readonly labels?: readonly string[];
+    readonly epic_name?: string;
+    readonly epic_color?: string;
   };
-  isDragging?: boolean;
-  onSelect?: () => void;
+  readonly isDragging?: boolean;
+  readonly onSelect?: () => void;
 }
 
 const ISSUE_TYPE_ICONS = {

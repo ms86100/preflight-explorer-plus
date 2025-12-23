@@ -17,23 +17,23 @@ import {
 import type { SprintState } from '@/types/jira';
 
 interface SprintHeaderProps {
-  sprint: {
-    id: string;
-    name: string;
-    goal?: string;
-    state: SprintState;
-    start_date?: string;
-    end_date?: string;
+  readonly sprint: {
+    readonly id: string;
+    readonly name: string;
+    readonly goal?: string;
+    readonly state: SprintState;
+    readonly start_date?: string;
+    readonly end_date?: string;
   };
-  stats: {
-    totalIssues: number;
-    completedIssues: number;
-    totalPoints: number;
-    completedPoints: number;
+  readonly stats: {
+    readonly totalIssues: number;
+    readonly completedIssues: number;
+    readonly totalPoints: number;
+    readonly completedPoints: number;
   };
-  onStartSprint?: () => void;
-  onCompleteSprint?: () => void;
-  onEditSprint?: () => void;
+  readonly onStartSprint?: () => void;
+  readonly onCompleteSprint?: () => void;
+  readonly onEditSprint?: () => void;
 }
 
 export function SprintHeader({

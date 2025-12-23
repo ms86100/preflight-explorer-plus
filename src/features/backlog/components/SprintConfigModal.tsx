@@ -9,8 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { Calendar, Clock, Settings2 } from 'lucide-react';
 
 interface SprintConfigModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
 export function SprintConfigModal({ open, onOpenChange }: SprintConfigModalProps) {

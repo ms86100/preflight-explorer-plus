@@ -2,8 +2,8 @@ import { ClassificationLevel } from '@/types/jira';
 import { cn } from '@/lib/utils';
 
 interface ClassificationBannerProps {
-  level: ClassificationLevel;
-  className?: string;
+  readonly level: ClassificationLevel;
+  readonly className?: string;
 }
 
 const CLASSIFICATION_CONFIG: Record<ClassificationLevel, { label: string; className: string }> = {
