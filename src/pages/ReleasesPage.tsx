@@ -43,14 +43,14 @@ import {
 import { toast } from 'sonner';
 
 interface Version {
-  id: string;
-  name: string;
-  description: string | null;
-  start_date: string | null;
-  release_date: string | null;
-  is_released: boolean;
-  is_archived: boolean;
-  project_id: string;
+  readonly id: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly start_date: string | null;
+  readonly release_date: string | null;
+  readonly is_released: boolean;
+  readonly is_archived: boolean;
+  readonly project_id: string;
 }
 
 export default function ReleasesPage() {

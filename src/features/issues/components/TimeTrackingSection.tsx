@@ -11,13 +11,13 @@ import { format } from 'date-fns';
 import { Clock, Plus, Trash2, Loader2 } from 'lucide-react';
 
 interface Worklog {
-  id: string;
-  author_id: string;
-  time_spent: number;
-  started_at: string;
-  description: string | null;
-  created_at: string;
-  author?: { display_name: string; avatar_url: string | null };
+  readonly id: string;
+  readonly author_id: string;
+  readonly time_spent: number;
+  readonly started_at: string;
+  readonly description: string | null;
+  readonly created_at: string;
+  readonly author?: { readonly display_name: string; readonly avatar_url: string | null };
 }
 
 interface TimeTrackingSectionProps {
