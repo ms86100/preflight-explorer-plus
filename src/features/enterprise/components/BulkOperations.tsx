@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,9 +31,9 @@ import {
 import { toast } from 'sonner';
 
 interface BulkOperationsProps {
-  projectId: string;
-  selectedIssueIds: string[];
-  onSelectionChange: (ids: string[]) => void;
+  readonly projectId: string;
+  readonly selectedIssueIds: readonly string[];
+  readonly onSelectionChange: (ids: string[]) => void;
 }
 
 export function BulkOperations({ projectId, selectedIssueIds, onSelectionChange }: BulkOperationsProps) {
