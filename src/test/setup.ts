@@ -17,7 +17,7 @@ afterEach(() => {
 });
 
 // Mock window.matchMedia for responsive components
-Object.defineProperty(window, "matchMedia", {
+Object.defineProperty(globalThis, "matchMedia", {
   writable: true,
   value: vi.fn().mockImplementation((query: string) => ({
     matches: false,
@@ -32,26 +32,26 @@ Object.defineProperty(window, "matchMedia", {
 });
 
 // Mock ResizeObserver
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
+(globalThis as typeof globalThis & { ResizeObserver: unknown }).ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }));
 
 // Mock IntersectionObserver
-global.IntersectionObserver = vi.fn().mockImplementation(() => ({
+(globalThis as typeof globalThis & { IntersectionObserver: unknown }).IntersectionObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }));
 
 // Mock scrollTo
-window.scrollTo = vi.fn();
+(globalThis as typeof globalThis & { scrollTo: unknown }).scrollTo = vi.fn();
 
 // Mock crypto.randomUUID for tests
-Object.defineProperty(global, "crypto", {
+Object.defineProperty(globalThis, "crypto", {
   value: {
-    randomUUID: () => "test-uuid-" + Math.random().toString(36).substr(2, 9),
+    randomUUID: () => "test-uuid-" + Math.random().toString(36).slice(2, 11),
     getRandomValues: (arr: Uint8Array) => {
       for (let i = 0; i < arr.length; i++) {
         arr[i] = Math.floor(Math.random() * 256);

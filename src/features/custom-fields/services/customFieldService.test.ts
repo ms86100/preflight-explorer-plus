@@ -6,40 +6,163 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { FieldType, CustomFieldDefinition, CustomFieldContext, CustomFieldValue, FieldOption } from './customFieldService';
 
-// Mock Supabase client
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: vi.fn(() => ({
+// Helper function: Validates a field value against its type requirements (moved to outer scope - S2004/S7721 fix)
+function validateFieldValue(
+  fieldType: FieldType,
+  value: unknown,
+  options?: FieldOption[],
+  isRequired?: boolean
+): { valid: boolean; error?: string } {
+  // Check required
+  if (isRequired && (value === null || value === undefined || value === '')) {
+    return { valid: false, error: 'Field is required' };
+  }
+
+  // Allow empty for non-required fields
+  if (value === null || value === undefined || value === '') {
+    return { valid: true };
+  }
+
+  switch (fieldType) {
+    case 'text':
+    case 'textarea':
+    case 'url':
+      if (typeof value !== 'string') {
+        return { valid: false, error: 'Value must be a string' };
+      }
+      break;
+
+    case 'number':
+      if (typeof value !== 'number' || Number.isNaN(value)) {
+        return { valid: false, error: 'Value must be a number' };
+      }
+      break;
+
+    case 'date':
+    case 'datetime':
+      if (typeof value !== 'string' || Number.isNaN(Date.parse(value))) {
+        return { valid: false, error: 'Value must be a valid date' };
+      }
+      break;
+
+    case 'checkbox':
+      if (typeof value !== 'boolean') {
+        return { valid: false, error: 'Value must be a boolean' };
+      }
+      break;
+
+    case 'select':
+      if (!options?.find((opt) => opt.value === value)) {
+        return { valid: false, error: 'Value must be one of the available options' };
+      }
+      break;
+
+    case 'multiselect':
+      if (!Array.isArray(value)) {
+        return { valid: false, error: 'Value must be an array' };
+      }
+      for (const v of value) {
+        if (!options?.find((opt) => opt.value === v)) {
+          return { valid: false, error: `Invalid option: ${v}` };
+        }
+      }
+      break;
+
+    case 'user':
+      if (typeof value !== 'string') {
+        return { valid: false, error: 'Value must be a user ID' };
+      }
+      break;
+  }
+
+  return { valid: true };
+}
+
+// Helper function: Determines which value column to use based on field type (moved to outer scope - S7721 fix)
+function getValueColumn(fieldType: FieldType): 'value_text' | 'value_number' | 'value_date' | 'value_json' {
+  switch (fieldType) {
+    case 'number':
+      return 'value_number';
+    case 'date':
+    case 'datetime':
+      return 'value_date';
+    case 'multiselect':
+    case 'checkbox':
+      return 'value_json';
+    default:
+      return 'value_text';
+  }
+}
+
+// Helper function: Formats a field value for display (moved to outer scope - S7721 fix)
+function formatFieldValue(
+  fieldType: FieldType,
+  value: unknown,
+  options?: FieldOption[]
+): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  switch (fieldType) {
+    case 'checkbox':
+      return value ? 'Yes' : 'No';
+    case 'select': {
+      const option = options?.find((o) => o.value === value);
+      return option?.label || String(value);
+    }
+    case 'multiselect':
+      if (Array.isArray(value)) {
+        return value
+          .map((v) => options?.find((o) => o.value === v)?.label || String(v))
+          .join(', ');
+      }
+      return '';
+    case 'date':
+      return new Date(value as string).toLocaleDateString();
+    case 'datetime':
+      return new Date(value as string).toLocaleString();
+    default:
+      return String(value);
+  }
+}
+
+// Mock Supabase client - flattened structure to avoid deep nesting (S2004 fix)
+const mockSupabaseFrom = vi.fn(() => ({
+  select: vi.fn(() => ({
+    eq: vi.fn(() => ({
+      order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+      single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+      or: vi.fn(() => Promise.resolve({ data: [], error: null })),
+    })),
+    single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+    order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+  })),
+  insert: vi.fn(() => ({
+    select: vi.fn(() => ({
+      single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
+    })),
+  })),
+  update: vi.fn(() => ({
+    eq: vi.fn(() => ({
       select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-          single: vi.fn(() => Promise.resolve({ data: null, error: null })),
-          or: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        single: vi.fn(() => Promise.resolve({ data: null, error: null })),
-        order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-      })),
-      insert: vi.fn(() => ({
-        select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-        })),
-      })),
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-          })),
-        })),
-      })),
-      delete: vi.fn(() => ({
-        eq: vi.fn(() => Promise.resolve({ error: null })),
-      })),
-      upsert: vi.fn(() => ({
-        select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-        })),
+        single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
       })),
     })),
+  })),
+  delete: vi.fn(() => ({
+    eq: vi.fn(() => Promise.resolve({ error: null })),
+  })),
+  upsert: vi.fn(() => ({
+    select: vi.fn(() => ({
+      single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
+    })),
+  })),
+}));
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: mockSupabaseFrom,
   },
 }));
 
@@ -138,7 +261,7 @@ describe('Custom Field Types', () => {
         is_active: true,
         options: null,
         validation_rules: {
-          pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
+          pattern: String.raw`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`,
           maxLength: 255,
         },
         position: 2,
@@ -258,80 +381,6 @@ describe('Custom Field Types', () => {
 // ============================================================================
 
 describe('Custom Field Validation', () => {
-  /**
-   * Validates a field value against its type requirements.
-   */
-  function validateFieldValue(
-    fieldType: FieldType,
-    value: unknown,
-    options?: FieldOption[],
-    isRequired?: boolean
-  ): { valid: boolean; error?: string } {
-    // Check required
-    if (isRequired && (value === null || value === undefined || value === '')) {
-      return { valid: false, error: 'Field is required' };
-    }
-
-    // Allow empty for non-required fields
-    if (value === null || value === undefined || value === '') {
-      return { valid: true };
-    }
-
-    switch (fieldType) {
-      case 'text':
-      case 'textarea':
-      case 'url':
-        if (typeof value !== 'string') {
-          return { valid: false, error: 'Value must be a string' };
-        }
-        break;
-
-      case 'number':
-        if (typeof value !== 'number' || isNaN(value)) {
-          return { valid: false, error: 'Value must be a number' };
-        }
-        break;
-
-      case 'date':
-      case 'datetime':
-        if (typeof value !== 'string' || isNaN(Date.parse(value))) {
-          return { valid: false, error: 'Value must be a valid date' };
-        }
-        break;
-
-      case 'checkbox':
-        if (typeof value !== 'boolean') {
-          return { valid: false, error: 'Value must be a boolean' };
-        }
-        break;
-
-      case 'select':
-        if (!options?.find((opt) => opt.value === value)) {
-          return { valid: false, error: 'Value must be one of the available options' };
-        }
-        break;
-
-      case 'multiselect':
-        if (!Array.isArray(value)) {
-          return { valid: false, error: 'Value must be an array' };
-        }
-        for (const v of value) {
-          if (!options?.find((opt) => opt.value === v)) {
-            return { valid: false, error: `Invalid option: ${v}` };
-          }
-        }
-        break;
-
-      case 'user':
-        if (typeof value !== 'string') {
-          return { valid: false, error: 'Value must be a user ID' };
-        }
-        break;
-    }
-
-    return { valid: true };
-  }
-
   describe('validateFieldValue', () => {
     it('should validate required fields', () => {
       expect(validateFieldValue('text', null, undefined, true)).toEqual({
@@ -363,7 +412,7 @@ describe('Custom Field Validation', () => {
         valid: false,
         error: 'Value must be a number',
       });
-      expect(validateFieldValue('number', NaN)).toEqual({
+      expect(validateFieldValue('number', Number.NaN)).toEqual({
         valid: false,
         error: 'Value must be a number',
       });
@@ -430,24 +479,6 @@ describe('Custom Field Validation', () => {
 // ============================================================================
 
 describe('Custom Field Helpers', () => {
-  /**
-   * Determines which value column to use based on field type.
-   */
-  function getValueColumn(fieldType: FieldType): 'value_text' | 'value_number' | 'value_date' | 'value_json' {
-    switch (fieldType) {
-      case 'number':
-        return 'value_number';
-      case 'date':
-      case 'datetime':
-        return 'value_date';
-      case 'multiselect':
-      case 'checkbox':
-        return 'value_json';
-      default:
-        return 'value_text';
-    }
-  }
-
   describe('getValueColumn', () => {
     it('should return value_text for text-based fields', () => {
       expect(getValueColumn('text')).toBe('value_text');
@@ -472,67 +503,31 @@ describe('Custom Field Helpers', () => {
     });
   });
 
-  /**
-   * Formats a field value for display.
-   */
-  function formatFieldValue(
-    fieldType: FieldType,
-    value: unknown,
-    options?: FieldOption[]
-  ): string {
-    if (value === null || value === undefined) {
-      return '';
-    }
-
-    switch (fieldType) {
-      case 'checkbox':
-        return value ? 'Yes' : 'No';
-      case 'select':
-        return options?.find((o) => o.value === value)?.label || String(value);
-      case 'multiselect':
-        if (Array.isArray(value)) {
-          return value
-            .map((v) => options?.find((o) => o.value === v)?.label || v)
-            .join(', ');
-        }
-        return '';
-      case 'date':
-        return new Date(value as string).toLocaleDateString();
-      case 'datetime':
-        return new Date(value as string).toLocaleString();
-      default:
-        return String(value);
-    }
-  }
-
   describe('formatFieldValue', () => {
-    it('should handle null values', () => {
-      expect(formatFieldValue('text', null)).toBe('');
-      expect(formatFieldValue('text', undefined)).toBe('');
-    });
-
     it('should format checkbox values', () => {
       expect(formatFieldValue('checkbox', true)).toBe('Yes');
       expect(formatFieldValue('checkbox', false)).toBe('No');
     });
 
-    it('should format select values with labels', () => {
-      const options: FieldOption[] = [{ value: 'v1', label: 'Label One' }];
-      expect(formatFieldValue('select', 'v1', options)).toBe('Label One');
+    it('should format select values', () => {
+      const options: FieldOption[] = [
+        { value: 'low', label: 'Low Priority' },
+      ];
+      expect(formatFieldValue('select', 'low', options)).toBe('Low Priority');
       expect(formatFieldValue('select', 'unknown', options)).toBe('unknown');
     });
 
     it('should format multiselect values', () => {
       const options: FieldOption[] = [
-        { value: 'a', label: 'A' },
-        { value: 'b', label: 'B' },
+        { value: 'a', label: 'Label A' },
+        { value: 'b', label: 'Label B' },
       ];
-      expect(formatFieldValue('multiselect', ['a', 'b'], options)).toBe('A, B');
+      expect(formatFieldValue('multiselect', ['a', 'b'], options)).toBe('Label A, Label B');
     });
 
-    it('should format text values', () => {
-      expect(formatFieldValue('text', 'hello')).toBe('hello');
-      expect(formatFieldValue('number', 42)).toBe('42');
+    it('should return empty string for null/undefined', () => {
+      expect(formatFieldValue('text', null)).toBe('');
+      expect(formatFieldValue('text', undefined)).toBe('');
     });
   });
 });

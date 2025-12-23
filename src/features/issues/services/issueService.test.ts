@@ -6,60 +6,62 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { IssueInsert, IssueRow, IssueFilters, IssueWithRelations } from './issueService';
 
-// Mock supabase client
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          order: vi.fn(() => ({
-            range: vi.fn(() => Promise.resolve({
-              data: mockIssues,
-              error: null,
-              count: mockIssues.length,
-            })),
-          })),
-          maybeSingle: vi.fn(() => Promise.resolve({
-            data: mockIssues[0],
+// Mock supabase client - flattened structure (S2004 fix)
+const mockSupabaseFrom = vi.fn(() => ({
+  select: vi.fn(() => ({
+    eq: vi.fn(() => ({
+      order: vi.fn(() => ({
+        range: vi.fn(() => Promise.resolve({
+          data: mockIssues,
+          error: null,
+          count: mockIssues.length,
+        })),
+      })),
+      maybeSingle: vi.fn(() => Promise.resolve({
+        data: mockIssues[0],
+        error: null,
+      })),
+      ilike: vi.fn(() => ({
+        order: vi.fn(() => ({
+          range: vi.fn(() => Promise.resolve({
+            data: mockIssues,
             error: null,
-          })),
-          ilike: vi.fn(() => ({
-            order: vi.fn(() => ({
-              range: vi.fn(() => Promise.resolve({
-                data: mockIssues,
-                error: null,
-                count: mockIssues.length,
-              })),
-            })),
-          })),
-          in: vi.fn(() => Promise.resolve({
-            data: mockProfiles,
-            error: null,
+            count: mockIssues.length,
           })),
         })),
       })),
-      insert: vi.fn(() => ({
-        select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({
-            data: mockCreatedIssue,
-            error: null,
-          })),
-        })),
-      })),
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({
-              data: { ...mockIssues[0], summary: 'Updated Summary' },
-              error: null,
-            })),
-          })),
-        })),
-      })),
-      delete: vi.fn(() => ({
-        eq: vi.fn(() => Promise.resolve({ error: null })),
+      in: vi.fn(() => Promise.resolve({
+        data: mockProfiles,
+        error: null,
       })),
     })),
+  })),
+  insert: vi.fn(() => ({
+    select: vi.fn(() => ({
+      single: vi.fn(() => Promise.resolve({
+        data: mockCreatedIssue,
+        error: null,
+      })),
+    })),
+  })),
+  update: vi.fn(() => ({
+    eq: vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: vi.fn(() => Promise.resolve({
+          data: { ...mockIssues[0], summary: 'Updated Summary' },
+          error: null,
+        })),
+      })),
+    })),
+  })),
+  delete: vi.fn(() => ({
+    eq: vi.fn(() => Promise.resolve({ error: null })),
+  })),
+}));
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: mockSupabaseFrom,
     rpc: vi.fn(() => Promise.resolve({
       data: mockProfiles,
       error: null,
@@ -227,7 +229,7 @@ describe('Issue validation', () => {
     const validateDueDate = (date: string | undefined): boolean => {
       if (!date) return true;
       const parsed = Date.parse(date);
-      return !isNaN(parsed);
+      return !Number.isNaN(parsed);
     };
     
     expect(validateDueDate('2024-12-31')).toBe(true);

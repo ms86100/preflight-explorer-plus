@@ -12,8 +12,10 @@ describe("cn", () => {
   });
 
   it("should handle conditional classes", () => {
-    expect(cn("base", true && "active")).toBe("base active");
-    expect(cn("base", false && "active")).toBe("base");
+    const isActive = true;
+    const isInactive = false;
+    expect(cn("base", isActive ? "active" : undefined)).toBe("base active");
+    expect(cn("base", isInactive ? "active" : undefined)).toBe("base");
   });
 
   it("should handle object syntax", () => {
