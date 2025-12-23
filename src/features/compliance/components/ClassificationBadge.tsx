@@ -6,10 +6,10 @@ import { cn } from '@/lib/utils';
 type ClassificationLevel = 'public' | 'restricted' | 'confidential' | 'export_controlled';
 
 interface ClassificationBadgeProps {
-  level: ClassificationLevel | null | undefined;
-  showIcon?: boolean;
-  size?: 'sm' | 'md' | 'lg';
-  className?: string;
+  readonly level: ClassificationLevel | null | undefined;
+  readonly showIcon?: boolean;
+  readonly size?: 'sm' | 'md' | 'lg';
+  readonly className?: string;
 }
 
 const CLASSIFICATION_CONFIG: Record<ClassificationLevel, {
@@ -79,8 +79,8 @@ export function ClassificationBadge({
 }
 
 interface ClassificationBannerProps {
-  level: ClassificationLevel | null | undefined;
-  className?: string;
+  readonly level: ClassificationLevel | null | undefined;
+  readonly className?: string;
 }
 
 export function ClassificationBanner({ level, className }: ClassificationBannerProps) {

@@ -182,7 +182,7 @@ export function NotificationsList({ limit, showHeader = true }: NotificationsLis
                     {getTypeIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`font-medium text-sm ${!notification.is_read ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    <p className={`font-medium text-sm ${notification.is_read ? 'text-muted-foreground' : 'text-foreground'}`}>
                       {notification.title}
                     </p>
                     <p className="text-sm text-muted-foreground truncate">

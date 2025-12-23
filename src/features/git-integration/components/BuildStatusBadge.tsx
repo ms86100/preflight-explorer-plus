@@ -7,11 +7,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import type { BuildStatus } from '../types';
 
 interface BuildStatusBadgeProps {
-  status: BuildStatus;
-  pipelineName?: string;
-  buildNumber?: string;
-  webUrl?: string;
-  showLabel?: boolean;
+  readonly status: BuildStatus;
+  readonly pipelineName?: string;
+  readonly buildNumber?: string;
+  readonly webUrl?: string;
+  readonly showLabel?: boolean;
 }
 
 const statusConfig: Record<BuildStatus, {

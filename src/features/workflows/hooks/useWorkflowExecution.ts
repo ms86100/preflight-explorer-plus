@@ -8,7 +8,7 @@ import * as executionService from '../services/workflowExecutionService';
 export function useAvailableTransitions(issueId: string | null) {
   return useQuery({
     queryKey: ['available-transitions', issueId],
-    queryFn: () => executionService.getAvailableTransitions(issueId!),
+    queryFn: () => executionService.getAvailableTransitions(issueId ?? ''),
     enabled: !!issueId,
     staleTime: 30000, // Cache for 30 seconds
   });
@@ -68,7 +68,7 @@ export function useWorkflowSchemes() {
 export function useWorkflowSchemeWithMappings(schemeId: string | null) {
   return useQuery({
     queryKey: ['workflow-scheme', schemeId, 'mappings'],
-    queryFn: () => executionService.getWorkflowSchemeWithMappings(schemeId!),
+    queryFn: () => executionService.getWorkflowSchemeWithMappings(schemeId ?? ''),
     enabled: !!schemeId,
   });
 }
@@ -79,7 +79,7 @@ export function useWorkflowSchemeWithMappings(schemeId: string | null) {
 export function useProjectWorkflowScheme(projectId: string | null) {
   return useQuery({
     queryKey: ['project-workflow-scheme', projectId],
-    queryFn: () => executionService.getProjectWorkflowScheme(projectId!),
+    queryFn: () => executionService.getProjectWorkflowScheme(projectId ?? ''),
     enabled: !!projectId,
   });
 }

@@ -246,7 +246,7 @@ function PluginCard({ plugin, onToggle, isToggling }: Readonly<PluginCardProps>)
   const CategoryIcon = CATEGORY_ICONS[plugin.category] || Puzzle;
 
   return (
-    <Card className={`transition-all ${!plugin.is_enabled ? 'opacity-60' : ''}`}>
+    <Card className={`transition-all ${plugin.is_enabled ? '' : 'opacity-60'}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">

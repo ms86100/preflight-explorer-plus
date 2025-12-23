@@ -53,7 +53,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface WorkflowDesignerProps {
-  workflowId: string;
+  readonly workflowId: string;
 }
 
 interface DragState {

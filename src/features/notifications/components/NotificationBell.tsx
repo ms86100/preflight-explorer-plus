@@ -117,7 +117,7 @@ export function NotificationBell() {
                 <div
                   key={notification.id}
                   className={`p-3 flex gap-3 hover:bg-accent cursor-pointer ${
-                    !notification.is_read ? 'bg-primary/5' : ''
+                    notification.is_read ? '' : 'bg-primary/5'
                   }`}
                   onClick={() => markAsRead(notification.id)}
                 >
@@ -125,7 +125,7 @@ export function NotificationBell() {
                     {getTypeIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${!notification.is_read ? 'font-medium' : ''}`}>
+                    <p className={`text-sm ${notification.is_read ? '' : 'font-medium'}`}>
                       {notification.title}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
