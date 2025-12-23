@@ -317,7 +317,7 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
                     {format(new Date(attachment.created_at), 'MMM d, yyyy')}
                   </p>
                 </div>
-                <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                <div className="flex gap-1" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="group" aria-label="Attachment actions">
                   {isImage && (
                     <Button
                       variant="ghost"

@@ -139,7 +139,7 @@ export function LdapConfigurationList({ onSelect, onNew }: LdapConfigurationList
                     </CardTitle>
                     <CardDescription>{config.server_url}</CardDescription>
                   </div>
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="group" aria-label="Configuration actions">
                     {getSyncStatusBadge(config.last_sync_status)}
                     <Button
                       variant="ghost"
