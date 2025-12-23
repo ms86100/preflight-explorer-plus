@@ -205,8 +205,8 @@ export function sanitizeInput(input: string): string {
     sanitized = sanitized.replace(pattern, '');
   }
 
-  // Remove null bytes - using global regex for ES2020 compatibility
-  sanitized = sanitized.replace(/\x00/g, '');
+  // Remove null bytes using split/join to avoid control characters in regex (S4784)
+  sanitized = sanitized.split('\0').join('');
 
   // Trim whitespace
   return sanitized.trim();

@@ -4,57 +4,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-
-// ============================================================================
-// Mock Response Functions (module level - S2004 fix)
-// ============================================================================
-
-function mockSingleResponse() {
-  return Promise.resolve({ data: null, error: null });
-}
-
-function mockOrderResponse() {
-  return Promise.resolve({ data: [], error: null });
-}
-
-function mockDeleteResponse() {
-  return Promise.resolve({ error: null });
-}
-
-function mockInsertSingleResponse() {
-  return Promise.resolve({ data: { id: 'new-id' }, error: null });
-}
-
-function mockUpdateSingleResponse() {
-  return Promise.resolve({ data: {}, error: null });
-}
-
-// ============================================================================
-// Mock Factory Function (module level - S2004 fix)
-// ============================================================================
-
-function createDefaultFromMock() {
-  return {
-    select: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        single: mockSingleResponse,
-        order: mockOrderResponse,
-      })),
-      order: mockOrderResponse,
-    })),
-    insert: vi.fn(() => ({
-      select: vi.fn(() => ({ single: mockInsertSingleResponse })),
-    })),
-    update: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        select: vi.fn(() => ({ single: mockUpdateSingleResponse })),
-      })),
-    })),
-    delete: vi.fn(() => ({
-      eq: mockDeleteResponse,
-    })),
-  };
-}
+import { createDefaultFromMock } from '@/test/mockFactories';
 
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
@@ -101,18 +51,6 @@ interface LocalDataBlockSchema {
   created_by: string;
 }
 
-interface LocalDataBlockInstance {
-  id: string;
-  schema_id: string;
-  schema_name?: string;
-  name?: string;
-  issue_id?: string;
-  project_id?: string;
-  rows: LocalDataRow[];
-  created_at: string;
-  updated_at: string;
-}
-
 // ============================================================================
 // Type Tests
 // ============================================================================
@@ -151,7 +89,7 @@ describe('Structured Data Types', () => {
 });
 
 // ============================================================================
-// Validation Tests - Module Level Helpers
+// Validation Helper Functions
 // ============================================================================
 
 function validateCell(column: LocalColumnDefinition, value: unknown): { valid: boolean; error?: string } {
@@ -200,6 +138,10 @@ function createEmptyRow(columns: LocalColumnDefinition[]): LocalDataRow {
   return { id: generateRowId(), values };
 }
 
+// ============================================================================
+// Validation Tests
+// ============================================================================
+
 describe('Structured Data Validation', () => {
   describe('validateCell', () => {
     it('should validate required fields', () => {
@@ -232,6 +174,10 @@ describe('Structured Data Validation', () => {
     });
   });
 });
+
+// ============================================================================
+// Helper Function Tests
+// ============================================================================
 
 describe('Structured Data Helpers', () => {
   describe('generateRowId', () => {

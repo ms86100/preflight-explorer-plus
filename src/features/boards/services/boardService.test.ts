@@ -5,124 +5,20 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { boardService, sprintService } from "./boardService";
+import {
+  createSelectEqOrderMock,
+  createSelectEqSingleMock,
+  createSelectEqEqMaybeSingleMock,
+  createSelectEqMock,
+  createInsertSelectSingleMock,
+  createInsertMock,
+  createUpdateEqSelectSingleMock,
+  createDeleteEqMock,
+  createDeleteEqEqMock,
+  createDefaultFromMock,
+} from "@/test/mockFactories";
 
-// Mock helper functions moved to module scope to reduce nesting complexity (S2004)
-function createSelectEqOrderMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue(resolvedValue),
-      }),
-    }),
-  } as ReturnType<typeof supabase.from>;
-}
-
-function createSelectEqSingleMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue(resolvedValue),
-      }),
-    }),
-  } as ReturnType<typeof supabase.from>;
-}
-
-function createSelectEqEqMaybeSingleMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          maybeSingle: vi.fn().mockResolvedValue(resolvedValue),
-        }),
-      }),
-    }),
-  } as ReturnType<typeof supabase.from>;
-}
-
-function createInsertSelectSingleMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    insert: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue(resolvedValue),
-      }),
-    }),
-  } as ReturnType<typeof supabase.from>;
-}
-
-function createUpdateEqSelectSingleMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    update: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(resolvedValue),
-        }),
-      }),
-    }),
-  } as ReturnType<typeof supabase.from>;
-}
-
-function createDeleteEqMock(resolvedValue: { error: unknown }) {
-  return {
-    delete: vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue(resolvedValue),
-    }),
-  } as ReturnType<typeof supabase.from>;
-}
-
-function createDeleteEqEqMock(resolvedValue: { error: unknown }) {
-  return {
-    delete: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue(resolvedValue),
-      }),
-    }),
-  } as ReturnType<typeof supabase.from>;
-}
-
-function createSelectEqMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue(resolvedValue),
-    }),
-  } as ReturnType<typeof supabase.from>;
-}
-
-function createInsertMock(resolvedValue: { error: unknown }) {
-  return {
-    insert: vi.fn().mockResolvedValue(resolvedValue),
-  } as ReturnType<typeof supabase.from>;
-}
-
-// Mock factory function for default mock - prevents nested functions inside vi.mock (S2004)
-function createDefaultFromMock() {
-  return {
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-        single: vi.fn().mockResolvedValue({ data: null, error: null }),
-        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-      }),
-      order: vi.fn().mockResolvedValue({ data: [], error: null }),
-    }),
-    insert: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({ data: {}, error: null }),
-      }),
-    }),
-    update: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: {}, error: null }),
-        }),
-      }),
-    }),
-    delete: vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue({ error: null }),
-    }),
-  };
-}
-
-// Mock Supabase client - flattened structure (S2004)
+// Mock Supabase client
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     from: vi.fn(() => createDefaultFromMock()),
@@ -145,7 +41,7 @@ describe("boardService", () => {
       ];
 
       vi.mocked(supabase.from).mockReturnValue(
-        createSelectEqOrderMock({ data: mockBoards, error: null })
+        createSelectEqOrderMock({ data: mockBoards, error: null }) as ReturnType<typeof supabase.from>
       );
 
       const result = await boardService.getByProject("proj-1");
@@ -156,7 +52,7 @@ describe("boardService", () => {
 
     it("should throw on error", async () => {
       vi.mocked(supabase.from).mockReturnValue(
-        createSelectEqOrderMock({ data: null, error: { message: "Error" } })
+        createSelectEqOrderMock({ data: null, error: { message: "Error" } }) as ReturnType<typeof supabase.from>
       );
 
       await expect(boardService.getByProject("proj-1")).rejects.toEqual({ message: "Error" });
@@ -168,7 +64,7 @@ describe("boardService", () => {
       const mockBoard = { id: "1", name: "Board 1", project_id: "proj-1" };
 
       vi.mocked(supabase.from).mockReturnValue(
-        createSelectEqSingleMock({ data: mockBoard, error: null })
+        createSelectEqSingleMock({ data: mockBoard, error: null }) as ReturnType<typeof supabase.from>
       );
 
       const result = await boardService.getById("1");
@@ -185,7 +81,7 @@ describe("boardService", () => {
       ];
 
       vi.mocked(supabase.from).mockReturnValue(
-        createSelectEqOrderMock({ data: mockColumns, error: null })
+        createSelectEqOrderMock({ data: mockColumns, error: null }) as ReturnType<typeof supabase.from>
       );
 
       const result = await boardService.getColumns("board-1");
@@ -207,7 +103,7 @@ describe("sprintService", () => {
       ];
 
       vi.mocked(supabase.from).mockReturnValue(
-        createSelectEqOrderMock({ data: mockSprints, error: null })
+        createSelectEqOrderMock({ data: mockSprints, error: null }) as ReturnType<typeof supabase.from>
       );
 
       const result = await sprintService.getByBoard("board-1");
@@ -222,7 +118,7 @@ describe("sprintService", () => {
       const mockSprint = { id: "1", name: "Sprint 1", state: "active" };
 
       vi.mocked(supabase.from).mockReturnValue(
-        createSelectEqEqMaybeSingleMock({ data: mockSprint, error: null })
+        createSelectEqEqMaybeSingleMock({ data: mockSprint, error: null }) as ReturnType<typeof supabase.from>
       );
 
       const result = await sprintService.getActive("board-1");
@@ -232,7 +128,7 @@ describe("sprintService", () => {
 
     it("should return null when no active sprint", async () => {
       vi.mocked(supabase.from).mockReturnValue(
-        createSelectEqEqMaybeSingleMock({ data: null, error: null })
+        createSelectEqEqMaybeSingleMock({ data: null, error: null }) as ReturnType<typeof supabase.from>
       );
 
       const result = await sprintService.getActive("board-1");
@@ -246,7 +142,7 @@ describe("sprintService", () => {
       const mockSprint = { id: "new-sprint", name: "Sprint 1", board_id: "board-1" };
 
       vi.mocked(supabase.from).mockReturnValue(
-        createInsertSelectSingleMock({ data: mockSprint, error: null })
+        createInsertSelectSingleMock({ data: mockSprint, error: null }) as ReturnType<typeof supabase.from>
       );
 
       const result = await sprintService.create({ board_id: "board-1", name: "Sprint 1" });
@@ -261,7 +157,7 @@ describe("sprintService", () => {
       const mockSprint = { id: "1", state: "active", start_date: "2024-01-01", end_date: "2024-01-14" };
 
       vi.mocked(supabase.from).mockReturnValue(
-        createUpdateEqSelectSingleMock({ data: mockSprint, error: null })
+        createUpdateEqSelectSingleMock({ data: mockSprint, error: null }) as ReturnType<typeof supabase.from>
       );
 
       const result = await sprintService.start("1", "2024-01-01", "2024-01-14");
@@ -275,7 +171,7 @@ describe("sprintService", () => {
       const mockSprint = { id: "1", state: "closed", completed_date: "2024-01-14" };
 
       vi.mocked(supabase.from).mockReturnValue(
-        createUpdateEqSelectSingleMock({ data: mockSprint, error: null })
+        createUpdateEqSelectSingleMock({ data: mockSprint, error: null }) as ReturnType<typeof supabase.from>
       );
 
       const result = await sprintService.complete("1");
@@ -297,7 +193,7 @@ describe("sprintService", () => {
       ];
 
       vi.mocked(supabase.from).mockReturnValue(
-        createSelectEqMock({ data: mockIssues, error: null })
+        createSelectEqMock({ data: mockIssues, error: null }) as ReturnType<typeof supabase.from>
       );
 
       const result = await sprintService.getIssues("sprint-1");
@@ -310,7 +206,7 @@ describe("sprintService", () => {
   describe("addIssue", () => {
     it("should add issue to sprint", async () => {
       vi.mocked(supabase.from).mockReturnValue(
-        createInsertMock({ error: null })
+        createInsertMock({ error: null }) as ReturnType<typeof supabase.from>
       );
 
       await expect(sprintService.addIssue("sprint-1", "issue-1")).resolves.not.toThrow();
@@ -320,7 +216,7 @@ describe("sprintService", () => {
   describe("removeIssue", () => {
     it("should remove issue from sprint", async () => {
       vi.mocked(supabase.from).mockReturnValue(
-        createDeleteEqEqMock({ error: null })
+        createDeleteEqEqMock({ error: null }) as ReturnType<typeof supabase.from>
       );
 
       await expect(sprintService.removeIssue("sprint-1", "issue-1")).resolves.not.toThrow();
@@ -330,7 +226,7 @@ describe("sprintService", () => {
   describe("delete", () => {
     it("should delete sprint and issue associations", async () => {
       vi.mocked(supabase.from).mockReturnValue(
-        createDeleteEqMock({ error: null })
+        createDeleteEqMock({ error: null }) as ReturnType<typeof supabase.from>
       );
 
       await expect(sprintService.delete("sprint-1")).resolves.not.toThrow();

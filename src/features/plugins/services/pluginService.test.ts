@@ -12,88 +12,16 @@ import {
   updatePluginConfig,
   createPlugin,
 } from "./pluginService";
+import {
+  createSelectOrderOrderMock,
+  createSelectEqSingleMock,
+  createSelectEqOrderMock,
+  createUpdateEqSelectSingleMock,
+  createInsertSelectSingleMock,
+  createDefaultFromMock,
+} from "@/test/mockFactories";
 
-// Mock factory functions moved to module scope to avoid nested functions (S2004)
-function createSelectOrderOrderMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    select: vi.fn().mockReturnValue({
-      order: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue(resolvedValue),
-      }),
-    }),
-  };
-}
-
-function createSelectEqSingleMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue(resolvedValue),
-      }),
-    }),
-  };
-}
-
-function createSelectEqOrderMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue(resolvedValue),
-      }),
-    }),
-  };
-}
-
-function createUpdateEqSelectSingleMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    update: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(resolvedValue),
-        }),
-      }),
-    }),
-  };
-}
-
-function createInsertSelectSingleMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    insert: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue(resolvedValue),
-      }),
-    }),
-  };
-}
-
-// Default mock factory
-function createDefaultFromMock() {
-  return {
-    select: vi.fn().mockReturnValue({
-      order: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-      }),
-      eq: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-        single: vi.fn().mockResolvedValue({ data: null, error: null }),
-      }),
-    }),
-    insert: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({ data: {}, error: null }),
-      }),
-    }),
-    update: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: {}, error: null }),
-        }),
-      }),
-    }),
-  };
-}
-
-// Mock Supabase client - flattened structure (S2004)
+// Mock Supabase client
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     from: vi.fn(() => createDefaultFromMock()),

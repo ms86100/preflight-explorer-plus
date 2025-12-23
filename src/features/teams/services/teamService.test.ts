@@ -5,100 +5,17 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { teamService } from "./teamService";
+import {
+  createSelectEqOrderMock,
+  createSelectEqMock,
+  createInsertSelectSingleMock,
+  createUpdateEqSelectSingleMock,
+  createUpdateEqMock,
+  createDeleteEqMock,
+  createDefaultFromMock,
+} from "@/test/mockFactories";
 
-// Mock factory functions moved to module scope (S2004)
-function createSelectEqOrderMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue(resolvedValue),
-      }),
-    }),
-  };
-}
-
-function createSelectEqMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue(resolvedValue),
-    }),
-  };
-}
-
-function createSelectInMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    select: vi.fn().mockReturnValue({
-      in: vi.fn().mockResolvedValue(resolvedValue),
-    }),
-  };
-}
-
-function createInsertSelectSingleMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    insert: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue(resolvedValue),
-      }),
-    }),
-  };
-}
-
-function createUpdateEqSelectSingleMock(resolvedValue: { data: unknown; error: unknown }) {
-  return {
-    update: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(resolvedValue),
-        }),
-      }),
-    }),
-  };
-}
-
-function createUpdateEqMock(resolvedValue: { error: unknown }) {
-  return {
-    update: vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue(resolvedValue),
-    }),
-  };
-}
-
-function createDeleteEqMock(resolvedValue: { error: unknown }) {
-  return {
-    delete: vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue(resolvedValue),
-    }),
-  };
-}
-
-// Default mock factory
-function createDefaultFromMock() {
-  return {
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-      }),
-      in: vi.fn().mockResolvedValue({ data: [], error: null }),
-    }),
-    insert: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({ data: {}, error: null }),
-      }),
-    }),
-    update: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: {}, error: null }),
-        }),
-      }),
-    }),
-    delete: vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue({ error: null }),
-    }),
-  };
-}
-
-// Mock Supabase client - flattened structure (S2004)
+// Mock Supabase client
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     from: vi.fn(() => createDefaultFromMock()),
