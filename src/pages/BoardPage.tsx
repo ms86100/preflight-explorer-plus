@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { ScrumBoard, KanbanBoard, BasicBoard } from '@/features/boards';
 import { useProjects } from '@/features/projects/hooks/useProjects';
@@ -9,7 +9,8 @@ import { CreateIssueModal } from '@/features/issues/components/CreateIssueModal'
 import { IssueDetailModal } from '@/features/issues/components/IssueDetailModal';
 import { useExecuteTransition } from '@/features/workflows';
 import { useIssuesByProject } from '@/features/issues';
-import { Loader2 } from 'lucide-react';
+import { Loader2, LayoutList, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -231,6 +232,32 @@ export default function BoardPage() {
     );
   }
 
+  // Render empty state for Scrum board when no active sprint
+  const renderScrumEmptyState = () => (
+    <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+        <LayoutList className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <h2 className="text-xl font-semibold mb-2">No active sprint</h2>
+      <p className="text-muted-foreground mb-6 max-w-md">
+        In Scrum, the board displays issues from your active sprint. 
+        Create issues in the backlog, then add them to a sprint and start it to see them here.
+      </p>
+      <div className="flex gap-3">
+        <Button asChild>
+          <Link to={`/projects/${projectKey}/backlog`}>
+            <LayoutList className="h-4 w-4 mr-2" />
+            Go to Backlog
+          </Link>
+        </Button>
+        <Button variant="outline" onClick={() => setCreateIssueOpen(true)}>
+          Create Issue
+          <ArrowRight className="h-4 w-4 ml-2" />
+        </Button>
+      </div>
+    </div>
+  );
+
   // Render appropriate board type based on template
   const renderBoard = () => {
     const commonProps = {
@@ -251,17 +278,21 @@ export default function BoardPage() {
         return <BasicBoard {...commonProps} />;
       case 'scrum':
       default:
+        // Show empty state when no active sprint
+        if (!activeSprint) {
+          return renderScrumEmptyState();
+        }
         return (
           <ScrumBoard 
             {...commonProps}
-            sprint={activeSprint ? {
+            sprint={{
               id: activeSprint.id,
               name: activeSprint.name,
               goal: activeSprint.goal || undefined,
               state: activeSprint.state as any,
               start_date: activeSprint.start_date || undefined,
               end_date: activeSprint.end_date || undefined,
-            } : undefined}
+            }}
           />
         );
     }
