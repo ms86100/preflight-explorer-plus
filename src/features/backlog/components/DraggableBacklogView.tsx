@@ -466,6 +466,17 @@ export function DraggableBacklogView() {
     }
   };
 
+  // Handler extracted to reduce nesting depth (S2004 fix)
+  const handleMoveToBacklog = async (issue: BacklogIssue) => {
+    const sprintId = [...sprintIssueMap.entries()].find(
+      ([, issues]) => issues.some(i => i.id === issue.id)
+    )?.[0];
+    if (sprintId) {
+      await removeIssueFromSprint.mutateAsync({ sprintId, issueId: issue.id });
+      toast.success(`Removed ${issue.issue_key} from sprint`);
+    }
+  };
+
   const renderIssueRow = (issue: BacklogIssue, inSprint: boolean = false) => {
     const TypeIcon = issue.issue_type?.name ? ISSUE_TYPE_ICONS[issue.issue_type.name] || CheckSquare : CheckSquare;
     const priorityIcon = issue.priority?.name ? PRIORITY_ICONS[issue.priority.name] : '';
@@ -579,15 +590,7 @@ export function DraggableBacklogView() {
             </DropdownMenuItem>
 
             {inSprint && (
-              <DropdownMenuItem onClick={async () => {
-                const sprintId = [...sprintIssueMap.entries()].find(
-                  ([, issues]) => issues.some(i => i.id === issue.id)
-                )?.[0];
-                if (sprintId) {
-                  await removeIssueFromSprint.mutateAsync({ sprintId, issueId: issue.id });
-                  toast.success(`Removed ${issue.issue_key} from sprint`);
-                }
-              }}>
+              <DropdownMenuItem onClick={() => handleMoveToBacklog(issue)}>
                 <ArrowLeftRight className="h-4 w-4 mr-2" />
                 Move to backlog
               </DropdownMenuItem>

@@ -298,7 +298,103 @@ async function triggerAutomationRules(
   }
 }
 
-// Execute a single automation action
+// ==================== ACTION HANDLERS (S3776 fix) ====================
+
+// Handle transition_issue action
+async function handleTransitionIssue(
+  supabase: any,
+  action: any,
+  issueId: string
+): Promise<void> {
+  if (action.status_id) {
+    await supabase
+      .from('issues')
+      .update({ status_id: action.status_id })
+      .eq('id', issueId);
+    return;
+  }
+
+  if (!action.status_category) return;
+
+  const { data: status } = await supabase
+    .from('issue_statuses')
+    .select('id')
+    .eq('category', action.status_category)
+    .limit(1)
+    .single();
+
+  if (status) {
+    await supabase
+      .from('issues')
+      .update({ status_id: status.id })
+      .eq('id', issueId);
+  }
+}
+
+// Handle add_comment action
+async function handleAddComment(
+  supabase: any,
+  action: any,
+  issueId: string,
+  eventData: any
+): Promise<void> {
+  if (!action.comment) return;
+
+  const placeholders: Record<string, string> = {
+    '{{commit_hash}}': eventData.commitHash || 'N/A',
+    '{{pr_id}}': eventData.prId || 'N/A',
+    '{{build_status}}': eventData.buildStatus || 'N/A',
+    '{{environment}}': eventData.environment || 'N/A',
+  };
+
+  let commentBody = action.comment;
+  for (const [placeholder, value] of Object.entries(placeholders)) {
+    commentBody = commentBody.replace(placeholder, value);
+  }
+
+  await supabase.from('comments').insert({
+    issue_id: issueId,
+    author_id: action.author_id || null,
+    body: commentBody,
+  });
+}
+
+// Handle assign_issue action
+async function handleAssignIssue(
+  supabase: any,
+  action: any,
+  issueId: string
+): Promise<void> {
+  if (!action.assignee_id) return;
+
+  await supabase
+    .from('issues')
+    .update({ assignee_id: action.assignee_id })
+    .eq('id', issueId);
+}
+
+// Handle set_field action
+async function handleSetField(
+  supabase: any,
+  action: any,
+  issueId: string
+): Promise<void> {
+  if (!action.field_name || action.field_value === undefined) return;
+
+  const updateData: Record<string, any> = {};
+  updateData[action.field_name] = action.field_value;
+  await supabase.from('issues').update(updateData).eq('id', issueId);
+}
+
+// Action dispatcher map (reduces cognitive complexity)
+const actionHandlers: Record<string, (supabase: any, action: any, issueId: string, eventData: any) => Promise<void>> = {
+  'transition_issue': (supabase, action, issueId) => handleTransitionIssue(supabase, action, issueId),
+  'add_comment': handleAddComment,
+  'assign_issue': (supabase, action, issueId) => handleAssignIssue(supabase, action, issueId),
+  'set_field': (supabase, action, issueId) => handleSetField(supabase, action, issueId),
+};
+
+// Execute a single automation action (refactored for S3776)
 async function executeAutomationAction(
   supabase: any,
   action: any,
@@ -307,67 +403,11 @@ async function executeAutomationAction(
 ) {
   console.log(`Executing action ${action.type} on issue ${issueId}`);
 
-  switch (action.type) {
-    case 'transition_issue':
-      if (action.status_id) {
-        await supabase
-          .from('issues')
-          .update({ status_id: action.status_id })
-          .eq('id', issueId);
-      } else if (action.status_category) {
-        // Find status by category
-        const { data: status } = await supabase
-          .from('issue_statuses')
-          .select('id')
-          .eq('category', action.status_category)
-          .limit(1)
-          .single();
-
-        if (status) {
-          await supabase
-            .from('issues')
-            .update({ status_id: status.id })
-            .eq('id', issueId);
-        }
-      }
-      break;
-
-    case 'add_comment':
-      if (action.comment) {
-        // Replace placeholders in comment
-        let commentBody = action.comment;
-        commentBody = commentBody.replace('{{commit_hash}}', eventData.commitHash || 'N/A');
-        commentBody = commentBody.replace('{{pr_id}}', eventData.prId || 'N/A');
-        commentBody = commentBody.replace('{{build_status}}', eventData.buildStatus || 'N/A');
-        commentBody = commentBody.replace('{{environment}}', eventData.environment || 'N/A');
-
-        await supabase.from('comments').insert({
-          issue_id: issueId,
-          author_id: action.author_id || null,
-          body: commentBody,
-        });
-      }
-      break;
-
-    case 'assign_issue':
-      if (action.assignee_id) {
-        await supabase
-          .from('issues')
-          .update({ assignee_id: action.assignee_id })
-          .eq('id', issueId);
-      }
-      break;
-
-    case 'set_field':
-      if (action.field_name && action.field_value !== undefined) {
-        const updateData: Record<string, any> = {};
-        updateData[action.field_name] = action.field_value;
-        await supabase.from('issues').update(updateData).eq('id', issueId);
-      }
-      break;
-
-    default:
-      console.log(`Unknown action type: ${action.type}`);
+  const handler = actionHandlers[action.type];
+  if (handler) {
+    await handler(supabase, action, issueId, eventData);
+  } else {
+    console.log(`Unknown action type: ${action.type}`);
   }
 }
 

@@ -6,76 +6,111 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { FieldType, CustomFieldDefinition, CustomFieldContext, CustomFieldValue, FieldOption } from './customFieldService';
 
-// Helper function: Validates a field value against its type requirements (moved to outer scope - S2004/S7721 fix)
+// Type-specific validators extracted to reduce cognitive complexity (S3776 fix)
+type ValidationResult = { valid: boolean; error?: string };
+
+function validateStringType(value: unknown): ValidationResult {
+  if (typeof value !== 'string') {
+    return { valid: false, error: 'Value must be a string' };
+  }
+  return { valid: true };
+}
+
+function validateNumberType(value: unknown): ValidationResult {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return { valid: false, error: 'Value must be a number' };
+  }
+  return { valid: true };
+}
+
+function validateDateType(value: unknown): ValidationResult {
+  if (typeof value !== 'string' || Number.isNaN(Date.parse(value))) {
+    return { valid: false, error: 'Value must be a valid date' };
+  }
+  return { valid: true };
+}
+
+function validateCheckboxType(value: unknown): ValidationResult {
+  if (typeof value !== 'boolean') {
+    return { valid: false, error: 'Value must be a boolean' };
+  }
+  return { valid: true };
+}
+
+function validateSelectType(value: unknown, options?: FieldOption[]): ValidationResult {
+  if (!options?.find((opt) => opt.value === value)) {
+    return { valid: false, error: 'Value must be one of the available options' };
+  }
+  return { valid: true };
+}
+
+function validateMultiselectType(value: unknown, options?: FieldOption[]): ValidationResult {
+  if (!Array.isArray(value)) {
+    return { valid: false, error: 'Value must be an array' };
+  }
+  for (const v of value) {
+    if (!options?.find((opt) => opt.value === v)) {
+      return { valid: false, error: `Invalid option: ${v}` };
+    }
+  }
+  return { valid: true };
+}
+
+function validateUserType(value: unknown): ValidationResult {
+  if (typeof value !== 'string') {
+    return { valid: false, error: 'Value must be a user ID' };
+  }
+  return { valid: true };
+}
+
+function isEmptyValue(value: unknown): boolean {
+  return value === null || value === undefined || value === '';
+}
+
+// Dispatcher for type-specific validation (S3776 fix)
+function validateByType(fieldType: FieldType, value: unknown, options?: FieldOption[]): ValidationResult {
+  switch (fieldType) {
+    case 'text':
+    case 'textarea':
+    case 'url':
+      return validateStringType(value);
+    case 'number':
+      return validateNumberType(value);
+    case 'date':
+    case 'datetime':
+      return validateDateType(value);
+    case 'checkbox':
+      return validateCheckboxType(value);
+    case 'select':
+      return validateSelectType(value, options);
+    case 'multiselect':
+      return validateMultiselectType(value, options);
+    case 'user':
+      return validateUserType(value);
+    default:
+      return { valid: true };
+  }
+}
+
+// Main validation function with reduced complexity (S3776 fix)
 function validateFieldValue(
   fieldType: FieldType,
   value: unknown,
   options?: FieldOption[],
   isRequired?: boolean
-): { valid: boolean; error?: string } {
-  // Check required
-  if (isRequired && (value === null || value === undefined || value === '')) {
+): ValidationResult {
+  // Check required - early return
+  if (isRequired && isEmptyValue(value)) {
     return { valid: false, error: 'Field is required' };
   }
 
-  // Allow empty for non-required fields
-  if (value === null || value === undefined || value === '') {
+  // Allow empty for non-required fields - early return
+  if (isEmptyValue(value)) {
     return { valid: true };
   }
 
-  switch (fieldType) {
-    case 'text':
-    case 'textarea':
-    case 'url':
-      if (typeof value !== 'string') {
-        return { valid: false, error: 'Value must be a string' };
-      }
-      break;
-
-    case 'number':
-      if (typeof value !== 'number' || Number.isNaN(value)) {
-        return { valid: false, error: 'Value must be a number' };
-      }
-      break;
-
-    case 'date':
-    case 'datetime':
-      if (typeof value !== 'string' || Number.isNaN(Date.parse(value))) {
-        return { valid: false, error: 'Value must be a valid date' };
-      }
-      break;
-
-    case 'checkbox':
-      if (typeof value !== 'boolean') {
-        return { valid: false, error: 'Value must be a boolean' };
-      }
-      break;
-
-    case 'select':
-      if (!options?.find((opt) => opt.value === value)) {
-        return { valid: false, error: 'Value must be one of the available options' };
-      }
-      break;
-
-    case 'multiselect':
-      if (!Array.isArray(value)) {
-        return { valid: false, error: 'Value must be an array' };
-      }
-      for (const v of value) {
-        if (!options?.find((opt) => opt.value === v)) {
-          return { valid: false, error: `Invalid option: ${v}` };
-        }
-      }
-      break;
-
-    case 'user':
-      if (typeof value !== 'string') {
-        return { valid: false, error: 'Value must be a user ID' };
-      }
-      break;
-  }
-
-  return { valid: true };
+  // Delegate to type-specific validator
+  return validateByType(fieldType, value, options);
 }
 
 // Helper function: Determines which value column to use based on field type (moved to outer scope - S7721 fix)
