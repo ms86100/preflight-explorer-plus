@@ -1,5 +1,18 @@
-export type ImportType = 'issues' | 'projects' | 'users';
-export type ImportStatus = 'pending' | 'validating' | 'validated' | 'importing' | 'completed' | 'failed' | 'cancelled';
+import {
+  IMPORT_TYPE,
+  IMPORT_STATUS,
+  VALIDATION_ERROR_TYPE,
+  type ImportTypeValue,
+  type ImportStatusType,
+  type ValidationErrorTypeValue,
+} from '@/lib/constants';
+
+// Re-export constants for convenience
+export { IMPORT_TYPE, IMPORT_STATUS, VALIDATION_ERROR_TYPE };
+
+// Type aliases for backward compatibility
+export type ImportType = ImportTypeValue;
+export type ImportStatus = ImportStatusType;
 
 export interface FieldMapping {
   sourceColumn: string;
@@ -9,7 +22,7 @@ export interface FieldMapping {
 export interface ValidationError {
   row: number;
   field: string;
-  errorType: 'validation' | 'mapping' | 'duplicate' | 'reference' | 'system';
+  errorType: ValidationErrorTypeValue;
   message: string;
   originalValue?: string;
 }

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getExports, deleteExport, downloadExport } from '../services/documentComposerService';
+import { EXPORT_STATUS, POLLING_INTERVALS } from '@/lib/constants';
 import type { ExportJob } from '../types';
 
 export function ExportHistory() {
@@ -24,7 +25,7 @@ export function ExportHistory() {
   const { data: exports = [], isLoading } = useQuery({
     queryKey: ['document-exports'],
     queryFn: getExports,
-    refetchInterval: 3000, // Poll for status updates
+    refetchInterval: POLLING_INTERVALS.STANDARD, // Poll for status updates
   });
 
   const deleteMutation = useMutation({
@@ -58,10 +59,10 @@ export function ExportHistory() {
   };
 
   const statusConfig: Record<ExportJob['status'], { icon: React.ReactNode; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-    pending: { icon: <Clock className="h-3 w-3" />, variant: 'outline' },
-    processing: { icon: <RefreshCw className="h-3 w-3 animate-spin" />, variant: 'secondary' },
-    completed: { icon: <CheckCircle className="h-3 w-3" />, variant: 'default' },
-    failed: { icon: <AlertCircle className="h-3 w-3" />, variant: 'destructive' },
+    [EXPORT_STATUS.PENDING]: { icon: <Clock className="h-3 w-3" />, variant: 'outline' },
+    [EXPORT_STATUS.PROCESSING]: { icon: <RefreshCw className="h-3 w-3 animate-spin" />, variant: 'secondary' },
+    [EXPORT_STATUS.COMPLETED]: { icon: <CheckCircle className="h-3 w-3" />, variant: 'default' },
+    [EXPORT_STATUS.FAILED]: { icon: <AlertCircle className="h-3 w-3" />, variant: 'destructive' },
   };
 
   const formatDate = (dateStr: string) => {
@@ -136,7 +137,7 @@ export function ExportHistory() {
                   {statusConfig[exportJob.status]?.icon}
                   <span className="capitalize">{exportJob.status}</span>
                 </Badge>
-                {exportJob.status === 'processing' && (
+                {exportJob.status === EXPORT_STATUS.PROCESSING && (
                   <span className="ml-2 text-xs text-muted-foreground">{exportJob.progress}%</span>
                 )}
                 {exportJob.error && (
@@ -148,7 +149,7 @@ export function ExportHistory() {
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
-                  {exportJob.status === 'completed' && (
+                  {exportJob.status === EXPORT_STATUS.COMPLETED && (
                     <Button 
                       variant="ghost" 
                       size="sm"
@@ -157,7 +158,7 @@ export function ExportHistory() {
                       <Download className="h-4 w-4" />
                     </Button>
                   )}
-                  {exportJob.status === 'failed' && (
+                  {exportJob.status === EXPORT_STATUS.FAILED && (
                     <Button variant="ghost" size="sm">
                       <RefreshCw className="h-4 w-4" />
                     </Button>

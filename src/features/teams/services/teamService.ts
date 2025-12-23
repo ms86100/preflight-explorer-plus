@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { TEAM_ROLE, type TeamRoleType } from '@/lib/constants';
 import type { ProjectTeam, ProjectTeamMember } from '../types';
 
 export const teamService = {
@@ -36,7 +37,7 @@ export const teamService = {
     
     return (data || []).map(m => ({
       ...m,
-      role: m.role as 'lead' | 'member',
+      role: m.role as TeamRoleType,
       profile: profileMap.get(m.user_id) || undefined,
     }));
   },
@@ -89,7 +90,7 @@ export const teamService = {
   async addTeamMember(
     teamId: string,
     userId: string,
-    role: 'lead' | 'member',
+    role: TeamRoleType,
     addedBy: string
   ): Promise<ProjectTeamMember> {
     const { data, error } = await supabase
@@ -104,10 +105,10 @@ export const teamService = {
       .single();
     
     if (error) throw error;
-    return { ...data, role: data.role as 'lead' | 'member' };
+    return { ...data, role: data.role as TeamRoleType };
   },
 
-  async updateMemberRole(memberId: string, role: 'lead' | 'member'): Promise<void> {
+  async updateMemberRole(memberId: string, role: TeamRoleType): Promise<void> {
     const { error } = await supabase
       .from('project_team_members')
       .update({ role })
