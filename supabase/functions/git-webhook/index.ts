@@ -136,12 +136,14 @@ function verifyBitbucketWebhook(headers: Headers, secret: string): boolean {
 // Issue key pattern: PROJECT-123
 const ISSUE_KEY_PATTERN = /\b([A-Z][A-Z0-9]+-\d+)\b/g;
 
-// Smart commit patterns
+// Smart commit patterns - Optimized to prevent catastrophic backtracking (ReDoS)
+// Using atomic-like patterns with possessive quantifier emulation
 const SMART_COMMIT_PATTERNS = {
-  comment: /#comment\s+(.+?)(?=#|$)/gi,
-  time: /#time\s+(\d+[wdhm](?:\d+[wdhm])*)/gi,
-  resolve: /#(resolve|done|close|fixed)\b/gi,
-  inProgress: /#(in-progress|start|working)\b/gi,
+  // Use non-greedy matching with explicit termination to prevent backtracking
+  comment: /#comment\s+([^#\n]+)/gi,
+  time: /#time\s+(\d{1,3}[wdhm](?:\s*\d{1,3}[wdhm]){0,3})/gi,
+  resolve: /#(?:resolve|done|close|fixed)\b/gi,
+  inProgress: /#(?:in-progress|start|working)\b/gi,
   reopen: /#reopen\b/gi,
 };
 

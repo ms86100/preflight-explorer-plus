@@ -7,14 +7,15 @@ import type { ParsedSmartCommit, SmartCommitAction } from '../types';
 // Matches Jira issue keys like PROJ-123, ABC-1, TEST-9999
 const ISSUE_KEY_PATTERN = /\b([A-Z][A-Z0-9]+-\d+)\b/g;
 
-// Smart commit command patterns
-const COMMENT_PATTERN = /#comment\s+(.+?)(?=#|$)/gi;
-const TIME_PATTERN = /#time\s+(\d+[wdhm]\s*)+/gi;
+// Smart commit command patterns - Optimized to prevent catastrophic backtracking (ReDoS)
+// Using explicit character classes instead of .+? and bounded quantifiers
+const COMMENT_PATTERN = /#comment\s+([^#\n]{1,500})/gi;
+const TIME_PATTERN = /#time\s+(\d{1,3}[wdhm](?:\s*\d{1,3}[wdhm]){0,3})/gi;
 const TRANSITION_PATTERNS: Record<string, RegExp> = {
-  resolve: /#(resolve|done|close|fixed|closes|fixes)\b/gi,
-  'in-progress': /#(in-progress|start|working|wip)\b/gi,
-  reopen: /#(reopen|open)\b/gi,
-  review: /#(review|code-review|pr)\b/gi,
+  resolve: /#(?:resolve|done|close|fixed|closes|fixes)\b/gi,
+  'in-progress': /#(?:in-progress|start|working|wip)\b/gi,
+  reopen: /#(?:reopen|open)\b/gi,
+  review: /#(?:review|code-review|pr)\b/gi,
 };
 
 /**

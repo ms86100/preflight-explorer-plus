@@ -70,7 +70,11 @@ export function AttachmentsSection({ issueId }: AttachmentsSectionProps) {
         }
 
         const fileExt = file.name.split('.').pop();
-        const filePath = `${issueId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        // Use crypto.getRandomValues for secure random string generation
+        const randomBytes = new Uint8Array(8);
+        crypto.getRandomValues(randomBytes);
+        const randomStr = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+        const filePath = `${issueId}/${Date.now()}-${randomStr}.${fileExt}`;
 
         // Upload to storage
         const { error: uploadError } = await supabase.storage

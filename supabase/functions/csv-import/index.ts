@@ -216,8 +216,16 @@ function validateRow(
   return errors;
 }
 
+/**
+ * Validates email format with ReDoS-safe regex
+ * Uses bounded quantifiers to prevent catastrophic backtracking
+ */
 function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  // Limit input length first to prevent DoS
+  if (email.length > 254) return false;
+  // Use bounded quantifiers to prevent ReDoS attacks
+  // Local part: 1-64 chars, domain: 1-253 chars, TLD: 2-63 chars
+  return /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,63}$/.test(email);
 }
 
 // deno-lint-ignore no-explicit-any

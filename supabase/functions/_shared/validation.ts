@@ -44,12 +44,15 @@ export function isValidUuid(value: unknown): boolean {
 }
 
 /**
- * Validates email format
+ * Validates email format with ReDoS-safe regex
+ * Uses bounded quantifiers to prevent catastrophic backtracking
  */
 export function isValidEmail(value: unknown): boolean {
   if (typeof value !== 'string') return false;
   if (value.length > INPUT_LIMITS.EMAIL) return false;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // Use bounded quantifiers to prevent ReDoS attacks
+  // Local part: 1-64 chars, domain: 1-253 chars, TLD: 2-63 chars
+  const emailRegex = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,63}$/;
   return emailRegex.test(value);
 }
 

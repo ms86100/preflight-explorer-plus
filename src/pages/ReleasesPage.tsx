@@ -87,10 +87,14 @@ export default function ReleasesPage() {
     queryFn: async () => {
       if (!project?.id) return {};
       // In a real implementation, you'd query issues by fix_version_id
-      // For now, return mock data
+      // For now, return mock data using crypto.getRandomValues for secure randomness
       const counts: Record<string, { total: number; done: number }> = {};
-      (versions || []).forEach(v => {
-        counts[v.id] = { total: Math.floor(Math.random() * 20) + 5, done: Math.floor(Math.random() * 15) };
+      const randomArray = new Uint8Array((versions || []).length * 2);
+      crypto.getRandomValues(randomArray);
+      (versions || []).forEach((v, i) => {
+        const total = (randomArray[i * 2] % 20) + 5;
+        const done = randomArray[i * 2 + 1] % (total + 1);
+        counts[v.id] = { total, done };
       });
       return counts;
     },
