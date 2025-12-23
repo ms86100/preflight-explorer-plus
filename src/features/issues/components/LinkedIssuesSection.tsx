@@ -11,22 +11,22 @@ import { toast } from 'sonner';
 import { Link as LinkIcon, Plus, Trash2, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 
 interface LinkedIssue {
-  id: string;
-  source_issue_id: string;
-  target_issue_id: string;
-  link_type: string;
-  created_at: string;
-  target_issue?: {
-    id: string;
-    issue_key: string;
-    summary: string;
-    status: { name: string; color: string };
+  readonly id: string;
+  readonly source_issue_id: string;
+  readonly target_issue_id: string;
+  readonly link_type: string;
+  readonly created_at: string;
+  readonly target_issue?: {
+    readonly id: string;
+    readonly issue_key: string;
+    readonly summary: string;
+    readonly status: { readonly name: string; readonly color: string };
   };
-  source_issue?: {
-    id: string;
-    issue_key: string;
-    summary: string;
-    status: { name: string; color: string };
+  readonly source_issue?: {
+    readonly id: string;
+    readonly issue_key: string;
+    readonly summary: string;
+    readonly status: { readonly name: string; readonly color: string };
   };
 }
 

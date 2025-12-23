@@ -1,37 +1,37 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export interface AvailableTransition {
-  transition_id: string | null;
-  transition_name: string;
-  to_status_id: string;
-  to_status_name: string;
-  to_status_color: string;
-  to_status_category: string;
+  readonly transition_id: string | null;
+  readonly transition_name: string;
+  readonly to_status_id: string;
+  readonly to_status_name: string;
+  readonly to_status_color: string;
+  readonly to_status_category: string;
 }
 
 export interface WorkflowScheme {
-  id: string;
-  name: string;
-  description: string | null;
-  is_default: boolean;
-  created_at: string;
-  updated_at: string;
+  readonly id: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly is_default: boolean;
+  readonly created_at: string;
+  readonly updated_at: string;
 }
 
 export interface WorkflowSchemeMapping {
-  id: string;
-  scheme_id: string;
-  issue_type_id: string | null;
-  workflow_id: string;
-  workflow?: { id: string; name: string };
-  issue_type?: { id: string; name: string } | null;
+  readonly id: string;
+  readonly scheme_id: string;
+  readonly issue_type_id: string | null;
+  readonly workflow_id: string;
+  readonly workflow?: { readonly id: string; readonly name: string };
+  readonly issue_type?: { readonly id: string; readonly name: string } | null;
 }
 
 export interface ProjectWorkflowScheme {
-  id: string;
-  project_id: string;
-  scheme_id: string;
-  scheme?: WorkflowScheme;
+  readonly id: string;
+  readonly project_id: string;
+  readonly scheme_id: string;
+  readonly scheme?: WorkflowScheme;
 }
 
 /**

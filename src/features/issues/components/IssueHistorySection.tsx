@@ -19,15 +19,15 @@ import {
 } from 'lucide-react';
 
 interface HistoryEntry {
-  id: string;
-  field_name: string;
-  old_value: string | null;
-  new_value: string | null;
-  changed_by: string;
-  changed_at: string;
-  changer?: {
-    display_name: string | null;
-    avatar_url: string | null;
+  readonly id: string;
+  readonly field_name: string;
+  readonly old_value: string | null;
+  readonly new_value: string | null;
+  readonly changed_by: string;
+  readonly changed_at: string;
+  readonly changer?: {
+    readonly display_name: string | null;
+    readonly avatar_url: string | null;
   };
 }
 

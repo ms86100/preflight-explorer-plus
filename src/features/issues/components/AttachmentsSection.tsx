@@ -8,15 +8,15 @@ import { format } from 'date-fns';
 import { Paperclip, Upload, Trash2, Download, FileText, Image, File, Loader2, X, Eye } from 'lucide-react';
 
 interface Attachment {
-  id: string;
-  filename: string;
-  file_path: string;
-  file_size: number;
-  mime_type: string | null;
-  author_id: string;
-  created_at: string;
-  author?: { display_name: string };
-  previewUrl?: string;
+  readonly id: string;
+  readonly filename: string;
+  readonly file_path: string;
+  readonly file_size: number;
+  readonly mime_type: string | null;
+  readonly author_id: string;
+  readonly created_at: string;
+  readonly author?: { readonly display_name: string };
+  readonly previewUrl?: string;
 }
 
 interface AttachmentsSectionProps {

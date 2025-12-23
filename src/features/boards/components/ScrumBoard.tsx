@@ -14,21 +14,21 @@ import { BoardColumn } from './BoardColumn';
 import type { ClassificationLevel, SprintState } from '@/types/jira';
 
 interface BoardIssue {
-  id: string;
-  issue_key: string;
-  summary: string;
-  issue_type: 'Epic' | 'Story' | 'Task' | 'Bug' | 'Subtask';
-  priority: 'Highest' | 'High' | 'Medium' | 'Low' | 'Lowest';
-  status: string;
-  assignee?: {
-    display_name: string;
-    avatar_url?: string;
+  readonly id: string;
+  readonly issue_key: string;
+  readonly summary: string;
+  readonly issue_type: 'Epic' | 'Story' | 'Task' | 'Bug' | 'Subtask';
+  readonly priority: 'Highest' | 'High' | 'Medium' | 'Low' | 'Lowest';
+  readonly status: string;
+  readonly assignee?: {
+    readonly display_name: string;
+    readonly avatar_url?: string;
   };
-  story_points?: number;
-  classification?: ClassificationLevel;
-  labels?: string[];
-  epic_name?: string;
-  epic_color?: string;
+  readonly story_points?: number;
+  readonly classification?: ClassificationLevel;
+  readonly labels?: readonly string[];
+  readonly epic_name?: string;
+  readonly epic_color?: string;
 }
 
 interface ScrumBoardProps {
