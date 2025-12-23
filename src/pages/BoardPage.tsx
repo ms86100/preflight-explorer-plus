@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { ScrumBoard, KanbanBoard, BasicBoard } from '@/features/boards';
 import { useProjects } from '@/features/projects/hooks/useProjects';
@@ -28,6 +28,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 
 export default function BoardPage() {
   const { projectKey } = useParams<{ projectKey: string }>();
+  const navigate = useNavigate();
   const [createIssueOpen, setCreateIssueOpen] = useState(false);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -393,8 +394,21 @@ export default function BoardPage() {
           open={createIssueOpen}
           onOpenChange={setCreateIssueOpen}
           onSuccess={(issueKey) => {
-            if (isScrum) {
+            // If Scrum with active sprint, add issue to sprint
+            if (isScrum && activeSprint) {
               addCreatedIssueToActiveSprint(issueKey);
+              return;
+            }
+            // If Scrum with no active sprint, redirect to backlog so user can see the issue
+            if (isScrum && !activeSprint) {
+              toast.success(`${issueKey} created in backlog`, {
+                description: 'Add it to a sprint and start the sprint to see it on the board.',
+                action: {
+                  label: 'Go to Backlog',
+                  onClick: () => navigate(`/projects/${projectKey}/backlog`),
+                },
+              });
+              navigate(`/projects/${projectKey}/backlog`);
               return;
             }
             refetchIssues();
