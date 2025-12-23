@@ -41,7 +41,7 @@ export function CumulativeFlowChart({ projectId }: CumulativeFlowProps) {
       }
 
       // Convert to cumulative data
-      const sortedWeeks = Object.keys(weeklyData).sort();
+      const sortedWeeks = Object.keys(weeklyData).sort((a, b) => a.localeCompare(b));
       let cumulativeTodo = 0;
       let cumulativeInProgress = 0;
       let cumulativeDone = 0;

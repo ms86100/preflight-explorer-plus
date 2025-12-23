@@ -13,49 +13,46 @@ import type {
   TransitionPostFunction,
 } from './workflowService';
 
-// Mock supabase client
+// Mock responses defined at module level to avoid deep nesting (S2004 fix)
+const mockWorkflowsOrderResponse = () => Promise.resolve({
+  data: mockWorkflows,
+  error: null,
+});
+
+const mockWorkflowSingleResponse = () => Promise.resolve({
+  data: mockWorkflows[0],
+  error: null,
+});
+
+const mockOrOrderFn = vi.fn(mockWorkflowsOrderResponse);
+const mockOrFn = vi.fn(() => ({ order: mockOrOrderFn }));
+const mockEqOrderFn = vi.fn(mockWorkflowsOrderResponse);
+const mockEqFn = vi.fn(() => ({
+  order: mockEqOrderFn,
+  single: mockWorkflowSingleResponse,
+  or: mockOrFn,
+}));
+const mockSelectFn = vi.fn(() => ({ eq: mockEqFn }));
+
+const mockInsertSingleFn = vi.fn(mockWorkflowSingleResponse);
+const mockInsertSelectFn = vi.fn(() => ({ single: mockInsertSingleFn }));
+const mockInsertFn = vi.fn(() => ({ select: mockInsertSelectFn }));
+
+const mockUpdateSingleFn = vi.fn(mockWorkflowSingleResponse);
+const mockUpdateSelectFn = vi.fn(() => ({ single: mockUpdateSingleFn }));
+const mockUpdateEqFn = vi.fn(() => ({ select: mockUpdateSelectFn }));
+const mockUpdateFn = vi.fn(() => ({ eq: mockUpdateEqFn }));
+
+const mockDeleteEqFn = vi.fn(() => Promise.resolve({ error: null }));
+const mockDeleteFn = vi.fn(() => ({ eq: mockDeleteEqFn }));
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({
-            data: mockWorkflows,
-            error: null,
-          })),
-          single: vi.fn(() => Promise.resolve({
-            data: mockWorkflows[0],
-            error: null,
-          })),
-          or: vi.fn(() => ({
-            order: vi.fn(() => Promise.resolve({
-              data: mockWorkflows,
-              error: null,
-            })),
-          })),
-        })),
-      })),
-      insert: vi.fn(() => ({
-        select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({
-            data: mockWorkflows[0],
-            error: null,
-          })),
-        })),
-      })),
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({
-              data: mockWorkflows[0],
-              error: null,
-            })),
-          })),
-        })),
-      })),
-      delete: vi.fn(() => ({
-        eq: vi.fn(() => Promise.resolve({ error: null })),
-      })),
+      select: mockSelectFn,
+      insert: mockInsertFn,
+      update: mockUpdateFn,
+      delete: mockDeleteFn,
     })),
   },
 }));

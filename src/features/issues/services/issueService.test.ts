@@ -6,57 +6,57 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { IssueInsert, IssueRow, IssueFilters, IssueWithRelations } from './issueService';
 
-// Mock supabase client - flattened structure (S2004 fix)
+// Mock responses defined at module level to avoid deep nesting (S2004 fix)
+const mockRangeResponse = () => Promise.resolve({
+  data: mockIssues,
+  error: null,
+  count: mockIssues.length,
+});
+
+const mockMaybeSingleResponse = () => Promise.resolve({
+  data: mockIssues[0],
+  error: null,
+});
+
+const mockProfilesResponse = () => Promise.resolve({
+  data: mockProfiles,
+  error: null,
+});
+
+const mockOrderFn = vi.fn(() => ({ range: mockRangeResponse }));
+const mockIlikeOrderFn = vi.fn(() => ({ range: mockRangeResponse }));
+const mockIlikeFn = vi.fn(() => ({ order: mockIlikeOrderFn }));
+const mockEqFn = vi.fn(() => ({
+  order: mockOrderFn,
+  maybeSingle: mockMaybeSingleResponse,
+  ilike: mockIlikeFn,
+  in: mockProfilesResponse,
+}));
+const mockSelectFn = vi.fn(() => ({ eq: mockEqFn }));
+
+const mockInsertSingleFn = vi.fn(() => Promise.resolve({
+  data: mockCreatedIssue,
+  error: null,
+}));
+const mockInsertSelectFn = vi.fn(() => ({ single: mockInsertSingleFn }));
+const mockInsertFn = vi.fn(() => ({ select: mockInsertSelectFn }));
+
+const mockUpdateSingleFn = vi.fn(() => Promise.resolve({
+  data: { ...mockIssues[0], summary: 'Updated Summary' },
+  error: null,
+}));
+const mockUpdateSelectFn = vi.fn(() => ({ single: mockUpdateSingleFn }));
+const mockUpdateEqFn = vi.fn(() => ({ select: mockUpdateSelectFn }));
+const mockUpdateFn = vi.fn(() => ({ eq: mockUpdateEqFn }));
+
+const mockDeleteEqFn = vi.fn(() => Promise.resolve({ error: null }));
+const mockDeleteFn = vi.fn(() => ({ eq: mockDeleteEqFn }));
+
 const mockSupabaseFrom = vi.fn(() => ({
-  select: vi.fn(() => ({
-    eq: vi.fn(() => ({
-      order: vi.fn(() => ({
-        range: vi.fn(() => Promise.resolve({
-          data: mockIssues,
-          error: null,
-          count: mockIssues.length,
-        })),
-      })),
-      maybeSingle: vi.fn(() => Promise.resolve({
-        data: mockIssues[0],
-        error: null,
-      })),
-      ilike: vi.fn(() => ({
-        order: vi.fn(() => ({
-          range: vi.fn(() => Promise.resolve({
-            data: mockIssues,
-            error: null,
-            count: mockIssues.length,
-          })),
-        })),
-      })),
-      in: vi.fn(() => Promise.resolve({
-        data: mockProfiles,
-        error: null,
-      })),
-    })),
-  })),
-  insert: vi.fn(() => ({
-    select: vi.fn(() => ({
-      single: vi.fn(() => Promise.resolve({
-        data: mockCreatedIssue,
-        error: null,
-      })),
-    })),
-  })),
-  update: vi.fn(() => ({
-    eq: vi.fn(() => ({
-      select: vi.fn(() => ({
-        single: vi.fn(() => Promise.resolve({
-          data: { ...mockIssues[0], summary: 'Updated Summary' },
-          error: null,
-        })),
-      })),
-    })),
-  })),
-  delete: vi.fn(() => ({
-    eq: vi.fn(() => Promise.resolve({ error: null })),
-  })),
+  select: mockSelectFn,
+  insert: mockInsertFn,
+  update: mockUpdateFn,
+  delete: mockDeleteFn,
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
