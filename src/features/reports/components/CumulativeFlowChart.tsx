@@ -24,7 +24,7 @@ export function CumulativeFlowChart({ projectId }: CumulativeFlowProps) {
       // Group by week and status category
       const weeklyData: Record<string, { todo: number; in_progress: number; done: number }> = {};
       
-      issues.forEach(issue => {
+      for (const issue of issues) {
         const date = new Date(issue.created_at!);
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay());
@@ -38,7 +38,7 @@ export function CumulativeFlowChart({ projectId }: CumulativeFlowProps) {
         if (category === 'todo') weeklyData[weekKey].todo++;
         else if (category === 'in_progress') weeklyData[weekKey].in_progress++;
         else if (category === 'done') weeklyData[weekKey].done++;
-      });
+      }
 
       // Convert to cumulative data
       const sortedWeeks = Object.keys(weeklyData).sort();
