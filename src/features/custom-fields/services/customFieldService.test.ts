@@ -147,12 +147,7 @@ function formatFieldValue(
       return option?.label || String(value);
     }
     case 'multiselect':
-      if (Array.isArray(value)) {
-        return value
-          .map((v) => options?.find((o) => o.value === v)?.label || String(v))
-          .join(', ');
-      }
-      return '';
+      return formatMultiselectValue(value, options);
     case 'date':
       return new Date(value as string).toLocaleDateString();
     case 'datetime':
@@ -162,42 +157,55 @@ function formatFieldValue(
   }
 }
 
-// Mock Supabase client - flattened structure to avoid deep nesting (S2004 fix)
-const mockSupabaseFrom = vi.fn(() => ({
-  select: vi.fn(() => ({
-    eq: vi.fn(() => ({
-      order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-      single: vi.fn(() => Promise.resolve({ data: null, error: null })),
-      or: vi.fn(() => Promise.resolve({ data: [], error: null })),
-    })),
-    single: vi.fn(() => Promise.resolve({ data: null, error: null })),
-    order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-  })),
-  insert: vi.fn(() => ({
+// Helper to format multiselect values (extracted to reduce nesting - S2004 fix)
+function formatMultiselectValue(value: unknown, options?: FieldOption[]): string {
+  if (!Array.isArray(value)) return '';
+  return value
+    .map((v) => options?.find((o) => o.value === v)?.label || String(v))
+    .join(', ');
+}
+
+// ============================================================================
+// Mock Factory Functions (module level - S2004 fix)
+// ============================================================================
+
+function createDefaultFromMock() {
+  return {
     select: vi.fn(() => ({
-      single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
+      eq: vi.fn(() => ({
+        order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+        single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+        or: vi.fn(() => Promise.resolve({ data: [], error: null })),
+      })),
+      single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+      order: vi.fn(() => Promise.resolve({ data: [], error: null })),
     })),
-  })),
-  update: vi.fn(() => ({
-    eq: vi.fn(() => ({
+    insert: vi.fn(() => ({
       select: vi.fn(() => ({
         single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
       })),
     })),
-  })),
-  delete: vi.fn(() => ({
-    eq: vi.fn(() => Promise.resolve({ error: null })),
-  })),
-  upsert: vi.fn(() => ({
-    select: vi.fn(() => ({
-      single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
+    update: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        select: vi.fn(() => ({
+          single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
+        })),
+      })),
     })),
-  })),
-}));
+    delete: vi.fn(() => ({
+      eq: vi.fn(() => Promise.resolve({ error: null })),
+    })),
+    upsert: vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
+      })),
+    })),
+  };
+}
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: mockSupabaseFrom,
+    from: vi.fn(() => createDefaultFromMock()),
   },
 }));
 

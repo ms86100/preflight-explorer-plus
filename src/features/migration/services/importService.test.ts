@@ -6,16 +6,40 @@
 import { describe, it, expect, vi } from 'vitest';
 import { parseCSVHeaders, countCSVRows } from './importService';
 
-// Mock response functions defined at module level to avoid deep nesting (S2004 fix)
-const mockSessionResponse = () => Promise.resolve({ data: { session: { access_token: 'mock-token' } } });
-const mockUserResponse = () => Promise.resolve({ data: { user: { id: 'user-uuid' } } });
-const mockLimitResponse = () => Promise.resolve({ data: [], error: null });
-const mockInsertSingleResponse = () => Promise.resolve({ data: {}, error: null });
+// ============================================================================
+// Mock Response Functions (module level - S2004 fix)
+// ============================================================================
 
-const mockOrderFn = vi.fn(() => ({ limit: vi.fn(mockLimitResponse) }));
-const mockSelectFn = vi.fn(() => ({ order: mockOrderFn }));
-const mockInsertSelectFn = vi.fn(() => ({ single: vi.fn(mockInsertSingleResponse) }));
-const mockInsertFn = vi.fn(() => ({ select: mockInsertSelectFn }));
+function mockSessionResponse() {
+  return Promise.resolve({ data: { session: { access_token: 'mock-token' } } });
+}
+
+function mockUserResponse() {
+  return Promise.resolve({ data: { user: { id: 'user-uuid' } } });
+}
+
+function mockLimitResponse() {
+  return Promise.resolve({ data: [], error: null });
+}
+
+function mockInsertSingleResponse() {
+  return Promise.resolve({ data: {}, error: null });
+}
+
+// ============================================================================
+// Mock Factory Function (module level - S2004 fix)
+// ============================================================================
+
+function createDefaultFromMock() {
+  return {
+    select: vi.fn(() => ({
+      order: vi.fn(() => ({ limit: mockLimitResponse })),
+    })),
+    insert: vi.fn(() => ({
+      select: vi.fn(() => ({ single: mockInsertSingleResponse })),
+    })),
+  };
+}
 
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
@@ -24,10 +48,7 @@ vi.mock('@/integrations/supabase/client', () => ({
       getSession: vi.fn(mockSessionResponse),
       getUser: vi.fn(mockUserResponse),
     },
-    from: vi.fn(() => ({
-      select: mockSelectFn,
-      insert: mockInsertFn,
-    })),
+    from: vi.fn(() => createDefaultFromMock()),
   },
 }));
 
