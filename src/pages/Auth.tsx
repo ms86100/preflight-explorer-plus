@@ -42,12 +42,7 @@ export default function AuthPage() {
   const { toast } = useToast();
   const { signIn, signUp, isAuthenticated } = useAuth();
 
-  // Redirect if already authenticated
-  if (isAuthenticated) {
-    navigate('/');
-    return null;
-  }
-
+  // Hooks must be called before any conditional returns (S6440)
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
   });
@@ -55,6 +50,12 @@ export default function AuthPage() {
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
   });
+
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    navigate('/');
+    return null;
+  }
 
   const onSignIn = async (data: SignInFormData) => {
     setIsLoading(true);

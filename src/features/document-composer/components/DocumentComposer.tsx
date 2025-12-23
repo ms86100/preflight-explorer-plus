@@ -1,12 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  FileText, Table, FileType, Download, Settings, 
-  Plus, Eye, Trash2
-} from 'lucide-react';
+import { FileText, Table, FileType, Download } from 'lucide-react';
 import { ExportWizard } from './ExportWizard';
 import { TemplateEditor } from './TemplateEditor';
 import { ExportHistory } from './ExportHistory';
@@ -89,11 +85,11 @@ export function DocumentComposer() {
 }
 
 interface ExportFormatCardProps {
-  format: ExportFormat;
-  title: string;
-  description: string;
-  icon: ReactNode;
-  onExport: () => void;
+  readonly format: ExportFormat;
+  readonly title: string;
+  readonly description: string;
+  readonly icon: ReactNode;
+  readonly onExport: () => void;
 }
 
 function ExportFormatCard({ format, title, description, icon, onExport }: ExportFormatCardProps) {

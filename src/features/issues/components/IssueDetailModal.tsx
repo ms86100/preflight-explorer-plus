@@ -1,13 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
-  Paperclip,
-  Clock,
   MessageSquare,
-  History,
-  User,
-  Calendar,
   Flag,
-  Tag,
   Zap,
   Bug,
   CheckSquare,
@@ -38,7 +32,7 @@ import {
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { ClassificationBadge } from '@/components/compliance/ClassificationBanner';
-import { useIssueById, useUpdateIssue, useIssueTypes, usePriorities, useStatuses, useCloneIssue } from '@/features/issues';
+import { useIssueById, useUpdateIssue, usePriorities, useStatuses, useCloneIssue } from '@/features/issues';
 import { useAvailableTransitions, useExecuteTransition } from '@/features/workflows';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,10 +62,10 @@ interface IssueDetailModalProps {
 }
 
 interface Comment {
-  id: string;
-  author: { display_name: string; avatar_url: string | null };
-  body: string;
-  created_at: string;
+  readonly id: string;
+  readonly author: { readonly display_name: string; readonly avatar_url: string | null };
+  readonly body: string;
+  readonly created_at: string;
 }
 
 export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailModalProps) {

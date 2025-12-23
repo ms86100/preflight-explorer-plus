@@ -44,7 +44,7 @@ export function BranchesList({ branches, onCreateBranch, showCreateButton = true
   );
 }
 
-function BranchItem({ branch }: { branch: GitBranch }) {
+function BranchItem({ branch }: { readonly branch: GitBranch }) {
   const timeAgo = branch.last_commit_at
     ? formatDistanceToNow(new Date(branch.last_commit_at), { addSuffix: true })
     : branch.created_at

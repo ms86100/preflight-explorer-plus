@@ -52,7 +52,7 @@ export function CommitsList({ commits, maxVisible = 3 }: CommitsListProps) {
   );
 }
 
-function CommitItem({ commit }: { commit: GitCommit }) {
+function CommitItem({ commit }: { readonly commit: GitCommit }) {
   const shortHash = commit.commit_hash.substring(0, 7);
   const message = commit.message?.split('\n')[0] || 'No message';
   const timeAgo = commit.committed_at

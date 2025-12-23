@@ -65,7 +65,7 @@ import { ClassificationBadge } from '@/components/compliance/ClassificationBanne
 import { CreateIssueModal, IssueDetailModal, useIssuesByProject, useStatuses, useDeleteIssue, useUpdateIssue } from '@/features/issues';
 import { useProject } from '@/features/projects';
 import { useBoardsByProject, useSprintsByBoard, useCreateSprint, useStartSprint, useCompleteSprint, useAddIssueToSprint, useUpdateSprint, useDeleteSprint, useMoveIssuesToBacklog } from '@/features/boards';
-import { SprintPlanningModal } from './SprintPlanningModal';
+// SprintPlanningModal import removed - unused (S1128)
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { ClassificationLevel, SprintState } from '@/types/jira';
@@ -87,32 +87,32 @@ const PRIORITY_ICONS: Record<string, string> = {
 };
 
 interface BacklogIssue {
-  id: string;
-  issue_key: string;
-  summary: string;
-  issue_type: { name: string; color: string } | null;
-  priority: { name: string; color: string } | null;
-  status: { name: string; color: string; category: string } | null;
-  assignee: { display_name: string; avatar_url: string | null } | null;
-  story_points: number | null;
-  classification: string;
-  epic?: { issue_key: string; summary: string } | null;
+  readonly id: string;
+  readonly issue_key: string;
+  readonly summary: string;
+  readonly issue_type: { readonly name: string; readonly color: string } | null;
+  readonly priority: { readonly name: string; readonly color: string } | null;
+  readonly status: { readonly name: string; readonly color: string; readonly category: string } | null;
+  readonly assignee: { readonly display_name: string; readonly avatar_url: string | null } | null;
+  readonly story_points: number | null;
+  readonly classification: string;
+  readonly epic?: { readonly issue_key: string; readonly summary: string } | null;
 }
 
 interface SprintSection {
-  id: string;
-  name: string;
-  goal: string | null;
-  state: SprintState;
-  start_date: string | null;
-  end_date: string | null;
-  issues: BacklogIssue[];
+  readonly id: string;
+  readonly name: string;
+  readonly goal: string | null;
+  readonly state: SprintState;
+  readonly start_date: string | null;
+  readonly end_date: string | null;
+  readonly issues: readonly BacklogIssue[];
 }
 
 interface TeamMember {
-  id: string;
-  display_name: string | null;
-  avatar_url: string | null;
+  readonly id: string;
+  readonly display_name: string | null;
+  readonly avatar_url: string | null;
 }
 
 export function BacklogView() {

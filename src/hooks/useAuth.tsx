@@ -228,7 +228,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
    * ```
    */
   const signUp = async (email: string, password: string, displayName: string): Promise<{ error: Error | null }> => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${globalThis.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
       email,

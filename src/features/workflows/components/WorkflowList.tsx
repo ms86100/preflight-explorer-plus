@@ -56,9 +56,9 @@ import { WorkflowImportExport } from './WorkflowImportExport';
 import { WorkflowComparison } from './WorkflowComparison';
 
 interface WorkflowListProps {
-  projectId?: string;
-  onSelectWorkflow: (workflowId: string) => void;
-  selectedWorkflowId?: string;
+  readonly projectId?: string;
+  readonly onSelectWorkflow: (workflowId: string) => void;
+  readonly selectedWorkflowId?: string;
 }
 
 export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }: WorkflowListProps) {

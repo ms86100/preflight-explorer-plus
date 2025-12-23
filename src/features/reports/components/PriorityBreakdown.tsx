@@ -57,7 +57,7 @@ export function PriorityBreakdown({ projectId }: PriorityBreakdownProps) {
           });
         }
 
-        const current = priorityMap.get(priorityName)!;
+        const current = priorityMap.get(priorityName);
         current.total++;
         
         const category = status?.category || 'todo';

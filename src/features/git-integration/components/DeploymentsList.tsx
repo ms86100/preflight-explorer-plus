@@ -93,7 +93,7 @@ export function DeploymentsList({ deployments }: DeploymentsListProps) {
   );
 }
 
-function DeploymentItem({ deployment }: { deployment: GitDeployment }) {
+function DeploymentItem({ deployment }: { readonly deployment: GitDeployment }) {
   const envCfg = envConfig[deployment.environment];
   const statusCfg = statusConfig[deployment.status];
   const StatusIcon = statusCfg.icon;

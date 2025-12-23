@@ -73,7 +73,7 @@ export function ContributorPerformance({ projectId }: ContributorPerformanceProp
           });
         }
 
-        const stats = statsMap.get(assigneeId)!;
+        const stats = statsMap.get(assigneeId);
         
         if (category === 'done') {
           stats.completed++;

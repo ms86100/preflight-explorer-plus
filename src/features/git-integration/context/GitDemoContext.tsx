@@ -1,7 +1,7 @@
 // Git Demo Mode Context
 // Provides demo mode state and controls for testing Git integration
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -69,16 +69,16 @@ export function GitDemoProvider({ children }: { readonly children: ReactNode }) 
     }
   }, [isDemoMode, enableDemoMode, disableDemoMode]);
 
+  const contextValue = useMemo(() => ({
+    isDemoMode,
+    isLoading,
+    enableDemoMode,
+    disableDemoMode,
+    toggleDemoMode,
+  }), [isDemoMode, isLoading, enableDemoMode, disableDemoMode, toggleDemoMode]);
+
   return (
-    <GitDemoContext.Provider
-      value={{
-        isDemoMode,
-        isLoading,
-        enableDemoMode,
-        disableDemoMode,
-        toggleDemoMode,
-      }}
-    >
+    <GitDemoContext.Provider value={contextValue}>
       {children}
     </GitDemoContext.Provider>
   );
