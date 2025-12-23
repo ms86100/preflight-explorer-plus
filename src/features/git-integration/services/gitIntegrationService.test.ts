@@ -288,7 +288,9 @@ describe('Git Integration Helpers', () => {
    * Extracts issue keys from a commit message.
    */
   function extractIssueKeys(message: string): string[] {
-    const pattern = /([A-Z][A-Z0-9]*-\d+)/g;
+    // Use possessive-like matching with atomic groups via specific character limits
+    // to prevent catastrophic backtracking (ReDoS vulnerability)
+    const pattern = /\b([A-Z][A-Z0-9]{0,9}-\d{1,7})\b/g;
     const matches = message.match(pattern);
     return [...new Set(matches || [])];
   }
