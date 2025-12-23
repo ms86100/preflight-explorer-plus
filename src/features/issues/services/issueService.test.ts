@@ -6,68 +6,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { IssueInsert, IssueRow, IssueFilters, IssueWithRelations } from './issueService';
 
-// Mock responses defined at module level to avoid deep nesting (S2004 fix)
-const mockRangeResponse = () => Promise.resolve({
-  data: mockIssues,
-  error: null,
-  count: mockIssues.length,
-});
-
-const mockMaybeSingleResponse = () => Promise.resolve({
-  data: mockIssues[0],
-  error: null,
-});
-
-const mockProfilesResponse = () => Promise.resolve({
-  data: mockProfiles,
-  error: null,
-});
-
-const mockOrderFn = vi.fn(() => ({ range: mockRangeResponse }));
-const mockIlikeOrderFn = vi.fn(() => ({ range: mockRangeResponse }));
-const mockIlikeFn = vi.fn(() => ({ order: mockIlikeOrderFn }));
-const mockEqFn = vi.fn(() => ({
-  order: mockOrderFn,
-  maybeSingle: mockMaybeSingleResponse,
-  ilike: mockIlikeFn,
-  in: mockProfilesResponse,
-}));
-const mockSelectFn = vi.fn(() => ({ eq: mockEqFn }));
-
-const mockInsertSingleFn = vi.fn(() => Promise.resolve({
-  data: mockCreatedIssue,
-  error: null,
-}));
-const mockInsertSelectFn = vi.fn(() => ({ single: mockInsertSingleFn }));
-const mockInsertFn = vi.fn(() => ({ select: mockInsertSelectFn }));
-
-const mockUpdateSingleFn = vi.fn(() => Promise.resolve({
-  data: { ...mockIssues[0], summary: 'Updated Summary' },
-  error: null,
-}));
-const mockUpdateSelectFn = vi.fn(() => ({ single: mockUpdateSingleFn }));
-const mockUpdateEqFn = vi.fn(() => ({ select: mockUpdateSelectFn }));
-const mockUpdateFn = vi.fn(() => ({ eq: mockUpdateEqFn }));
-
-const mockDeleteEqFn = vi.fn(() => Promise.resolve({ error: null }));
-const mockDeleteFn = vi.fn(() => ({ eq: mockDeleteEqFn }));
-
-const mockSupabaseFrom = vi.fn(() => ({
-  select: mockSelectFn,
-  insert: mockInsertFn,
-  update: mockUpdateFn,
-  delete: mockDeleteFn,
-}));
-
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: mockSupabaseFrom,
-    rpc: vi.fn(() => Promise.resolve({
-      data: mockProfiles,
-      error: null,
-    })),
-  },
-}));
+// ============================================================================
+// Mock Data (defined FIRST to avoid hoisting issues with S2004)
+// ============================================================================
 
 const mockProfiles = [
   { id: 'user-1', display_name: 'John Doe', avatar_url: null },
@@ -119,6 +60,88 @@ const mockCreatedIssue: IssueRow = {
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
 };
+
+// ============================================================================
+// Mock Factory Functions (module level - S2004 fix)
+// ============================================================================
+
+function createMockRangeResponse() {
+  return Promise.resolve({
+    data: mockIssues,
+    error: null,
+    count: mockIssues.length,
+  });
+}
+
+function createMockMaybeSingleResponse() {
+  return Promise.resolve({
+    data: mockIssues[0],
+    error: null,
+  });
+}
+
+function createMockProfilesResponse() {
+  return Promise.resolve({
+    data: mockProfiles,
+    error: null,
+  });
+}
+
+function createMockInsertSingleResponse() {
+  return Promise.resolve({
+    data: mockCreatedIssue,
+    error: null,
+  });
+}
+
+function createMockUpdateSingleResponse() {
+  return Promise.resolve({
+    data: { ...mockIssues[0], summary: 'Updated Summary' },
+    error: null,
+  });
+}
+
+function createDefaultFromMock() {
+  return {
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        order: vi.fn(() => ({ range: createMockRangeResponse })),
+        maybeSingle: createMockMaybeSingleResponse,
+        ilike: vi.fn(() => ({ order: vi.fn(() => ({ range: createMockRangeResponse })) })),
+        in: createMockProfilesResponse,
+      })),
+    })),
+    insert: vi.fn(() => ({
+      select: vi.fn(() => ({ single: createMockInsertSingleResponse })),
+    })),
+    update: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        select: vi.fn(() => ({ single: createMockUpdateSingleResponse })),
+      })),
+    })),
+    delete: vi.fn(() => ({
+      eq: vi.fn(() => Promise.resolve({ error: null })),
+    })),
+  };
+}
+
+// ============================================================================
+// Supabase Client Mock
+// ============================================================================
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: vi.fn(() => createDefaultFromMock()),
+    rpc: vi.fn(() => Promise.resolve({
+      data: mockProfiles,
+      error: null,
+    })),
+  },
+}));
+
+// ============================================================================
+// Type Tests
+// ============================================================================
 
 describe('IssueInsert interface', () => {
   it('should accept valid issue data', () => {
@@ -190,25 +213,32 @@ describe('IssueFilters interface', () => {
   });
 });
 
-// Helper functions moved to module scope (S7721/S2004 fix)
-const validateSummary = (summary: string): boolean => {
-  return summary.trim().length > 0;
-};
+// ============================================================================
+// Validation Helper Functions (module level - S2004 fix)
+// ============================================================================
 
-const validateStoryPoints = (points: number | undefined): boolean => {
+function validateSummary(summary: string): boolean {
+  return summary.trim().length > 0;
+}
+
+function validateStoryPoints(points: number | undefined): boolean {
   if (points === undefined) return true;
   return points >= 0;
-};
+}
 
-const validateIssueKey = (key: string): boolean => {
+function validateIssueKey(key: string): boolean {
   return /^[A-Z][A-Z0-9]+-\d+$/.test(key);
-};
+}
 
-const validateDueDate = (date: string | undefined): boolean => {
+function validateDueDate(date: string | undefined): boolean {
   if (!date) return true;
   const parsed = Date.parse(date);
   return !Number.isNaN(parsed);
-};
+}
+
+// ============================================================================
+// Validation Tests
+// ============================================================================
 
 describe('Issue validation', () => {
   it('should validate summary is not empty', () => {

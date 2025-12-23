@@ -5,31 +5,65 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
-// Mock response functions defined at module level to avoid deep nesting (S2004 fix)
-const mockSingleResponse = () => Promise.resolve({ data: null, error: null });
-const mockInResponse = () => Promise.resolve({ data: [], error: null });
-const mockOrderResponse = () => Promise.resolve({ data: [], error: null });
-const mockLimitResponse = () => Promise.resolve({ data: [], error: null });
-const mockInsertSingleResponse = () => Promise.resolve({ data: { id: 'new-id' }, error: null });
-const mockUpdateSingleResponse = () => Promise.resolve({ data: {}, error: null });
-const mockDeleteResponse = () => Promise.resolve({ error: null });
+// ============================================================================
+// Mock Response Functions (module level - S2004 fix)
+// ============================================================================
 
-const mockEqFn = vi.fn(() => ({
-  single: mockSingleResponse,
-  in: mockInResponse,
-}));
-const mockSelectFn = vi.fn(() => ({
-  eq: mockEqFn,
-  order: mockOrderResponse,
-  limit: mockLimitResponse,
-}));
-const mockInsertSelectFn = vi.fn(() => ({ single: mockInsertSingleResponse }));
-const mockInsertFn = vi.fn(() => ({ select: mockInsertSelectFn }));
-const mockUpdateSelectFn = vi.fn(() => ({ single: mockUpdateSingleResponse }));
-const mockUpdateEqFn = vi.fn(() => ({ select: mockUpdateSelectFn }));
-const mockUpdateFn = vi.fn(() => ({ eq: mockUpdateEqFn }));
-const mockDeleteEqFn = vi.fn(mockDeleteResponse);
-const mockDeleteFn = vi.fn(() => ({ eq: mockDeleteEqFn }));
+function mockSingleResponse() {
+  return Promise.resolve({ data: null, error: null });
+}
+
+function mockInResponse() {
+  return Promise.resolve({ data: [], error: null });
+}
+
+function mockOrderResponse() {
+  return Promise.resolve({ data: [], error: null });
+}
+
+function mockLimitResponse() {
+  return Promise.resolve({ data: [], error: null });
+}
+
+function mockInsertSingleResponse() {
+  return Promise.resolve({ data: { id: 'new-id' }, error: null });
+}
+
+function mockUpdateSingleResponse() {
+  return Promise.resolve({ data: {}, error: null });
+}
+
+function mockDeleteResponse() {
+  return Promise.resolve({ error: null });
+}
+
+// ============================================================================
+// Mock Factory Function (module level - S2004 fix)
+// ============================================================================
+
+function createDefaultFromMock() {
+  return {
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        single: mockSingleResponse,
+        in: mockInResponse,
+      })),
+      order: mockOrderResponse,
+      limit: mockLimitResponse,
+    })),
+    insert: vi.fn(() => ({
+      select: vi.fn(() => ({ single: mockInsertSingleResponse })),
+    })),
+    update: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        select: vi.fn(() => ({ single: mockUpdateSingleResponse })),
+      })),
+    })),
+    delete: vi.fn(() => ({
+      eq: mockDeleteResponse,
+    })),
+  };
+}
 
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
@@ -37,12 +71,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     auth: {
       getUser: vi.fn(() => Promise.resolve({ data: { user: { id: 'user-uuid' } } })),
     },
-    from: vi.fn(() => ({
-      select: mockSelectFn,
-      insert: mockInsertFn,
-      update: mockUpdateFn,
-      delete: mockDeleteFn,
-    })),
+    from: vi.fn(() => createDefaultFromMock()),
   },
 }));
 
