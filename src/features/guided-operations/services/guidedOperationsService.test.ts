@@ -5,6 +5,30 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
+// Mock response functions defined at module level to avoid deep nesting (S2004 fix)
+const mockSingleResponse = () => Promise.resolve({ data: null, error: null });
+const mockOrderResponse = () => Promise.resolve({ data: [], error: null });
+const mockDeleteResponse = () => Promise.resolve({ error: null });
+const mockInsertSingleResponse = () => Promise.resolve({ data: { id: 'new-id' }, error: null });
+const mockUpdateSingleResponse = () => Promise.resolve({ data: {}, error: null });
+
+const mockEqOrderFn = vi.fn(mockOrderResponse);
+const mockEqFn = vi.fn(() => ({
+  single: mockSingleResponse,
+  order: mockEqOrderFn,
+}));
+const mockSelectFn = vi.fn(() => ({
+  eq: mockEqFn,
+  order: mockOrderResponse,
+}));
+const mockInsertSelectFn = vi.fn(() => ({ single: mockInsertSingleResponse }));
+const mockInsertFn = vi.fn(() => ({ select: mockInsertSelectFn }));
+const mockUpdateSelectFn = vi.fn(() => ({ single: mockUpdateSingleResponse }));
+const mockUpdateEqFn = vi.fn(() => ({ select: mockUpdateSelectFn }));
+const mockUpdateFn = vi.fn(() => ({ eq: mockUpdateEqFn }));
+const mockDeleteEqFn = vi.fn(mockDeleteResponse);
+const mockDeleteFn = vi.fn(() => ({ eq: mockDeleteEqFn }));
+
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -12,28 +36,10 @@ vi.mock('@/integrations/supabase/client', () => ({
       getUser: vi.fn(() => Promise.resolve({ data: { user: { id: 'user-uuid' } } })),
     },
     from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: null, error: null })),
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-      })),
-      insert: vi.fn(() => ({
-        select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: { id: 'new-id' }, error: null })),
-        })),
-      })),
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-          })),
-        })),
-      })),
-      delete: vi.fn(() => ({
-        eq: vi.fn(() => Promise.resolve({ error: null })),
-      })),
+      select: mockSelectFn,
+      insert: mockInsertFn,
+      update: mockUpdateFn,
+      delete: mockDeleteFn,
     })),
   },
 }));
@@ -327,60 +333,126 @@ describe('Guided Operations Types', () => {
 // Validation Tests
 // ============================================================================
 
-describe('Guided Operations Validation', () => {
-  /**
-   * Validates input value against field definition.
-   */
-  function validateInput(
-    field: StepInputField,
-    value: unknown
-  ): { valid: boolean; error?: string } {
-    // Check required
-    if (field.required && (value === undefined || value === null || value === '')) {
-      return { valid: false, error: `${field.label} is required` };
-    }
+/**
+ * Validates input value against field definition.
+ */
+function validateInput(
+  field: StepInputField,
+  value: unknown
+): { valid: boolean; error?: string } {
+  // Check required
+  if (field.required && (value === undefined || value === null || value === '')) {
+    return { valid: false, error: `${field.label} is required` };
+  }
 
-    // Skip validation for empty non-required fields
-    if (value === undefined || value === null || value === '') {
-      return { valid: true };
-    }
-
-    // Type-specific validation
-    switch (field.type) {
-      case 'number':
-        if (typeof value !== 'number' || Number.isNaN(value)) {
-          return { valid: false, error: `${field.label} must be a number` };
-        }
-        if (field.validation?.min !== undefined && value < field.validation.min) {
-          return { valid: false, error: `${field.label} must be at least ${field.validation.min}` };
-        }
-        if (field.validation?.max !== undefined && value > field.validation.max) {
-          return { valid: false, error: `${field.label} must be at most ${field.validation.max}` };
-        }
-        break;
-
-      case 'text':
-        if (typeof value !== 'string') {
-          return { valid: false, error: `${field.label} must be text` };
-        }
-        if (field.validation?.pattern) {
-          const regex = new RegExp(field.validation.pattern);
-          if (!regex.test(value)) {
-            return { valid: false, error: field.validation.message || `${field.label} format is invalid` };
-          }
-        }
-        break;
-
-      case 'select':
-        if (!field.options?.find((o) => o.value === value)) {
-          return { valid: false, error: `${field.label} must be a valid option` };
-        }
-        break;
-    }
-
+  // Skip validation for empty non-required fields
+  if (value === undefined || value === null || value === '') {
     return { valid: true };
   }
 
+  // Type-specific validation
+  switch (field.type) {
+    case 'number':
+      if (typeof value !== 'number' || Number.isNaN(value)) {
+        return { valid: false, error: `${field.label} must be a number` };
+      }
+      if (field.validation?.min !== undefined && value < field.validation.min) {
+        return { valid: false, error: `${field.label} must be at least ${field.validation.min}` };
+      }
+      if (field.validation?.max !== undefined && value > field.validation.max) {
+        return { valid: false, error: `${field.label} must be at most ${field.validation.max}` };
+      }
+      break;
+
+    case 'text':
+      if (typeof value !== 'string') {
+        return { valid: false, error: `${field.label} must be text` };
+      }
+      if (field.validation?.pattern) {
+        const regex = new RegExp(field.validation.pattern);
+        if (!regex.test(value)) {
+          return { valid: false, error: field.validation.message || `${field.label} format is invalid` };
+        }
+      }
+      break;
+
+    case 'select':
+      if (!field.options?.find((o) => o.value === value)) {
+        return { valid: false, error: `${field.label} must be a valid option` };
+      }
+      break;
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validates all inputs for a step.
+ */
+function validateStep(
+  step: LocalOperationStep,
+  data: Record<string, unknown>
+): { valid: boolean; errors: Record<string, string> } {
+  const errors: Record<string, string> = {};
+
+  for (const input of step.inputs || []) {
+    const result = validateInput(input, data[input.name]);
+    if (!result.valid && result.error) {
+      errors[input.name] = result.error;
+    }
+  }
+
+  return { valid: Object.keys(errors).length === 0, errors };
+}
+
+/**
+ * Evaluates conditions to determine next step.
+ */
+function evaluateConditions(
+  step: LocalOperationStep,
+  data: Record<string, unknown>
+): string | null {
+  if (!step.conditions) return null;
+
+  for (const condition of step.conditions) {
+    const fieldValue = data[condition.field];
+    let matches = false;
+
+    switch (condition.operator) {
+      case 'equals':
+        matches = fieldValue === condition.value;
+        break;
+      case 'not_equals':
+        matches = fieldValue !== condition.value;
+        break;
+      case 'contains':
+        matches = String(fieldValue).includes(String(condition.value));
+        break;
+      case 'greater_than':
+        matches = Number(fieldValue) > Number(condition.value);
+        break;
+      case 'less_than':
+        matches = Number(fieldValue) < Number(condition.value);
+        break;
+    }
+
+    if (matches && condition.skipToStep) {
+      return condition.skipToStep;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Calculates progress percentage.
+ */
+function calculateProgress(currentStep: number, totalSteps: number): number {
+  if (totalSteps === 0) return 0;
+  return Math.round((currentStep / totalSteps) * 100);
+}
+
+describe('Guided Operations Validation', () => {
   describe('validateInput', () => {
     it('should validate required fields', () => {
       const field: StepInputField = {
@@ -453,25 +525,6 @@ describe('Guided Operations Validation', () => {
     });
   });
 
-  /**
-   * Validates all inputs for a step.
-   */
-  function validateStep(
-    step: LocalOperationStep,
-    data: Record<string, unknown>
-  ): { valid: boolean; errors: Record<string, string> } {
-    const errors: Record<string, string> = {};
-
-    for (const input of step.inputs || []) {
-      const result = validateInput(input, data[input.name]);
-      if (!result.valid && result.error) {
-        errors[input.name] = result.error;
-      }
-    }
-
-    return { valid: Object.keys(errors).length === 0, errors };
-  }
-
   describe('validateStep', () => {
     it('should validate all inputs in step', () => {
       const step: LocalOperationStep = {
@@ -505,152 +558,117 @@ describe('Guided Operations Validation', () => {
       expect(result.errors).toEqual({});
     });
   });
-});
-
-// ============================================================================
-// Helper Function Tests
-// ============================================================================
-
-describe('Guided Operations Helpers', () => {
-  /**
-   * Calculates progress percentage for an execution.
-   */
-  function calculateProgress(execution: LocalOperationExecution, totalSteps: number): number {
-    if (execution.status === 'completed') return 100;
-    if (execution.status === 'failed' || execution.status === 'cancelled') {
-      return Math.round((execution.current_step / totalSteps) * 100);
-    }
-    return Math.round((execution.current_step / totalSteps) * 100);
-  }
-
-  describe('calculateProgress', () => {
-    it('should return 100 for completed execution', () => {
-      const execution: LocalOperationExecution = {
-        id: '1', operation_id: 'op', status: 'completed',
-        current_step: 3, step_data: {}, started_at: '',
-      };
-      expect(calculateProgress(execution, 4)).toBe(100);
-    });
-
-    it('should calculate progress based on current step', () => {
-      const execution: LocalOperationExecution = {
-        id: '1', operation_id: 'op', status: 'in_progress',
-        current_step: 2, step_data: {}, started_at: '',
-      };
-      expect(calculateProgress(execution, 4)).toBe(50);
-    });
-
-    it('should return 0 for first step', () => {
-      const execution: LocalOperationExecution = {
-        id: '1', operation_id: 'op', status: 'in_progress',
-        current_step: 0, step_data: {}, started_at: '',
-      };
-      expect(calculateProgress(execution, 4)).toBe(0);
-    });
-  });
-
-  /**
-   * Evaluates step conditions to determine next step.
-   */
-  function evaluateConditions(
-    step: LocalOperationStep,
-    data: Record<string, unknown>
-  ): string | null {
-    for (const condition of step.conditions || []) {
-      const value = data[condition.field];
-      let matches = false;
-
-      switch (condition.operator) {
-        case 'equals':
-          matches = value === condition.value;
-          break;
-        case 'not_equals':
-          matches = value !== condition.value;
-          break;
-        case 'contains':
-          matches = String(value).includes(String(condition.value));
-          break;
-        case 'greater_than':
-          matches = Number(value) > Number(condition.value);
-          break;
-        case 'less_than':
-          matches = Number(value) < Number(condition.value);
-          break;
-      }
-
-      if (matches && condition.skipToStep) {
-        return condition.skipToStep;
-      }
-    }
-
-    return null;
-  }
 
   describe('evaluateConditions', () => {
     it('should return null when no conditions', () => {
       const step: LocalOperationStep = {
-        id: '1', title: 'Test', type: 'input',
+        id: '1',
+        title: 'Test',
+        type: 'input',
       };
+      
       expect(evaluateConditions(step, {})).toBeNull();
     });
 
     it('should evaluate equals condition', () => {
       const step: LocalOperationStep = {
-        id: '1', title: 'Test', type: 'input',
+        id: '1',
+        title: 'Test',
+        type: 'input',
         conditions: [
-          { field: 'type', operator: 'equals', value: 'simple', skipToStep: 'final' },
+          { field: 'type', operator: 'equals', value: 'skip', skipToStep: 'step-3' },
         ],
       };
       
-      expect(evaluateConditions(step, { type: 'simple' })).toBe('final');
-      expect(evaluateConditions(step, { type: 'advanced' })).toBeNull();
+      expect(evaluateConditions(step, { type: 'skip' })).toBe('step-3');
+      expect(evaluateConditions(step, { type: 'other' })).toBeNull();
     });
 
     it('should evaluate greater_than condition', () => {
       const step: LocalOperationStep = {
-        id: '1', title: 'Test', type: 'input',
+        id: '1',
+        title: 'Test',
+        type: 'input',
         conditions: [
-          { field: 'count', operator: 'greater_than', value: 10, skipToStep: 'bulk' },
+          { field: 'amount', operator: 'greater_than', value: 1000, skipToStep: 'approval' },
         ],
       };
       
-      expect(evaluateConditions(step, { count: 15 })).toBe('bulk');
-      expect(evaluateConditions(step, { count: 5 })).toBeNull();
+      expect(evaluateConditions(step, { amount: 1500 })).toBe('approval');
+      expect(evaluateConditions(step, { amount: 500 })).toBeNull();
     });
   });
 
-  /**
-   * Gets category display info.
-   */
-  function getCategoryInfo(category: string): { label: string; icon: string } {
-    const categories: Record<string, { label: string; icon: string }> = {
-      project_management: { label: 'Project Management', icon: 'folder' },
-      maintenance: { label: 'Maintenance', icon: 'wrench' },
-      reporting: { label: 'Reporting', icon: 'chart' },
-      automation: { label: 'Automation', icon: 'robot' },
-      general: { label: 'General', icon: 'cog' },
-    };
-
-    return categories[category] || { label: category, icon: 'question' };
-  }
-
-  describe('getCategoryInfo', () => {
-    it('should return info for known categories', () => {
-      expect(getCategoryInfo('project_management')).toEqual({
-        label: 'Project Management',
-        icon: 'folder',
-      });
-      expect(getCategoryInfo('maintenance')).toEqual({
-        label: 'Maintenance',
-        icon: 'wrench',
-      });
+  describe('calculateProgress', () => {
+    it('should calculate correct percentage', () => {
+      expect(calculateProgress(0, 4)).toBe(0);
+      expect(calculateProgress(2, 4)).toBe(50);
+      expect(calculateProgress(4, 4)).toBe(100);
     });
 
-    it('should return default for unknown categories', () => {
-      expect(getCategoryInfo('unknown')).toEqual({
-        label: 'unknown',
-        icon: 'question',
-      });
+    it('should handle zero total steps', () => {
+      expect(calculateProgress(0, 0)).toBe(0);
+    });
+  });
+});
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Creates a new execution state.
+ */
+function createExecution(operationId: string, operationName: string): LocalOperationExecution {
+  return {
+    id: `exec-${Date.now()}`,
+    operation_id: operationId,
+    operation_name: operationName,
+    status: 'in_progress',
+    current_step: 0,
+    step_data: {},
+    started_at: new Date().toISOString(),
+  };
+}
+
+/**
+ * Gets display text for execution status.
+ */
+function getStatusDisplay(status: LocalOperationExecution['status']): { label: string; color: string } {
+  switch (status) {
+    case 'in_progress':
+      return { label: 'In Progress', color: 'blue' };
+    case 'completed':
+      return { label: 'Completed', color: 'green' };
+    case 'failed':
+      return { label: 'Failed', color: 'red' };
+    case 'cancelled':
+      return { label: 'Cancelled', color: 'gray' };
+    case 'pending_approval':
+      return { label: 'Pending Approval', color: 'yellow' };
+  }
+}
+
+describe('Guided Operations Helpers', () => {
+  describe('createExecution', () => {
+    it('should create new execution with initial state', () => {
+      const execution = createExecution('op-1', 'Test Operation');
+      
+      expect(execution.operation_id).toBe('op-1');
+      expect(execution.operation_name).toBe('Test Operation');
+      expect(execution.status).toBe('in_progress');
+      expect(execution.current_step).toBe(0);
+      expect(execution.step_data).toEqual({});
+    });
+  });
+
+  describe('getStatusDisplay', () => {
+    it('should return correct display for each status', () => {
+      expect(getStatusDisplay('in_progress')).toEqual({ label: 'In Progress', color: 'blue' });
+      expect(getStatusDisplay('completed')).toEqual({ label: 'Completed', color: 'green' });
+      expect(getStatusDisplay('failed')).toEqual({ label: 'Failed', color: 'red' });
+      expect(getStatusDisplay('cancelled')).toEqual({ label: 'Cancelled', color: 'gray' });
+      expect(getStatusDisplay('pending_approval')).toEqual({ label: 'Pending Approval', color: 'yellow' });
     });
   });
 });

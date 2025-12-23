@@ -5,6 +5,33 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
+// Mock response functions defined at module level to avoid deep nesting (S2004 fix)
+const mockSingleResponse = () => Promise.resolve({ data: null, error: null });
+const mockOrderResponse = () => Promise.resolve({ data: [], error: null });
+const mockDeleteResponse = () => Promise.resolve({ error: null });
+const mockInsertSingleResponse = () => Promise.resolve({ data: {}, error: null });
+const mockUpdateSingleResponse = () => Promise.resolve({ data: {}, error: null });
+
+const mockInOrderFn = vi.fn(mockOrderResponse);
+const mockInFn = vi.fn(() => ({ order: mockInOrderFn }));
+const mockEqOrderFn = vi.fn(mockOrderResponse);
+const mockEqFn = vi.fn(() => ({
+  single: mockSingleResponse,
+  order: mockEqOrderFn,
+}));
+const mockSelectFn = vi.fn(() => ({
+  eq: mockEqFn,
+  order: mockOrderResponse,
+  in: mockInFn,
+}));
+const mockInsertSelectFn = vi.fn(() => ({ single: mockInsertSingleResponse }));
+const mockInsertFn = vi.fn(() => ({ select: mockInsertSelectFn }));
+const mockUpdateSelectFn = vi.fn(() => ({ single: mockUpdateSingleResponse }));
+const mockUpdateEqFn = vi.fn(() => ({ select: mockUpdateSelectFn }));
+const mockUpdateFn = vi.fn(() => ({ eq: mockUpdateEqFn }));
+const mockDeleteEqFn = vi.fn(mockDeleteResponse);
+const mockDeleteFn = vi.fn(() => ({ eq: mockDeleteEqFn }));
+
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -12,31 +39,10 @@ vi.mock('@/integrations/supabase/client', () => ({
       getUser: vi.fn(() => Promise.resolve({ data: { user: { id: 'user-uuid' } } })),
     },
     from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: null, error: null })),
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        in: vi.fn(() => ({
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-      })),
-      insert: vi.fn(() => ({
-        select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-        })),
-      })),
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-          })),
-        })),
-      })),
-      delete: vi.fn(() => ({
-        eq: vi.fn(() => Promise.resolve({ error: null })),
-      })),
+      select: mockSelectFn,
+      insert: mockInsertFn,
+      update: mockUpdateFn,
+      delete: mockDeleteFn,
     })),
   },
 }));
@@ -283,18 +289,77 @@ describe('Git Integration Types', () => {
 // Helper Function Tests
 // ============================================================================
 
-describe('Git Integration Helpers', () => {
-  /**
-   * Extracts issue keys from a commit message.
-   */
-  function extractIssueKeys(message: string): string[] {
-    // Use possessive-like matching with atomic groups via specific character limits
-    // to prevent catastrophic backtracking (ReDoS vulnerability)
-    const pattern = /\b([A-Z][A-Z0-9]{0,9}-\d{1,7})\b/g;
-    const matches = message.match(pattern);
-    return [...new Set(matches || [])];
-  }
+/**
+ * Extracts issue keys from a commit message.
+ */
+function extractIssueKeys(message: string): string[] {
+  // Use possessive-like matching with atomic groups via specific character limits
+  // to prevent catastrophic backtracking (ReDoS vulnerability)
+  const pattern = /\b([A-Z][A-Z0-9]{0,9}-\d{1,7})\b/g;
+  const matches = message.match(pattern);
+  return [...new Set(matches || [])];
+}
 
+/**
+ * Generates a branch name from issue key and summary.
+ */
+function generateBranchName(issueKey: string, summary: string): string {
+  const sanitized = summary
+    .toLowerCase()
+    .split(/[^a-z0-9\s-]/).join('')
+    .split(/\s+/).join('-')
+    .substring(0, 50);
+  return `feature/${issueKey.toLowerCase()}-${sanitized}`;
+}
+
+/**
+ * Calculates development summary from raw data.
+ */
+function calculateDevSummary(
+  commits: GitCommit[],
+  branches: GitBranch[],
+  pullRequests: GitPullRequest[],
+  builds: GitBuild[],
+  deployments: { environment: string; status: string }[]
+): IssueDevelopmentSummary {
+  const openPRs = pullRequests.filter((pr) => pr.status === 'open');
+  const mergedPRs = pullRequests.filter((pr) => pr.status === 'merged');
+  const latestBuild = [...builds].sort(
+    (a, b) => new Date(b.started_at || 0).getTime() - new Date(a.started_at || 0).getTime()
+  )[0];
+  const deployedEnvs = [
+    ...new Set(
+      deployments.filter((d) => d.status === 'success').map((d) => d.environment)
+    ),
+  ];
+
+  return {
+    commitCount: commits.length,
+    branchCount: branches.length,
+    openPRCount: openPRs.length,
+    mergedPRCount: mergedPRs.length,
+    latestBuildStatus: latestBuild?.status,
+    deployedEnvironments: deployedEnvs,
+  };
+}
+
+/**
+ * Determines the overall build health based on recent builds.
+ */
+function getBuildHealth(builds: GitBuild[]): 'healthy' | 'unstable' | 'broken' | 'unknown' {
+  if (builds.length === 0) return 'unknown';
+
+  const recentBuilds = builds.slice(0, 5);
+  const successCount = recentBuilds.filter((b) => b.status === 'success').length;
+  const failedCount = recentBuilds.filter((b) => b.status === 'failed').length;
+
+  if (successCount === recentBuilds.length) return 'healthy';
+  if (failedCount > successCount) return 'broken';
+  if (failedCount > 0) return 'unstable';
+  return 'healthy';
+}
+
+describe('Git Integration Helpers', () => {
   describe('extractIssueKeys', () => {
     it('should extract single issue key', () => {
       expect(extractIssueKeys('PROJ-123 Fix bug')).toEqual(['PROJ-123']);
@@ -318,18 +383,6 @@ describe('Git Integration Helpers', () => {
     });
   });
 
-  /**
-   * Generates a branch name from issue key and summary.
-   */
-  function generateBranchName(issueKey: string, summary: string): string {
-    const sanitized = summary
-      .toLowerCase()
-      .split(/[^a-z0-9\s-]/).join('')
-      .split(/\s+/).join('-')
-      .substring(0, 50);
-    return `feature/${issueKey.toLowerCase()}-${sanitized}`;
-  }
-
   describe('generateBranchName', () => {
     it('should generate valid branch name', () => {
       expect(generateBranchName('PROJ-123', 'Fix login bug')).toBe(
@@ -349,37 +402,6 @@ describe('Git Integration Helpers', () => {
       expect(result.length).toBeLessThanOrEqual(50 + 'feature/proj-123-'.length);
     });
   });
-
-  /**
-   * Calculates development summary from raw data.
-   */
-  function calculateDevSummary(
-    commits: GitCommit[],
-    branches: GitBranch[],
-    pullRequests: GitPullRequest[],
-    builds: GitBuild[],
-    deployments: { environment: string; status: string }[]
-  ): IssueDevelopmentSummary {
-    const openPRs = pullRequests.filter((pr) => pr.status === 'open');
-    const mergedPRs = pullRequests.filter((pr) => pr.status === 'merged');
-    const latestBuild = [...builds].sort(
-      (a, b) => new Date(b.started_at || 0).getTime() - new Date(a.started_at || 0).getTime()
-    )[0];
-    const deployedEnvs = [
-      ...new Set(
-        deployments.filter((d) => d.status === 'success').map((d) => d.environment)
-      ),
-    ];
-
-    return {
-      commitCount: commits.length,
-      branchCount: branches.length,
-      openPRCount: openPRs.length,
-      mergedPRCount: mergedPRs.length,
-      latestBuildStatus: latestBuild?.status,
-      deployedEnvironments: deployedEnvs,
-    };
-  }
 
   describe('calculateDevSummary', () => {
     it('should calculate empty summary', () => {
@@ -449,22 +471,6 @@ describe('Git Integration Helpers', () => {
 // ============================================================================
 
 describe('Build Status Helpers', () => {
-  /**
-   * Determines the overall build health based on recent builds.
-   */
-  function getBuildHealth(builds: GitBuild[]): 'healthy' | 'unstable' | 'broken' | 'unknown' {
-    if (builds.length === 0) return 'unknown';
-
-    const recentBuilds = builds.slice(0, 5);
-    const successCount = recentBuilds.filter((b) => b.status === 'success').length;
-    const failedCount = recentBuilds.filter((b) => b.status === 'failed').length;
-
-    if (successCount === recentBuilds.length) return 'healthy';
-    if (failedCount > successCount) return 'broken';
-    if (failedCount > 0) return 'unstable';
-    return 'healthy';
-  }
-
   describe('getBuildHealth', () => {
     it('should return unknown for no builds', () => {
       expect(getBuildHealth([])).toBe('unknown');

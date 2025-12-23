@@ -5,6 +5,32 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
+// Mock response functions defined at module level to avoid deep nesting (S2004 fix)
+const mockSingleResponse = () => Promise.resolve({ data: null, error: null });
+const mockInResponse = () => Promise.resolve({ data: [], error: null });
+const mockOrderResponse = () => Promise.resolve({ data: [], error: null });
+const mockLimitResponse = () => Promise.resolve({ data: [], error: null });
+const mockInsertSingleResponse = () => Promise.resolve({ data: { id: 'new-id' }, error: null });
+const mockUpdateSingleResponse = () => Promise.resolve({ data: {}, error: null });
+const mockDeleteResponse = () => Promise.resolve({ error: null });
+
+const mockEqFn = vi.fn(() => ({
+  single: mockSingleResponse,
+  in: mockInResponse,
+}));
+const mockSelectFn = vi.fn(() => ({
+  eq: mockEqFn,
+  order: mockOrderResponse,
+  limit: mockLimitResponse,
+}));
+const mockInsertSelectFn = vi.fn(() => ({ single: mockInsertSingleResponse }));
+const mockInsertFn = vi.fn(() => ({ select: mockInsertSelectFn }));
+const mockUpdateSelectFn = vi.fn(() => ({ single: mockUpdateSingleResponse }));
+const mockUpdateEqFn = vi.fn(() => ({ select: mockUpdateSelectFn }));
+const mockUpdateFn = vi.fn(() => ({ eq: mockUpdateEqFn }));
+const mockDeleteEqFn = vi.fn(mockDeleteResponse);
+const mockDeleteFn = vi.fn(() => ({ eq: mockDeleteEqFn }));
+
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -12,29 +38,10 @@ vi.mock('@/integrations/supabase/client', () => ({
       getUser: vi.fn(() => Promise.resolve({ data: { user: { id: 'user-uuid' } } })),
     },
     from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: null, error: null })),
-          in: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
-        order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
-      })),
-      insert: vi.fn(() => ({
-        select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: { id: 'new-id' }, error: null })),
-        })),
-      })),
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-          })),
-        })),
-      })),
-      delete: vi.fn(() => ({
-        eq: vi.fn(() => Promise.resolve({ error: null })),
-      })),
+      select: mockSelectFn,
+      insert: mockInsertFn,
+      update: mockUpdateFn,
+      delete: mockDeleteFn,
     })),
   },
 }));
