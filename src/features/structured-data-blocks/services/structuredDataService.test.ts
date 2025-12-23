@@ -439,7 +439,8 @@ describe('Structured Data Helpers', () => {
   });
 
   /**
-   * Evaluates a simple formula.
+   * Safely evaluates a simple arithmetic formula without using eval/Function.
+   * Only supports basic math operations: +, -, *, /, parentheses, and numbers.
    */
   function evaluateFormula(
     formula: string,
@@ -455,17 +456,79 @@ describe('Structured Data Helpers', () => {
     for (const column of columns) {
       const value = row.values[column.id];
       if (typeof value === 'number') {
-        evaluatable = evaluatable.replace(new RegExp(column.id, 'g'), String(value));
+        evaluatable = evaluatable.replace(new RegExp(`\\b${column.id}\\b`, 'g'), String(value));
       }
     }
     
+    // Validate: only allow numbers, operators, parentheses, decimals, and whitespace
+    const safePattern = /^[\d+\-*/().\s]+$/;
+    if (!safePattern.test(evaluatable)) {
+      return null;
+    }
+    
     try {
-      // Simple evaluation (in production, use a proper parser)
-      // eslint-disable-next-line no-eval
-      return Function(`return ${evaluatable}`)();
+      // Safe recursive descent parser for basic arithmetic
+      return parseExpression(evaluatable.replace(/\s/g, ''));
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Simple recursive descent parser for arithmetic expressions.
+   * Handles +, -, *, /, and parentheses with correct precedence.
+   */
+  function parseExpression(expr: string): number {
+    let pos = 0;
+
+    function parseNumber(): number {
+      let numStr = '';
+      while (pos < expr.length && /[\d.]/.test(expr[pos])) {
+        numStr += expr[pos++];
+      }
+      if (!numStr) throw new Error('Expected number');
+      return parseFloat(numStr);
+    }
+
+    function parseFactor(): number {
+      if (expr[pos] === '(') {
+        pos++; // skip '('
+        const result = parseAddSub();
+        if (expr[pos] !== ')') throw new Error('Expected )');
+        pos++; // skip ')'
+        return result;
+      }
+      // Handle negative numbers
+      if (expr[pos] === '-') {
+        pos++;
+        return -parseFactor();
+      }
+      return parseNumber();
+    }
+
+    function parseMulDiv(): number {
+      let left = parseFactor();
+      while (pos < expr.length && (expr[pos] === '*' || expr[pos] === '/')) {
+        const op = expr[pos++];
+        const right = parseFactor();
+        left = op === '*' ? left * right : left / right;
+      }
+      return left;
+    }
+
+    function parseAddSub(): number {
+      let left = parseMulDiv();
+      while (pos < expr.length && (expr[pos] === '+' || expr[pos] === '-')) {
+        const op = expr[pos++];
+        const right = parseMulDiv();
+        left = op === '+' ? left + right : left - right;
+      }
+      return left;
+    }
+
+    const result = parseAddSub();
+    if (pos !== expr.length) throw new Error('Unexpected character');
+    return result;
   }
 
   describe('evaluateFormula', () => {
