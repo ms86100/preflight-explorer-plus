@@ -10,9 +10,9 @@ interface ResolutionTimeChartProps {
 }
 
 interface ResolutionBucket {
-  range: string;
-  count: number;
-  percentage: number;
+  readonly range: string;
+  readonly count: number;
+  readonly percentage: number;
 }
 
 export function ResolutionTimeChart({ projectId }: ResolutionTimeChartProps) {

@@ -11,13 +11,13 @@ interface OverdueAnalysisProps {
 }
 
 interface OverdueIssue {
-  id: string;
-  issueKey: string;
-  summary: string;
-  dueDate: string;
-  daysOverdue: number;
-  priority: string;
-  assignee: string | null;
+  readonly id: string;
+  readonly issueKey: string;
+  readonly summary: string;
+  readonly dueDate: string;
+  readonly daysOverdue: number;
+  readonly priority: string;
+  readonly assignee: string | null;
 }
 
 export function OverdueAnalysis({ projectId }: OverdueAnalysisProps) {

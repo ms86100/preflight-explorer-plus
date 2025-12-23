@@ -296,16 +296,63 @@ describe('Document Composer Types', () => {
 // Helper Function Tests
 // ============================================================================
 
-describe('Document Composer Helpers', () => {
-  /**
-   * Calculates estimated export time based on issue count and format.
-   */
-  function estimateExportTime(issueCount: number, format: LocalExportFormat): number {
-    const baseTimeMs = 500;
-    const perIssueMs = format === 'pdf' ? 100 : format === 'docx' ? 80 : 20;
-    return baseTimeMs + issueCount * perIssueMs;
+// Module-level helper functions
+function estimateExportTime(issueCount: number, format: LocalExportFormat): number {
+  const baseTimeMs = 500;
+  const perIssueMs = format === 'pdf' ? 100 : format === 'docx' ? 80 : 20;
+  return baseTimeMs + issueCount * perIssueMs;
+}
+
+function validateTemplateSchema(schema: LocalTemplateSchema): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  if (!schema.sections || schema.sections.length === 0) {
+    errors.push('Template must have at least one section');
   }
 
+  for (const section of schema.sections || []) {
+    if (!section.type) {
+      errors.push('Each section must have a type');
+    }
+    if (section.type === 'issues' && (!section.fields || section.fields.length === 0)) {
+      errors.push('Issues section must have at least one field');
+    }
+  }
+
+  if (schema.watermark?.opacity !== undefined) {
+    if (schema.watermark.opacity < 0 || schema.watermark.opacity > 1) {
+      errors.push('Watermark opacity must be between 0 and 1');
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+function generateCSV(
+  issues: { issue_key: string; summary: string; status: string }[],
+  fields: string[]
+): string {
+  const headers = fields.join(',');
+  const rows = issues.map((issue) =>
+    fields.map((field) => {
+      const value = String((issue as Record<string, unknown>)[field] || '');
+      if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    }).join(',')
+  );
+  return [headers, ...rows].join('\n');
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0)} ${units[i]}`;
+}
+
+describe('Document Composer Helpers', () => {
   describe('estimateExportTime', () => {
     it('should estimate time for PDF exports', () => {
       expect(estimateExportTime(10, 'pdf')).toBe(1500); // 500 + 10*100
@@ -321,34 +368,6 @@ describe('Document Composer Helpers', () => {
       expect(estimateExportTime(0, 'pdf')).toBe(500);
     });
   });
-
-  /**
-   * Validates template schema for required elements.
-   */
-  function validateTemplateSchema(schema: LocalTemplateSchema): { valid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    if (!schema.sections || schema.sections.length === 0) {
-      errors.push('Template must have at least one section');
-    }
-
-    for (const section of schema.sections || []) {
-      if (!section.type) {
-        errors.push('Each section must have a type');
-      }
-      if (section.type === 'issues' && (!section.fields || section.fields.length === 0)) {
-        errors.push('Issues section must have at least one field');
-      }
-    }
-
-    if (schema.watermark?.opacity !== undefined) {
-      if (schema.watermark.opacity < 0 || schema.watermark.opacity > 1) {
-        errors.push('Watermark opacity must be between 0 and 1');
-      }
-    }
-
-    return { valid: errors.length === 0, errors };
-  }
 
   describe('validateTemplateSchema', () => {
     it('should accept valid schema', () => {
@@ -390,28 +409,6 @@ describe('Document Composer Helpers', () => {
       );
     });
   });
-
-  /**
-   * Generates CSV content from issues.
-   */
-  function generateCSV(
-    issues: { issue_key: string; summary: string; status: string }[],
-    fields: string[]
-  ): string {
-    const headers = fields.join(',');
-    const rows = issues.map((issue) =>
-      fields.map((field) => {
-        const value = String((issue as Record<string, unknown>)[field] || '');
-        // Escape quotes and wrap in quotes if contains comma
-        if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-          return `"${value.replace(/"/g, '""')}"`;
-        }
-        return value;
-      }).join(',')
-    );
-    return [headers, ...rows].join('\n');
-  }
-
   describe('generateCSV', () => {
     it('should generate valid CSV', () => {
       const issues = [
@@ -444,16 +441,6 @@ describe('Document Composer Helpers', () => {
     });
   });
 
-  /**
-   * Formats file size for display.
-   */
-  function formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return `${(bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0)} ${units[i]}`;
-  }
-
   describe('formatFileSize', () => {
     it('should format bytes', () => {
       expect(formatFileSize(0)).toBe('0 B');
@@ -473,17 +460,27 @@ describe('Document Composer Helpers', () => {
 });
 
 // ============================================================================
-// Export Status Tests
+// Export Status Helpers - Module Level
 // ============================================================================
 
-describe('Export Status Helpers', () => {
-  /**
-   * Determines if an export can be downloaded.
-   */
-  function canDownload(job: LocalExportJob): boolean {
-    return job.status === 'completed' && Boolean(job.file_path || job.fileUrl);
-  }
+function canDownload(job: LocalExportJob): boolean {
+  return job.status === 'completed' && Boolean(job.file_path || job.fileUrl);
+}
 
+function getStatusDisplay(status: LocalExportJob['status']): { label: string; color: string } {
+  switch (status) {
+    case 'pending':
+      return { label: 'Queued', color: 'gray' };
+    case 'processing':
+      return { label: 'Generating...', color: 'blue' };
+    case 'completed':
+      return { label: 'Ready', color: 'green' };
+    case 'failed':
+      return { label: 'Failed', color: 'red' };
+  }
+}
+
+describe('Export Status Helpers', () => {
   describe('canDownload', () => {
     it('should return true for completed job with file', () => {
       const job: LocalExportJob = {
@@ -513,22 +510,6 @@ describe('Export Status Helpers', () => {
       expect(canDownload(job)).toBe(false);
     });
   });
-
-  /**
-   * Gets display status for export job.
-   */
-  function getStatusDisplay(status: LocalExportJob['status']): { label: string; color: string } {
-    switch (status) {
-      case 'pending':
-        return { label: 'Queued', color: 'gray' };
-      case 'processing':
-        return { label: 'Generating...', color: 'blue' };
-      case 'completed':
-        return { label: 'Ready', color: 'green' };
-      case 'failed':
-        return { label: 'Failed', color: 'red' };
-    }
-  }
 
   describe('getStatusDisplay', () => {
     it('should return correct display for each status', () => {

@@ -41,18 +41,18 @@ import { toast } from 'sonner';
 import { ClassificationBadge, ClassificationLevel } from './ClassificationBadge';
 
 interface ExportRequest {
-  id: string;
-  user_id: string;
-  export_type: string;
-  classification_level: string;
-  record_count: number | null;
-  file_format: string | null;
-  status: string;
-  approver_id: string | null;
-  approved_at: string | null;
-  rejection_reason: string | null;
-  created_at: string;
-  completed_at: string | null;
+  readonly id: string;
+  readonly user_id: string;
+  readonly export_type: string;
+  readonly classification_level: string;
+  readonly record_count: number | null;
+  readonly file_format: string | null;
+  readonly status: string;
+  readonly approver_id: string | null;
+  readonly approved_at: string | null;
+  readonly rejection_reason: string | null;
+  readonly created_at: string;
+  readonly completed_at: string | null;
 }
 
 export function DataExportControls() {

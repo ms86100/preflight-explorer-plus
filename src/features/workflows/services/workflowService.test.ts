@@ -215,22 +215,23 @@ describe('Workflow types', () => {
   });
 });
 
+// Module-level validation helpers
+function validateWorkflowName(name: string): boolean {
+  return name.trim().length > 0;
+}
+
+function validateStepPosition(x: number, y: number): boolean {
+  return x >= 0 && y >= 0;
+}
+
 describe('Workflow validation', () => {
   it('should validate workflow name is not empty', () => {
-    const validateWorkflowName = (name: string): boolean => {
-      return name.trim().length > 0;
-    };
-    
     expect(validateWorkflowName('Valid Name')).toBe(true);
     expect(validateWorkflowName('')).toBe(false);
     expect(validateWorkflowName('   ')).toBe(false);
   });
 
   it('should validate step positions are positive', () => {
-    const validateStepPosition = (x: number, y: number): boolean => {
-      return x >= 0 && y >= 0;
-    };
-    
     expect(validateStepPosition(100, 100)).toBe(true);
     expect(validateStepPosition(0, 0)).toBe(true);
     expect(validateStepPosition(-10, 100)).toBe(false);

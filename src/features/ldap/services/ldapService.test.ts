@@ -323,23 +323,59 @@ describe('LDAP Types', () => {
 // Validation Tests
 // ============================================================================
 
-describe('LDAP Validation', () => {
-  /**
-   * Validates LDAP server URL format.
-   */
-  function validateServerUrl(url: string): { valid: boolean; error?: string } {
-    if (!url) {
-      return { valid: false, error: 'Server URL is required' };
-    }
+// Module-level LDAP validation helpers
+function validateServerUrl(url: string): { valid: boolean; error?: string } {
+  if (!url) {
+    return { valid: false, error: 'Server URL is required' };
+  }
 
-    const pattern = /^ldaps?:\/\/[a-zA-Z0-9.-]+(:\d+)?$/;
-    if (!pattern.test(url)) {
-      return { valid: false, error: 'Invalid LDAP URL format. Use ldap:// or ldaps://' };
-    }
+  const pattern = /^ldaps?:\/\/[a-zA-Z0-9.-]+(:\d+)?$/;
+  if (!pattern.test(url)) {
+    return { valid: false, error: 'Invalid LDAP URL format. Use ldap:// or ldaps://' };
+  }
 
+  return { valid: true };
+}
+
+function validateDN(dn: string): { valid: boolean; error?: string } {
+  if (!dn) {
+    return { valid: false, error: 'Distinguished Name is required' };
+  }
+
+  const dnPattern = /^([a-zA-Z]+=.+,)*[a-zA-Z]+=.+$/;
+  if (!dnPattern.test(dn)) {
+    return { valid: false, error: 'Invalid DN format (e.g., cn=admin,dc=example,dc=com)' };
+  }
+
+  return { valid: true };
+}
+
+function validateFilter(filter: string): { valid: boolean; error?: string } {
+  if (!filter) {
     return { valid: true };
   }
 
+  if (!filter.startsWith('(') || !filter.endsWith(')')) {
+    return { valid: false, error: 'Filter must be enclosed in parentheses' };
+  }
+
+  let depth = 0;
+  for (const char of filter) {
+    if (char === '(') depth++;
+    if (char === ')') depth--;
+    if (depth < 0) {
+      return { valid: false, error: 'Unbalanced parentheses in filter' };
+    }
+  }
+
+  if (depth !== 0) {
+    return { valid: false, error: 'Unbalanced parentheses in filter' };
+  }
+
+  return { valid: true };
+}
+
+describe('LDAP Validation', () => {
   describe('validateServerUrl', () => {
     it('should accept valid LDAP URLs', () => {
       expect(validateServerUrl('ldap://ldap.example.com')).toEqual({ valid: true });
@@ -359,23 +395,6 @@ describe('LDAP Validation', () => {
     });
   });
 
-  /**
-   * Validates Distinguished Name format.
-   */
-  function validateDN(dn: string): { valid: boolean; error?: string } {
-    if (!dn) {
-      return { valid: false, error: 'Distinguished Name is required' };
-    }
-
-    // Basic DN format validation
-    const dnPattern = /^([a-zA-Z]+=.+,)*[a-zA-Z]+=.+$/;
-    if (!dnPattern.test(dn)) {
-      return { valid: false, error: 'Invalid DN format (e.g., cn=admin,dc=example,dc=com)' };
-    }
-
-    return { valid: true };
-  }
-
   describe('validateDN', () => {
     it('should accept valid DNs', () => {
       expect(validateDN('dc=example,dc=com')).toEqual({ valid: true });
@@ -394,36 +413,6 @@ describe('LDAP Validation', () => {
       });
     });
   });
-
-  /**
-   * Validates LDAP filter syntax.
-   */
-  function validateFilter(filter: string): { valid: boolean; error?: string } {
-    if (!filter) {
-      return { valid: true }; // Filters are optional
-    }
-
-    // Basic filter syntax check
-    if (!filter.startsWith('(') || !filter.endsWith(')')) {
-      return { valid: false, error: 'Filter must be enclosed in parentheses' };
-    }
-
-    // Check for balanced parentheses
-    let depth = 0;
-    for (const char of filter) {
-      if (char === '(') depth++;
-      if (char === ')') depth--;
-      if (depth < 0) {
-        return { valid: false, error: 'Unbalanced parentheses in filter' };
-      }
-    }
-
-    if (depth !== 0) {
-      return { valid: false, error: 'Unbalanced parentheses in filter' };
-    }
-
-    return { valid: true };
-  }
 
   describe('validateFilter', () => {
     it('should accept valid filters', () => {
@@ -450,31 +439,45 @@ describe('LDAP Validation', () => {
 });
 
 // ============================================================================
-// Helper Function Tests
+// Module-level LDAP Helper Functions
 // ============================================================================
 
-describe('LDAP Helpers', () => {
-  /**
-   * Calculates time since last sync.
-   */
-  function getTimeSinceSync(lastSyncAt: string | null): string {
-    if (!lastSyncAt) return 'Never';
+function getTimeSinceSync(lastSyncAt: string | null): string {
+  if (!lastSyncAt) return 'Never';
 
-    const now = new Date();
-    const syncDate = new Date(lastSyncAt);
-    const diffMs = now.getTime() - syncDate.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
+  const now = new Date();
+  const syncDate = new Date(lastSyncAt);
+  const diffMs = now.getTime() - syncDate.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-    
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+  
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+}
+
+function getSyncHealth(config: LdapConfiguration): 'healthy' | 'warning' | 'error' | 'unknown' {
+  if (!config.is_active) return 'unknown';
+  if (!config.last_sync_at) return 'warning';
+  if (config.last_sync_status === 'failed') return 'error';
+  if (config.last_sync_status === 'running') return 'healthy';
+
+  const now = new Date();
+  const lastSync = new Date(config.last_sync_at);
+  const overdueMs = config.sync_interval_minutes * 60 * 1000 * 2;
+  
+  if (now.getTime() - lastSync.getTime() > overdueMs) {
+    return 'warning';
   }
 
+  return 'healthy';
+}
+
+describe('LDAP Helpers', () => {
   describe('getTimeSinceSync', () => {
     it('should return Never for null', () => {
       expect(getTimeSinceSync(null)).toBe('Never');
@@ -500,27 +503,6 @@ describe('LDAP Helpers', () => {
       expect(getTimeSinceSync(threeDaysAgo)).toBe('3 days ago');
     });
   });
-
-  /**
-   * Determines sync health based on configuration and last sync.
-   */
-  function getSyncHealth(config: LdapConfiguration): 'healthy' | 'warning' | 'error' | 'unknown' {
-    if (!config.is_active) return 'unknown';
-    if (!config.last_sync_at) return 'warning';
-    if (config.last_sync_status === 'failed') return 'error';
-    if (config.last_sync_status === 'running') return 'healthy';
-
-    // Check if sync is overdue
-    const now = new Date();
-    const lastSync = new Date(config.last_sync_at);
-    const overdueMs = config.sync_interval_minutes * 60 * 1000 * 2; // 2x interval
-    
-    if (now.getTime() - lastSync.getTime() > overdueMs) {
-      return 'warning';
-    }
-
-    return 'healthy';
-  }
 
   describe('getSyncHealth', () => {
     it('should return unknown for inactive config', () => {

@@ -31,15 +31,15 @@ import {
 import { format } from 'date-fns';
 
 interface AuditLog {
-  id: string;
-  user_id: string | null;
-  entity_type: string;
-  entity_id: string | null;
-  action: string;
-  old_values: Record<string, unknown> | null;
-  new_values: Record<string, unknown> | null;
-  classification_context: string | null;
-  created_at: string;
+  readonly id: string;
+  readonly user_id: string | null;
+  readonly entity_type: string;
+  readonly entity_id: string | null;
+  readonly action: string;
+  readonly old_values: Record<string, unknown> | null;
+  readonly new_values: Record<string, unknown> | null;
+  readonly classification_context: string | null;
+  readonly created_at: string;
 }
 
 export function AuditLogsViewer() {

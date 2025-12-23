@@ -10,9 +10,9 @@ interface ControlChartProps {
 }
 
 interface DataPoint {
-  date: string;
-  days: number;
-  issueKey: string;
+  readonly date: string;
+  readonly days: number;
+  readonly issueKey: string;
 }
 
 export function ControlChart({ projectId }: ControlChartProps) {

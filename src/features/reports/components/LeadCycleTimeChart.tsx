@@ -10,9 +10,9 @@ interface LeadCycleTimeChartProps {
 }
 
 interface TimeData {
-  date: string;
-  leadTime: number;
-  cycleTime: number;
+  readonly date: string;
+  readonly leadTime: number;
+  readonly cycleTime: number;
 }
 
 export function LeadCycleTimeChart({ projectId }: LeadCycleTimeChartProps) {

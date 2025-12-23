@@ -12,14 +12,14 @@ interface ContributorPerformanceProps {
 }
 
 interface ContributorStats {
-  id: string;
-  name: string;
-  initials: string;
-  completed: number;
-  inProgress: number;
-  storyPoints: number;
-  avgResolutionDays: number;
-  completionRate: number;
+  readonly id: string;
+  readonly name: string;
+  readonly initials: string;
+  readonly completed: number;
+  readonly inProgress: number;
+  readonly storyPoints: number;
+  readonly avgResolutionDays: number;
+  readonly completionRate: number;
 }
 
 export function ContributorPerformance({ projectId }: ContributorPerformanceProps) {
