@@ -94,7 +94,7 @@ export function GitOrganizationsList() {
     <>
       <div className="grid gap-4">
         {organizations.map((org) => (
-          <Card key={org.id} className={!org.is_active ? 'opacity-60' : ''}>
+          <Card key={org.id} className={org.is_active ? '' : 'opacity-60'}>
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">

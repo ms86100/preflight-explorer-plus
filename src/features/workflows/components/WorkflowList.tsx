@@ -250,7 +250,7 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
                           Default
                         </Badge>
                       )}
-                      {(workflow as any).is_draft && (
+                      {'is_draft' in workflow && workflow.is_draft && (
                         <Badge variant="outline" className="text-xs bg-yellow-500/20 text-yellow-600 border-yellow-500/30">
                           <PenSquare className="h-3 w-3 mr-1" />
                           Draft
@@ -277,7 +277,7 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     {/* Draft actions for draft workflows */}
-                    {(workflow as any).is_draft ? (
+                    {'is_draft' in workflow && workflow.is_draft ? (
                       <>
                         <DropdownMenuItem
                           onClick={(e) => {

@@ -355,7 +355,7 @@ export default function AutomationPage() {
             ) : (
               <div className="space-y-3">
                 {rules.map((rule) => (
-                  <Card key={rule.id} className={!rule.is_enabled ? 'opacity-60' : ''}>
+                  <Card key={rule.id} className={rule.is_enabled ? '' : 'opacity-60'}>
                     <CardContent className="py-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
