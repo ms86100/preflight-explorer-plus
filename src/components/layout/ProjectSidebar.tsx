@@ -19,9 +19,9 @@ import { Project } from '@/types/jira';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ProjectSidebarProps {
-  project?: Project;
-  isCollapsed?: boolean;
-  onToggleCollapse?: () => void;
+  readonly project?: Project;
+  readonly isCollapsed?: boolean;
+  readonly onToggleCollapse?: () => void;
 }
 
 // Original terminology - legally distinct naming

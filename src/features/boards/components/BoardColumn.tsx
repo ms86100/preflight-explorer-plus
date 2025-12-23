@@ -28,15 +28,15 @@ interface BoardIssue {
 }
 
 interface BoardColumnProps {
-  id: string;
-  name: string;
-  issues: BoardIssue[];
-  statusCategory: 'todo' | 'in_progress' | 'done';
-  minIssues?: number;
-  maxIssues?: number;
-  onCreateIssue?: () => void;
-  onIssueSelect?: (issueId: string) => void;
-  onDrop?: (issueId: string, columnId: string) => void;
+  readonly id: string;
+  readonly name: string;
+  readonly issues: readonly BoardIssue[];
+  readonly statusCategory: 'todo' | 'in_progress' | 'done';
+  readonly minIssues?: number;
+  readonly maxIssues?: number;
+  readonly onCreateIssue?: () => void;
+  readonly onIssueSelect?: (issueId: string) => void;
+  readonly onDrop?: (issueId: string, columnId: string) => void;
 }
 
 const STATUS_CATEGORY_STYLES = {

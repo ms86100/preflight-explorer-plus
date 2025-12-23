@@ -32,31 +32,31 @@ interface BoardIssue {
 }
 
 interface ScrumBoardProps {
-  projectKey: string;
-  projectName: string;
-  sprint?: {
-    id: string;
-    name: string;
-    goal?: string;
-    state: SprintState;
-    start_date?: string;
-    end_date?: string;
+  readonly projectKey: string;
+  readonly projectName: string;
+  readonly sprint?: {
+    readonly id: string;
+    readonly name: string;
+    readonly goal?: string;
+    readonly state: SprintState;
+    readonly start_date?: string;
+    readonly end_date?: string;
   };
-  columns: {
-    id: string;
-    name: string;
-    statusCategory: 'todo' | 'in_progress' | 'done';
-    maxIssues?: number;
+  readonly columns: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly statusCategory: 'todo' | 'in_progress' | 'done';
+    readonly maxIssues?: number;
   }[];
-  issues: BoardIssue[];
-  teamMembers?: {
-    id: string;
-    display_name: string;
-    avatar_url?: string;
+  readonly issues: readonly BoardIssue[];
+  readonly teamMembers?: readonly {
+    readonly id: string;
+    readonly display_name: string;
+    readonly avatar_url?: string;
   }[];
-  onIssueMove?: (issueId: string, newStatus: string) => void;
-  onIssueSelect?: (issueId: string) => void;
-  onCreateIssue?: (status?: string) => void;
+  readonly onIssueMove?: (issueId: string, newStatus: string) => void;
+  readonly onIssueSelect?: (issueId: string) => void;
+  readonly onCreateIssue?: (status?: string) => void;
 }
 
 // Default columns when none provided
