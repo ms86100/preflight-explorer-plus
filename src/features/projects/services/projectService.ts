@@ -477,6 +477,16 @@ export const projectService = {
     // Delete git repositories linked to project
     await supabase.from('git_repositories').delete().eq('project_id', id);
 
+    // Delete additional project-related data
+    await supabase.from('automation_rules').delete().eq('project_id', id);
+    await supabase.from('custom_field_contexts').delete().eq('project_id', id);
+    await supabase.from('data_block_instances').delete().eq('project_id', id);
+    await supabase.from('plugin_installations').delete().eq('project_id', id);
+    await supabase.from('project_permission_schemes').delete().eq('project_id', id);
+    await supabase.from('project_teams').delete().eq('project_id', id);
+    await supabase.from('versions').delete().eq('project_id', id);
+    await supabase.from('workflows').delete().eq('project_id', id);
+
     // Finally, delete the project
     const { error } = await supabase.from('projects').delete().eq('id', id);
 

@@ -8,9 +8,7 @@ import {
   LayoutGrid,
   List,
   MoreHorizontal,
-  Star,
   Archive,
-  Settings,
   Loader2,
   Trash2,
 } from 'lucide-react';
@@ -210,15 +208,6 @@ export default function ProjectsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Star className="h-4 w-4 mr-2" />
-                            Add to favorites
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(`/projects/${project.pkey}/settings`)}>
-                            <Settings className="h-4 w-4 mr-2" />
-                            Project settings
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive"
                             onClick={() => archiveProject.mutate(project.id)}
@@ -280,15 +269,6 @@ export default function ProjectsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Star className="h-4 w-4 mr-2" />
-                        Add to favorites
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate(`/projects/${project.pkey}/settings`)}>
-                        <Settings className="h-4 w-4 mr-2" />
-                        Project settings
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive"
                         onClick={() => archiveProject.mutate(project.id)}
