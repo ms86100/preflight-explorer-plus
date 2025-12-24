@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
-import { ScrumBoard, KanbanBoard, BasicBoard } from '@/features/boards';
+import { ScrumBoard, KanbanBoard, BasicBoard, BoardSettingsModal } from '@/features/boards';
 import { useProjects } from '@/features/projects/hooks/useProjects';
 import { useBoardsByProject, useBoardColumns, useActiveSprint, useSprintIssues, useSprintsByBoard, useStartSprint } from '@/features/boards/hooks/useBoards';
 import { boardService } from '@/features/boards/services/boardService';
@@ -9,7 +9,7 @@ import { CreateIssueModal } from '@/features/issues/components/CreateIssueModal'
 import { IssueDetailModal } from '@/features/issues/components/IssueDetailModal';
 import { useExecuteTransition } from '@/features/workflows';
 import { useIssuesByProject } from '@/features/issues';
-import { Loader2, LayoutList, ArrowRight, Play, Calendar } from 'lucide-react';
+import { Loader2, LayoutList, ArrowRight, Play, Calendar, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +34,7 @@ export default function BoardPage() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [isInitializingColumns, setIsInitializingColumns] = useState(false);
   const [didAttemptInitColumns, setDidAttemptInitColumns] = useState(false);
+  const [boardSettingsOpen, setBoardSettingsOpen] = useState(false);
   
   // Start sprint modal state
   const [startSprintOpen, setStartSprintOpen] = useState(false);
@@ -367,6 +368,7 @@ export default function BoardPage() {
       onIssueMove: handleIssueMove,
       onIssueSelect: handleIssueSelect,
       onCreateIssue: () => setCreateIssueOpen(true),
+      onOpenSettings: () => setBoardSettingsOpen(true),
     };
 
     switch (boardType) {
@@ -437,6 +439,16 @@ export default function BoardPage() {
         open={detailModalOpen}
         onOpenChange={setDetailModalOpen}
       />
+
+      {board && (
+        <BoardSettingsModal
+          boardId={board.id}
+          boardName={board.name}
+          open={boardSettingsOpen}
+          onOpenChange={setBoardSettingsOpen}
+          onColumnsChanged={refetchColumns}
+        />
+      )}
 
       {/* Start Sprint Dialog */}
       <Dialog open={startSprintOpen} onOpenChange={setStartSprintOpen}>

@@ -50,6 +50,7 @@ interface BasicBoardProps {
   readonly onIssueMove?: (issueId: string, newStatus: string) => void;
   readonly onIssueSelect?: (issueId: string) => void;
   readonly onCreateIssue?: (status?: string) => void;
+  readonly onOpenSettings?: () => void;
 }
 
 // Simple default columns for basic/business projects
@@ -68,6 +69,7 @@ export function BasicBoard({
   onIssueMove,
   onIssueSelect,
   onCreateIssue,
+  onOpenSettings,
 }: Partial<BasicBoardProps>) {
   const [issues, setIssues] = useState(initialIssues);
   const [searchQuery, setSearchQuery] = useState('');
@@ -247,7 +249,7 @@ export function BasicBoard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Board settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={onOpenSettings}>Board settings</DropdownMenuItem>
               <DropdownMenuItem>Export tasks</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

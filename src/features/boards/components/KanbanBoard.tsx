@@ -52,6 +52,7 @@ interface KanbanBoardProps {
   readonly onIssueMove?: (issueId: string, newStatus: string) => void;
   readonly onIssueSelect?: (issueId: string) => void;
   readonly onCreateIssue?: (status?: string) => void;
+  readonly onOpenSettings?: () => void;
 }
 
 // Default Kanban columns with WIP limits
@@ -83,6 +84,7 @@ export function KanbanBoard({
   onIssueMove,
   onIssueSelect,
   onCreateIssue,
+  onOpenSettings,
 }: Partial<KanbanBoardProps>) {
   const [issues, setIssues] = useState(initialIssues);
   const [searchQuery, setSearchQuery] = useState('');
@@ -264,8 +266,8 @@ export function KanbanBoard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Board settings</DropdownMenuItem>
-              <DropdownMenuItem>Configure WIP limits</DropdownMenuItem>
+              <DropdownMenuItem onClick={onOpenSettings}>Board settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={onOpenSettings}>Configure WIP limits</DropdownMenuItem>
               <DropdownMenuItem>Swimlanes</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
