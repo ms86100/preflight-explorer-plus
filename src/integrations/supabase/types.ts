@@ -1994,6 +1994,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "issues_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "issues_epic_id_fkey"
             columns: ["epic_id"]
             isOneToOne: false
@@ -2026,6 +2033,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "user_directory"
             referencedColumns: ["id"]
           },
           {
