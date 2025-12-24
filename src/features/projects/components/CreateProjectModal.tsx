@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,8 +23,21 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClassificationBadge } from '@/components/compliance/ClassificationBanner';
-import { FolderKanban, LayoutGrid, ListTodo, AlertTriangle, Shield, GitBranch } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { 
+  FolderKanban, 
+  LayoutGrid, 
+  ListTodo, 
+  AlertTriangle, 
+  Shield, 
+  GitBranch,
+  Workflow,
+  ArrowRight,
+  CheckCircle2,
+  Info
+} from 'lucide-react';
 import { useWorkflowSchemes } from '@/features/workflows/hooks/useWorkflowExecution';
+import { supabase } from '@/integrations/supabase/client';
 import type { ClassificationLevel } from '@/types/jira';
 
 const projectSchema = z.object({
@@ -54,6 +67,15 @@ interface CreateProjectModalProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
   readonly onSubmit?: (data: ProjectFormData) => Promise<void>;
+}
+
+interface WorkflowSchemeDetails {
+  id: string;
+  name: string;
+  description: string | null;
+  is_default: boolean;
+  statuses: string[];
+  workflowName: string | null;
 }
 
 const TEMPLATES = [
@@ -88,11 +110,73 @@ const PROGRAMS = [
 ];
 
 export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProjectModalProps) {
-  const [step, setStep] = useState<'template' | 'details' | 'compliance'>('template');
+  const [step, setStep] = useState<'template' | 'details' | 'workflow' | 'compliance'>('template');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [schemeDetails, setSchemeDetails] = useState<WorkflowSchemeDetails[]>([]);
 
   const { data: workflowSchemes } = useWorkflowSchemes();
   const defaultScheme = workflowSchemes?.find(s => s.is_default);
+
+  // Fetch workflow scheme details with statuses
+  useEffect(() => {
+    async function fetchSchemeDetails() {
+      if (!workflowSchemes || workflowSchemes.length === 0) return;
+
+      const details: WorkflowSchemeDetails[] = [];
+
+      for (const scheme of workflowSchemes) {
+        // Get the workflow mappings for this scheme
+        const { data: mappings } = await supabase
+          .from('workflow_scheme_mappings')
+          .select(`
+            workflow_id,
+            workflow:workflows(id, name)
+          `)
+          .eq('scheme_id', scheme.id)
+          .limit(1);
+
+        const workflowId = mappings?.[0]?.workflow_id;
+        const workflowName = (mappings?.[0]?.workflow as { id: string; name: string } | null)?.name || null;
+
+        let statuses: string[] = [];
+        if (workflowId) {
+          // Get unique statuses from workflow steps
+          const { data: steps } = await supabase
+            .from('workflow_steps')
+            .select(`
+              status:issue_statuses(id, name, position)
+            `)
+            .eq('workflow_id', workflowId)
+            .order('position_x');
+
+          if (steps) {
+            const uniqueStatuses = new Map<string, { name: string; position: number }>();
+            steps.forEach((s: any) => {
+              if (s.status && !uniqueStatuses.has(s.status.id)) {
+                uniqueStatuses.set(s.status.id, { name: s.status.name, position: s.status.position || 0 });
+              }
+            });
+            statuses = Array.from(uniqueStatuses.values())
+              .sort((a, b) => a.position - b.position)
+              .map(s => s.name);
+          }
+        }
+
+        details.push({
+          id: scheme.id,
+          name: scheme.name,
+          description: scheme.description,
+          is_default: scheme.is_default,
+          statuses,
+          workflowName,
+        });
+      }
+
+      setSchemeDetails(details);
+    }
+
+    fetchSchemeDetails();
+  }, [workflowSchemes]);
 
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
@@ -111,6 +195,7 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
   const selectedTemplate = watch('template');
   const selectedClassification = watch('classification');
   const projectName = watch('name');
+  const selectedSchemeId = watch('workflow_scheme_id');
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
@@ -141,6 +226,9 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
     setStep('template');
   };
 
+  const selectedScheme = schemeDetails.find(s => s.id === selectedSchemeId) || 
+    schemeDetails.find(s => s.is_default);
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -150,18 +238,21 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
             Create Project
           </DialogTitle>
           <DialogDescription>
-            Set up a new project with MRTT+ compliant security classification
+            Set up a new project with your preferred workflow and security settings
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={step} onValueChange={(v) => setStep(v as typeof step)} className="mt-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="template">1. Template</TabsTrigger>
             <TabsTrigger value="details" disabled={!selectedTemplate}>
               2. Details
             </TabsTrigger>
+            <TabsTrigger value="workflow" disabled={!projectName}>
+              3. Workflow
+            </TabsTrigger>
             <TabsTrigger value="compliance" disabled={!projectName}>
-              3. Compliance
+              4. Security
             </TabsTrigger>
           </TabsList>
 
@@ -262,6 +353,118 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
             </div>
           </TabsContent>
 
+          <TabsContent value="workflow" className="mt-6 space-y-6">
+            {/* Workflow Explanation */}
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-info/10 border border-info/30">
+              <Info className="h-5 w-5 text-info mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-semibold text-sm">What is a Workflow?</h4>
+                <p className="text-sm text-muted-foreground mt-1">
+                  A workflow defines the stages (statuses) an issue moves through from creation to completion.
+                  It determines your board columns and controls how issues transition between states.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Choose a Workflow Scheme</Label>
+              <p className="text-sm text-muted-foreground -mt-1">
+                Select how issues will flow through your project
+              </p>
+              
+              <div className="grid gap-3" role="radiogroup" aria-label="Workflow schemes">
+                {schemeDetails.map((scheme) => (
+                  <label
+                    key={scheme.id}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      (selectedSchemeId === scheme.id || (!selectedSchemeId && scheme.is_default))
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="workflow_scheme"
+                      value={scheme.id}
+                      checked={selectedSchemeId === scheme.id || (!selectedSchemeId && scheme.is_default)}
+                      onChange={() => setValue('workflow_scheme_id', scheme.id)}
+                      className="sr-only"
+                    />
+                    <div className="flex items-start gap-4">
+                      <div className={`p-3 rounded-lg ${
+                        (selectedSchemeId === scheme.id || (!selectedSchemeId && scheme.is_default))
+                          ? 'bg-primary/10' 
+                          : 'bg-muted'
+                      }`}>
+                        <Workflow className={`h-6 w-6 ${
+                          (selectedSchemeId === scheme.id || (!selectedSchemeId && scheme.is_default))
+                            ? 'text-primary' 
+                            : 'text-muted-foreground'
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold">{scheme.name}</h3>
+                          {scheme.is_default && (
+                            <Badge variant="secondary" className="text-xs">Default</Badge>
+                          )}
+                          {(selectedSchemeId === scheme.id || (!selectedSchemeId && scheme.is_default)) && (
+                            <CheckCircle2 className="h-4 w-4 text-primary ml-auto" />
+                          )}
+                        </div>
+                        {scheme.description && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {scheme.description}
+                          </p>
+                        )}
+                        {scheme.workflowName && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Uses: <span className="font-medium">{scheme.workflowName}</span>
+                          </p>
+                        )}
+                        
+                        {/* Status Flow Preview */}
+                        {scheme.statuses.length > 0 && (
+                          <div className="mt-3">
+                            <p className="text-xs text-muted-foreground mb-2">Board columns:</p>
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {scheme.statuses.map((status, index) => (
+                                <div key={status} className="flex items-center">
+                                  <Badge 
+                                    variant="outline" 
+                                    className="text-xs font-normal whitespace-nowrap"
+                                  >
+                                    {status}
+                                  </Badge>
+                                  {index < scheme.statuses.length - 1 && (
+                                    <ArrowRight className="h-3 w-3 text-muted-foreground mx-1 flex-shrink-0" />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Selected Workflow Summary */}
+            {selectedScheme && (
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <div className="flex items-center gap-2 text-sm">
+                  <GitBranch className="h-4 w-4 text-primary" />
+                  <span className="font-medium">Your board will have {selectedScheme.statuses.length} columns:</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {selectedScheme.statuses.join(' → ')}
+                </p>
+              </div>
+            )}
+          </TabsContent>
+
           <TabsContent value="compliance" className="mt-6 space-y-6">
             {/* MRTT+ Compliance Warning */}
             <div className="flex items-start gap-3 p-4 rounded-lg bg-warning/10 border border-warning/30">
@@ -341,34 +544,6 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="workflow-scheme">Workflow Scheme</Label>
-              <Select
-                value={watch('workflow_scheme_id') || ''}
-                onValueChange={(value) => setValue('workflow_scheme_id', value)}
-              >
-                <SelectTrigger id="workflow-scheme">
-                  <SelectValue placeholder={defaultScheme ? `${defaultScheme.name} (Default)` : 'Select workflow scheme'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {workflowSchemes?.map((scheme) => (
-                    <SelectItem key={scheme.id} value={scheme.id}>
-                      <div className="flex items-center gap-2">
-                        <GitBranch className="h-4 w-4 text-muted-foreground" />
-                        <span>{scheme.name}</span>
-                        {scheme.is_default && (
-                          <span className="text-xs text-muted-foreground">(Default)</span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Determines the issue workflows and board columns for this project
-              </p>
-            </div>
-
             {selectedClassification === 'export_controlled' && (
               <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/30">
                 <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
@@ -401,7 +576,7 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
                 Back
               </Button>
               <Button 
-                onClick={() => setStep('compliance')}
+                onClick={() => setStep('workflow')}
                 disabled={!projectName || !watch('pkey')}
               >
                 Continue
@@ -409,9 +584,20 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
             </>
           )}
           
-          {step === 'compliance' && (
+          {step === 'workflow' && (
             <>
               <Button variant="ghost" onClick={() => setStep('details')}>
+                Back
+              </Button>
+              <Button onClick={() => setStep('compliance')}>
+                Continue
+              </Button>
+            </>
+          )}
+          
+          {step === 'compliance' && (
+            <>
+              <Button variant="ghost" onClick={() => setStep('workflow')}>
                 Back
               </Button>
               <Button
