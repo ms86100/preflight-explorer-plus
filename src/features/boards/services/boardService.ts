@@ -303,6 +303,7 @@ export const boardService = {
 
   /**
    * Creates default columns for a board based on project template.
+   * @deprecated Use generateColumnsFromWorkflow instead for workflow-driven boards.
    */
   async createDefaultColumns(boardId: string, template: 'scrum' | 'kanban' | 'basic' = 'scrum') {
     // Get all statuses
@@ -381,6 +382,292 @@ export const boardService = {
         );
       }
     }
+  },
+
+  /**
+   * Generates board columns from a project's assigned workflow.
+   * Creates one column per unique status in the workflow and maps each status.
+   * 
+   * @param boardId - The board ID to generate columns for
+   * @param projectId - The project ID to get the workflow from
+   * @param preserveWipLimits - Whether to preserve existing WIP limits (default: true)
+   * @returns Object with generated columns count
+   */
+  async generateColumnsFromWorkflow(
+    boardId: string, 
+    projectId: string,
+    preserveWipLimits = true
+  ): Promise<{ columnsCreated: number; columnsRemoved: number }> {
+    // 1. Get the project's workflow scheme
+    const { data: schemeData } = await supabase
+      .from('project_workflow_schemes')
+      .select('scheme_id')
+      .eq('project_id', projectId)
+      .maybeSingle();
+
+    if (!schemeData?.scheme_id) {
+      throw new Error('Project has no workflow scheme assigned');
+    }
+
+    // 2. Get workflow mappings for this scheme (get the default workflow)
+    const { data: mappings } = await supabase
+      .from('workflow_scheme_mappings')
+      .select('workflow_id')
+      .eq('scheme_id', schemeData.scheme_id)
+      .is('issue_type_id', null) // Get the default mapping
+      .maybeSingle();
+
+    const workflowId = mappings?.workflow_id;
+    if (!workflowId) {
+      throw new Error('No default workflow found in scheme');
+    }
+
+    // 3. Get workflow steps with status information
+    const { data: steps } = await supabase
+      .from('workflow_steps')
+      .select(`
+        id,
+        status_id,
+        position_x,
+        status:issue_statuses(id, name, color, category)
+      `)
+      .eq('workflow_id', workflowId)
+      .order('position_x');
+
+    if (!steps || steps.length === 0) {
+      throw new Error('Workflow has no steps defined');
+    }
+
+    // 4. Get existing columns to preserve WIP limits
+    const existingColumns = await this.getColumns(boardId);
+    const existingWipLimits = new Map<string, { max: number | null; min: number | null }>();
+    
+    if (preserveWipLimits && existingColumns) {
+      for (const col of existingColumns) {
+        // Map by column name for matching
+        existingWipLimits.set(col.name.toLowerCase(), {
+          max: col.max_issues,
+          min: col.min_issues,
+        });
+      }
+    }
+
+    // 5. Delete existing columns and their mappings
+    if (existingColumns) {
+      for (const col of existingColumns) {
+        await supabase
+          .from('board_column_statuses')
+          .delete()
+          .eq('column_id', col.id);
+        
+        await supabase
+          .from('board_columns')
+          .delete()
+          .eq('id', col.id);
+      }
+    }
+
+    // 6. Create new columns from workflow steps (one column per status)
+    let position = 0;
+    const createdStatusIds = new Set<string>();
+
+    for (const step of steps) {
+      // Skip if we already created a column for this status
+      if (createdStatusIds.has(step.status_id)) continue;
+      createdStatusIds.add(step.status_id);
+
+      const status = step.status as { id: string; name: string; color: string | null; category: string | null } | null;
+      if (!status) continue;
+
+      const columnName = status.name;
+      const wipLimits = existingWipLimits.get(columnName.toLowerCase());
+
+      const { data: column } = await supabase
+        .from('board_columns')
+        .insert({
+          board_id: boardId,
+          name: columnName,
+          position: position++,
+          max_issues: wipLimits?.max ?? null,
+          min_issues: wipLimits?.min ?? null,
+        })
+        .select()
+        .single();
+
+      if (column) {
+        // Map the status to this column
+        await supabase.from('board_column_statuses').insert({
+          column_id: column.id,
+          status_id: status.id,
+        });
+      }
+    }
+
+    return {
+      columnsCreated: createdStatusIds.size,
+      columnsRemoved: existingColumns?.length || 0,
+    };
+  },
+
+  /**
+   * Syncs board columns with the project's workflow.
+   * Adds missing columns for new workflow steps and optionally removes orphaned columns.
+   * 
+   * @param boardId - The board ID to sync
+   * @param projectId - The project ID to get the workflow from
+   * @param removeOrphans - Whether to remove columns not in workflow (default: false)
+   */
+  async syncBoardColumnsWithWorkflow(
+    boardId: string,
+    projectId: string,
+    removeOrphans = false
+  ): Promise<{ added: number; removed: number }> {
+    // Get the project's workflow scheme
+    const { data: schemeData } = await supabase
+      .from('project_workflow_schemes')
+      .select('scheme_id')
+      .eq('project_id', projectId)
+      .maybeSingle();
+
+    if (!schemeData?.scheme_id) {
+      return { added: 0, removed: 0 };
+    }
+
+    // Get default workflow from scheme
+    const { data: mappings } = await supabase
+      .from('workflow_scheme_mappings')
+      .select('workflow_id')
+      .eq('scheme_id', schemeData.scheme_id)
+      .is('issue_type_id', null)
+      .maybeSingle();
+
+    if (!mappings?.workflow_id) {
+      return { added: 0, removed: 0 };
+    }
+
+    // Get workflow steps
+    const { data: steps } = await supabase
+      .from('workflow_steps')
+      .select(`
+        id,
+        status_id,
+        position_x,
+        status:issue_statuses(id, name, color, category)
+      `)
+      .eq('workflow_id', mappings.workflow_id)
+      .order('position_x');
+
+    if (!steps) {
+      return { added: 0, removed: 0 };
+    }
+
+    // Get existing columns with their status mappings
+    const existingColumns = await this.getColumns(boardId);
+    const mappedStatusIds = new Set<string>();
+    
+    if (existingColumns) {
+      for (const col of existingColumns) {
+        const columnStatuses = (col.column_statuses || []) as Array<{ status: { id: string } | null }>;
+        for (const cs of columnStatuses) {
+          if (cs.status?.id) {
+            mappedStatusIds.add(cs.status.id);
+          }
+        }
+      }
+    }
+
+    // Get workflow status IDs
+    const workflowStatusIds = new Set(steps.map(s => s.status_id));
+
+    // Add columns for statuses in workflow but not mapped
+    let added = 0;
+    const maxPosition = existingColumns?.length || 0;
+
+    for (const step of steps) {
+      if (!mappedStatusIds.has(step.status_id)) {
+        const status = step.status as { id: string; name: string; color: string | null; category: string | null } | null;
+        if (!status) continue;
+
+        const { data: column } = await supabase
+          .from('board_columns')
+          .insert({
+            board_id: boardId,
+            name: status.name,
+            position: maxPosition + added,
+          })
+          .select()
+          .single();
+
+        if (column) {
+          await supabase.from('board_column_statuses').insert({
+            column_id: column.id,
+            status_id: status.id,
+          });
+          added++;
+        }
+      }
+    }
+
+    // Remove orphaned columns if requested
+    let removed = 0;
+    if (removeOrphans && existingColumns) {
+      for (const col of existingColumns) {
+        const columnStatuses = (col.column_statuses || []) as Array<{ status: { id: string } | null }>;
+        const hasWorkflowStatus = columnStatuses.some(cs => 
+          cs.status?.id && workflowStatusIds.has(cs.status.id)
+        );
+
+        if (!hasWorkflowStatus) {
+          await supabase
+            .from('board_column_statuses')
+            .delete()
+            .eq('column_id', col.id);
+          
+          await supabase
+            .from('board_columns')
+            .delete()
+            .eq('id', col.id);
+          
+          removed++;
+        }
+      }
+    }
+
+    return { added, removed };
+  },
+
+  /**
+   * Gets the workflow status IDs for a project.
+   * Useful for validating if a status is part of the project's workflow.
+   */
+  async getProjectWorkflowStatusIds(projectId: string): Promise<Set<string>> {
+    const { data: schemeData } = await supabase
+      .from('project_workflow_schemes')
+      .select('scheme_id')
+      .eq('project_id', projectId)
+      .maybeSingle();
+
+    if (!schemeData?.scheme_id) {
+      return new Set();
+    }
+
+    const { data: mappings } = await supabase
+      .from('workflow_scheme_mappings')
+      .select('workflow_id')
+      .eq('scheme_id', schemeData.scheme_id)
+      .is('issue_type_id', null)
+      .maybeSingle();
+
+    if (!mappings?.workflow_id) {
+      return new Set();
+    }
+
+    const { data: steps } = await supabase
+      .from('workflow_steps')
+      .select('status_id')
+      .eq('workflow_id', mappings.workflow_id);
+
+    return new Set(steps?.map(s => s.status_id) || []);
   },
 };
 

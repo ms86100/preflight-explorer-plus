@@ -279,9 +279,37 @@ export const projectService = {
       owner_id: userId,
     }).select().single();
 
-    // Create template-specific columns immediately so board is ready
+    // Assign default workflow scheme to project if not already assigned
+    const { data: defaultScheme } = await supabase
+      .from('workflow_schemes')
+      .select('id')
+      .eq('is_default', true)
+      .maybeSingle();
+
+    if (defaultScheme) {
+      // Check if project already has a scheme
+      const { data: existingScheme } = await supabase
+        .from('project_workflow_schemes')
+        .select('id')
+        .eq('project_id', projectData.id)
+        .maybeSingle();
+
+      if (!existingScheme) {
+        await supabase.from('project_workflow_schemes').insert({
+          project_id: projectData.id,
+          scheme_id: defaultScheme.id,
+        });
+      }
+    }
+
+    // Generate board columns from the assigned workflow
     if (boardData) {
-      await boardService.createDefaultColumns(boardData.id, boardType);
+      try {
+        await boardService.generateColumnsFromWorkflow(boardData.id, projectData.id);
+      } catch {
+        // Fallback to template-based columns if workflow generation fails
+        await boardService.createDefaultColumns(boardData.id, boardType);
+      }
     }
 
     return projectData as ProjectRow;

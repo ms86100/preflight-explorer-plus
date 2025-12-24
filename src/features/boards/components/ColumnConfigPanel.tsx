@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
@@ -20,7 +20,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Plus, Trash2, X, GripVertical, AlertTriangle, Loader2, AlertCircle, ArrowRight, CheckCircle2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, X, AlertTriangle, Loader2, AlertCircle, ArrowRight, CheckCircle2, ChevronUp, ChevronDown, RefreshCw, GitBranch } from 'lucide-react';
 import { boardService } from '../services/boardService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -56,12 +56,15 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
   const [columns, setColumns] = useState<Column[]>([]);
   const [allStatuses, setAllStatuses] = useState<ColumnStatus[]>([]);
   const [workflowTransitions, setWorkflowTransitions] = useState<WorkflowTransition[]>([]);
+  const [workflowName, setWorkflowName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [newColumnName, setNewColumnName] = useState('');
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editingColumnName, setEditingColumnName] = useState('');
   const [deleteColumnId, setDeleteColumnId] = useState<string | null>(null);
+  const [showSyncConfirm, setShowSyncConfirm] = useState(false);
 
   // Load columns, statuses, and workflow transitions
   useEffect(() => {
@@ -114,26 +117,37 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
 
       if (!schemeData?.scheme_id) return;
 
-      // Get workflow mappings for this scheme
+      // Get workflow mappings for this scheme (default mapping)
       const { data: mappings } = await supabase
         .from('workflow_scheme_mappings')
         .select('workflow_id')
-        .eq('scheme_id', schemeData.scheme_id);
+        .eq('scheme_id', schemeData.scheme_id)
+        .is('issue_type_id', null)
+        .maybeSingle();
 
-      if (!mappings || mappings.length === 0) return;
+      if (!mappings?.workflow_id) return;
 
-      // Get all transitions from all workflows in the scheme
-      const workflowIds = [...new Set(mappings.map(m => m.workflow_id))];
-      
+      // Get workflow name
+      const { data: workflow } = await supabase
+        .from('workflows')
+        .select('name')
+        .eq('id', mappings.workflow_id)
+        .single();
+
+      if (workflow) {
+        setWorkflowName(workflow.name);
+      }
+
+      // Get all steps and transitions from the workflow
       const { data: steps } = await supabase
         .from('workflow_steps')
         .select('id, status_id, workflow_id')
-        .in('workflow_id', workflowIds);
+        .eq('workflow_id', mappings.workflow_id);
 
       const { data: transitions } = await supabase
         .from('workflow_transitions')
         .select('from_step_id, to_step_id')
-        .in('workflow_id', workflowIds);
+        .eq('workflow_id', mappings.workflow_id);
 
       if (!steps || !transitions) return;
 
@@ -152,6 +166,29 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
       setWorkflowTransitions(statusTransitions);
     } catch (error) {
       console.error('Failed to load workflow transitions:', error);
+    }
+  };
+
+  // Sync columns with workflow
+  const handleSyncWithWorkflow = async () => {
+    if (!projectId) {
+      toast.error('No project associated with this board');
+      return;
+    }
+
+    setSyncing(true);
+    setShowSyncConfirm(false);
+    
+    try {
+      const result = await boardService.generateColumnsFromWorkflow(boardId, projectId, true);
+      await loadData();
+      onColumnsChanged();
+      toast.success(`Synced with workflow: ${result.columnsCreated} columns created`);
+    } catch (error) {
+      console.error('Failed to sync with workflow:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to sync with workflow');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -398,6 +435,36 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
 
   return (
     <div className="space-y-6">
+      {/* Workflow Info Card */}
+      {workflowName && projectId && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2 text-primary">
+                <GitBranch className="h-4 w-4" />
+                Workflow: {workflowName}
+              </CardTitle>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => setShowSyncConfirm(true)}
+                disabled={syncing}
+              >
+                {syncing ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                )}
+                Sync with Workflow
+              </Button>
+            </div>
+            <CardDescription className="text-xs">
+              Board columns should match your workflow statuses. Use "Sync with Workflow" to regenerate columns from the workflow.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
       {/* Workflow Alignment Warnings */}
       {hasWorkflowWarnings && (
         <Card className="border-orange-500/50 bg-orange-500/10">
@@ -410,7 +477,7 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
           <CardContent>
             <p className="text-xs text-muted-foreground mb-3">
               Some columns may not be reachable based on your workflow transitions. 
-              Issues dragged to these columns may be blocked by workflow rules.
+              Click "Sync with Workflow" to fix these issues automatically.
             </p>
             <div className="space-y-2">
               {Array.from(columnAlignmentWarnings.entries()).map(([columnId, warnings]) => {
@@ -682,6 +749,25 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Sync Confirmation Dialog */}
+      <AlertDialog open={showSyncConfirm} onOpenChange={setShowSyncConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sync Columns with Workflow?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will regenerate all board columns based on your workflow statuses.
+              Existing columns will be replaced. WIP limits will be preserved where column names match.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSyncWithWorkflow}>
+              Sync Columns
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
