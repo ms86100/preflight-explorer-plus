@@ -339,12 +339,19 @@ export default function BoardPage() {
 
   // Render appropriate board type based on template
   const renderBoard = () => {
+    // Build status category map from columns for accurate stats calculation
+    const statusCategoryMap = new Map<string, string>();
+    boardColumns.forEach(col => {
+      statusCategoryMap.set(col.id, col.statusCategory);
+    });
+
     const commonProps = {
       projectKey: projectKey || '',
       projectName: project?.name || 'Project',
       columns: boardColumns.length > 0 ? boardColumns : undefined,
       issues: boardIssues,
       teamMembers,
+      statusCategoryMap,
       onIssueMove: handleIssueMove,
       onIssueSelect: handleIssueSelect,
       onCreateIssue: () => setCreateIssueOpen(true),

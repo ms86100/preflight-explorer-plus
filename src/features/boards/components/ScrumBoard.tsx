@@ -49,6 +49,8 @@ interface ScrumBoardProps {
     readonly maxIssues?: number;
   }[];
   readonly issues: readonly BoardIssue[];
+  /** Map of status ID to status category for stats calculation */
+  readonly statusCategoryMap?: ReadonlyMap<string, string>;
   readonly teamMembers?: readonly {
     readonly id: string;
     readonly display_name: string;
@@ -73,6 +75,7 @@ export function ScrumBoard({
   columns = DEFAULT_COLUMNS,
   issues: initialIssues = [],
   teamMembers = [],
+  statusCategoryMap,
   onIssueMove,
   onIssueSelect,
   onCreateIssue,
@@ -87,13 +90,22 @@ export function ScrumBoard({
     setIssues(initialIssues);
   }, [initialIssues]);
 
+  // Helper to check if an issue is done (by status category)
+  const isIssueDone = (issue: BoardIssue): boolean => {
+    if (statusCategoryMap) {
+      return statusCategoryMap.get(issue.status) === 'done';
+    }
+    // Fallback: check if the status string matches 'done' directly
+    return issue.status === 'done';
+  };
+
   // Calculate sprint stats
   const sprintStats = {
     totalIssues: issues.length,
-    completedIssues: issues.filter((i) => i.status === 'done').length,
+    completedIssues: issues.filter(isIssueDone).length,
     totalPoints: issues.reduce((sum, i) => sum + (i.story_points || 0), 0),
     completedPoints: issues
-      .filter((i) => i.status === 'done')
+      .filter(isIssueDone)
       .reduce((sum, i) => sum + (i.story_points || 0), 0),
   };
 

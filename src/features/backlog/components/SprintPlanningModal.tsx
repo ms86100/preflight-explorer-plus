@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,12 @@ interface SprintPlanningModalProps {
   readonly sprintName: string;
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
+  /** Pre-configured start date from sprint creation */
+  readonly initialStartDate?: string | null;
+  /** Pre-configured end date from sprint creation */
+  readonly initialEndDate?: string | null;
+  /** Pre-configured goal from sprint creation */
+  readonly initialGoal?: string | null;
 }
 
 export function SprintPlanningModal({
@@ -29,6 +35,9 @@ export function SprintPlanningModal({
   sprintName,
   open,
   onOpenChange,
+  initialStartDate,
+  initialEndDate,
+  initialGoal,
 }: SprintPlanningModalProps) {
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 14));
@@ -36,6 +45,23 @@ export function SprintPlanningModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const startSprint = useStartSprint();
+
+  // Initialize dates from sprint's saved configuration when modal opens
+  useEffect(() => {
+    if (open) {
+      if (initialStartDate) {
+        setStartDate(new Date(initialStartDate));
+      } else {
+        setStartDate(new Date());
+      }
+      if (initialEndDate) {
+        setEndDate(new Date(initialEndDate));
+      } else {
+        setEndDate(addDays(new Date(), 14));
+      }
+      setGoal(initialGoal || '');
+    }
+  }, [open, initialStartDate, initialEndDate, initialGoal]);
 
   const handleStart = async () => {
     setIsSubmitting(true);
@@ -47,8 +73,7 @@ export function SprintPlanningModal({
       });
       toast.success('Sprint started successfully');
       onOpenChange(false);
-    } catch (error) {
-      console.error('Failed to start sprint:', error);
+    } catch {
       toast.error('Failed to start sprint. Please try again.');
     } finally {
       setIsSubmitting(false);
