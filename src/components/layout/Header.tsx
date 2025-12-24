@@ -46,16 +46,14 @@ const NAV_ITEMS = [
     icon: LayoutDashboard,
     items: [
       { label: 'Overview', href: '/dashboards/system' },
-      { label: 'Create Workspace', href: '/dashboards/create' },
     ],
   },
   {
-    label: 'Programs',
+    label: 'Projects',
     href: '/projects',
     icon: FolderKanban,
     items: [
-      { label: 'All Programs', href: '/projects' },
-      { label: 'Create Program', href: '/projects/create' },
+      { label: 'All Projects', href: '/projects' },
     ],
   },
   {
@@ -66,23 +64,6 @@ const NAV_ITEMS = [
       { label: 'Search Work Items', href: '/issues' },
       { label: 'My Active Items', href: '/issues?filter=my-open' },
       { label: 'Reported by Me', href: '/issues?filter=reported-by-me' },
-    ],
-  },
-  {
-    label: 'Planner',
-    href: '/boards',
-    icon: Layers,
-    items: [
-      { label: 'All Planners', href: '/boards' },
-    ],
-  },
-  {
-    label: 'Roadmap',
-    href: '/plans',
-    icon: Calendar,
-    items: [
-      { label: 'Timeline View', href: '/plans/roadmaps' },
-      { label: 'Dependencies', href: '/plans/dependencies' },
     ],
   },
 ];

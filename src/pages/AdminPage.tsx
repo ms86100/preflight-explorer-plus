@@ -1,9 +1,9 @@
 import { AppLayout } from '@/components/layout/AppLayout';
-import { ComplianceDashboard, DataExportControls } from '@/features/compliance';
+import { ComplianceDashboard } from '@/features/compliance';
 import { AuditLogsViewer, AccessControlManager } from '@/features/enterprise';
 import { StatusManager } from '@/features/statuses';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, FileText, Download, CircleDot, Users } from 'lucide-react';
+import { Shield, FileText, CircleDot, Users } from 'lucide-react';
 
 export default function AdminPage() {
   return (
@@ -35,10 +35,6 @@ export default function AdminPage() {
               <FileText className="h-4 w-4" />
               Audit Logs
             </TabsTrigger>
-            <TabsTrigger value="exports" className="gap-2">
-              <Download className="h-4 w-4" />
-              Data Exports
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="statuses">
@@ -52,9 +48,6 @@ export default function AdminPage() {
           </TabsContent>
           <TabsContent value="audit">
             <AuditLogsViewer />
-          </TabsContent>
-          <TabsContent value="exports">
-            <DataExportControls />
           </TabsContent>
         </Tabs>
       </div>

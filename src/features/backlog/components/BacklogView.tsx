@@ -446,11 +446,6 @@ export function BacklogView() {
                   Start Sprint
                 </Button>
               )}
-              {sprint.state === 'active' && (
-                <Button size="sm" variant="outline" onClick={() => handleCompleteSprint(sprint.id)}>
-                  Complete Sprint
-                </Button>
-              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
