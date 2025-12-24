@@ -22,7 +22,6 @@ import {
   UserPlus,
   Pencil,
   ArrowLeftRight,
-  Settings2,
   History,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -82,7 +81,6 @@ import {
 } from '@/features/boards';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { SprintPlanningModal } from './SprintPlanningModal';
-import { SprintConfigModal } from './SprintConfigModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
@@ -142,10 +140,12 @@ export function DraggableBacklogView() {
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(new Set(['backlog']));
   const [isCreateIssueOpen, setIsCreateIssueOpen] = useState(false);
   const [isSprintPlanningOpen, setIsSprintPlanningOpen] = useState(false);
-  const [isSprintConfigOpen, setIsSprintConfigOpen] = useState(false);
   const [createIssueContext, setCreateIssueContext] = useState<string | undefined>();
   const [planningSprintId, setPlanningSprintId] = useState<string>('');
   const [planningSprintName, setPlanningSprintName] = useState<string>('');
+  const [planningSprintStartDate, setPlanningSprintStartDate] = useState<string | null>(null);
+  const [planningSprintEndDate, setPlanningSprintEndDate] = useState<string | null>(null);
+  const [planningSprintGoal, setPlanningSprintGoal] = useState<string | null>(null);
 
   // Create sprint with dates modal state
   const [isCreateSprintOpen, setIsCreateSprintOpen] = useState(false);
@@ -381,15 +381,17 @@ export function DraggableBacklogView() {
       });
       setIsCreateSprintOpen(false);
       toast.success('Sprint created successfully');
-    } catch (error) {
-      console.error('Failed to create sprint:', error);
+    } catch {
       toast.error('Failed to create sprint. Please try again.');
     }
   };
 
-  const handleStartSprintWithPlanning = (sprintId: string, sprintName: string) => {
-    setPlanningSprintId(sprintId);
-    setPlanningSprintName(sprintName);
+  const handleStartSprintWithPlanning = (sprint: SprintSection) => {
+    setPlanningSprintId(sprint.id);
+    setPlanningSprintName(sprint.name);
+    setPlanningSprintStartDate(sprint.start_date);
+    setPlanningSprintEndDate(sprint.end_date);
+    setPlanningSprintGoal(sprint.goal);
     setIsSprintPlanningOpen(true);
   };
 
@@ -672,7 +674,7 @@ export function DraggableBacklogView() {
 
             <div className="flex items-center gap-2">
               {sprint.state === 'future' && (
-                <Button size="sm" onClick={() => handleStartSprintWithPlanning(sprint.id, sprint.name)}>
+                <Button size="sm" onClick={() => handleStartSprintWithPlanning(sprint)}>
                   <Play className="h-3 w-3 mr-1" />
                   Start Sprint
                 </Button>
@@ -761,11 +763,9 @@ export function DraggableBacklogView() {
         sprintName={planningSprintName}
         open={isSprintPlanningOpen}
         onOpenChange={setIsSprintPlanningOpen}
-      />
-
-      <SprintConfigModal
-        open={isSprintConfigOpen}
-        onOpenChange={setIsSprintConfigOpen}
+        initialStartDate={planningSprintStartDate}
+        initialEndDate={planningSprintEndDate}
+        initialGoal={planningSprintGoal}
       />
 
       <AppLayout showSidebar projectKey={projectKey}>
@@ -808,10 +808,6 @@ export function DraggableBacklogView() {
 
             {activeTab === 'backlog' && (
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setIsSprintConfigOpen(true)}>
-                  <Settings2 className="h-4 w-4 mr-2" />
-                  Sprint Settings
-                </Button>
                 <Button variant="outline" size="sm" onClick={openCreateSprintModal}>
                   <Calendar className="h-4 w-4 mr-2" />
                   Create Sprint
