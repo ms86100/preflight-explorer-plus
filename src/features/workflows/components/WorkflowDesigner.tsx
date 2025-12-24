@@ -616,7 +616,7 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
                               className="text-destructive focus:text-destructive"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteStep.mutate({ id: step.id, workflowId });
+                                deleteStep.mutate({ id: step.id, workflowId, statusId: step.status_id });
                               }}
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
@@ -643,7 +643,7 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
                   <ContextMenuSeparator />
                   <ContextMenuItem
                     className="text-destructive focus:text-destructive"
-                    onClick={() => deleteStep.mutate({ id: step.id, workflowId })}
+                    onClick={() => deleteStep.mutate({ id: step.id, workflowId, statusId: step.status_id })}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Remove Status

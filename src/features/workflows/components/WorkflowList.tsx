@@ -23,7 +23,8 @@ import {
   FileEdit,
   Upload,
   X,
-  PenSquare
+  PenSquare,
+  AlertTriangle
 } from 'lucide-react';
 import {
   Dialog,
@@ -401,10 +402,22 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
     <AlertDialog open={!!publishConfirmId} onOpenChange={(open) => !open && setPublishConfirmId(null)}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Publish Draft?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This will replace the live workflow with all changes from this draft. 
-            The draft will be deleted after publishing. This action cannot be undone.
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-warning" />
+            Publish Draft?
+          </AlertDialogTitle>
+          <AlertDialogDescription className="space-y-2">
+            <p>
+              This will replace the live workflow with all changes from this draft.
+            </p>
+            <p className="font-medium text-foreground">
+              Warning: Publishing will regenerate board columns for all projects using this workflow. 
+              Any manual column customizations (WIP limits, ordering) will be preserved, but columns 
+              will be synced with the workflow steps.
+            </p>
+            <p>
+              The draft will be deleted after publishing. This action cannot be undone.
+            </p>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
