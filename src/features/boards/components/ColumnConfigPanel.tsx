@@ -20,7 +20,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Plus, Trash2, X, AlertTriangle, Loader2, AlertCircle, ArrowRight, CheckCircle2, ChevronUp, ChevronDown, RefreshCw, GitBranch } from 'lucide-react';
+import { AlertTriangle, Loader2, AlertCircle, ArrowRight, CheckCircle2, ChevronUp, ChevronDown, RefreshCw, GitBranch, Lock } from 'lucide-react';
 import { boardService } from '../services/boardService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -60,10 +60,6 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [newColumnName, setNewColumnName] = useState('');
-  const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
-  const [editingColumnName, setEditingColumnName] = useState('');
-  const [deleteColumnId, setDeleteColumnId] = useState<string | null>(null);
   const [showSyncConfirm, setShowSyncConfirm] = useState(false);
 
   // Load columns, statuses, and workflow transitions
@@ -192,9 +188,15 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
     }
   };
 
-  // Get unmapped statuses
+  // Get unmapped statuses (workflow statuses not in columns)
   const mappedStatusIds = new Set(columns.flatMap(c => c.statuses.map(s => s.id)));
-  const unmappedStatuses = allStatuses.filter(s => !mappedStatusIds.has(s.id));
+  const workflowStatusIds = useMemo(() => {
+    return new Set(workflowTransitions.flatMap(t => [t.from_status_id, t.to_status_id]));
+  }, [workflowTransitions]);
+  
+  const unmappedStatuses = allStatuses.filter(s => 
+    workflowStatusIds.has(s.id) && !mappedStatusIds.has(s.id)
+  );
 
   // Analyze workflow alignment for each column
   const columnAlignmentWarnings = useMemo(() => {
@@ -204,7 +206,6 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
 
     columns.forEach((column, index) => {
       const columnWarnings: string[] = [];
-      const columnStatusIds = new Set(column.statuses.map(s => s.id));
 
       // Check if any status in this column can be reached from previous columns
       if (index > 0) {
@@ -268,103 +269,6 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
 
     return info;
   }, [allStatuses, workflowTransitions]);
-
-  // Add new column
-  const handleAddColumn = async () => {
-    if (!newColumnName.trim()) return;
-
-    setSaving(true);
-    try {
-      const maxPosition = columns.length > 0 ? Math.max(...columns.map(c => c.position)) + 1 : 0;
-      await boardService.createColumn(boardId, newColumnName.trim(), maxPosition);
-      setNewColumnName('');
-      await loadData();
-      onColumnsChanged();
-      toast.success('Column added');
-    } catch (error) {
-      console.error('Failed to add column:', error);
-      toast.error('Failed to add column');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Rename column
-  const handleRenameColumn = async (columnId: string) => {
-    if (!editingColumnName.trim()) {
-      setEditingColumnId(null);
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await boardService.updateColumn(columnId, { name: editingColumnName.trim() });
-      setEditingColumnId(null);
-      await loadData();
-      onColumnsChanged();
-    } catch (error) {
-      console.error('Failed to rename column:', error);
-      toast.error('Failed to rename column');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Delete column
-  const handleDeleteColumn = async () => {
-    if (!deleteColumnId) return;
-
-    const column = columns.find(c => c.id === deleteColumnId);
-    if (column && column.statuses.length > 0) {
-      toast.error('Remove all statuses from the column first');
-      setDeleteColumnId(null);
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await boardService.deleteColumn(deleteColumnId);
-      setDeleteColumnId(null);
-      await loadData();
-      onColumnsChanged();
-      toast.success('Column deleted');
-    } catch (error) {
-      console.error('Failed to delete column:', error);
-      toast.error('Failed to delete column');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Add status to column
-  const handleAddStatusToColumn = async (columnId: string, statusId: string) => {
-    setSaving(true);
-    try {
-      await boardService.addStatusToColumn(columnId, statusId);
-      await loadData();
-      onColumnsChanged();
-    } catch (error) {
-      console.error('Failed to add status to column:', error);
-      toast.error('Failed to add status to column');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Remove status from column
-  const handleRemoveStatusFromColumn = async (columnId: string, statusId: string) => {
-    setSaving(true);
-    try {
-      await boardService.removeStatusFromColumn(columnId, statusId);
-      await loadData();
-      onColumnsChanged();
-    } catch (error) {
-      console.error('Failed to remove status from column:', error);
-      toast.error('Failed to remove status from column');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   // Update WIP limit
   const handleUpdateWipLimit = async (columnId: string, maxIssues: number | null) => {
@@ -432,6 +336,7 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
   }
 
   const hasWorkflowWarnings = columnAlignmentWarnings.size > 0;
+  const hasNoWorkflow = !workflowName || workflowTransitions.length === 0;
 
   return (
     <div className="space-y-6">
@@ -459,9 +364,27 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
               </Button>
             </div>
             <CardDescription className="text-xs">
-              Board columns should match your workflow statuses. Use "Sync with Workflow" to regenerate columns from the workflow.
+              Board columns are generated from your workflow. Use "Sync with Workflow" to update columns when the workflow changes.
             </CardDescription>
           </CardHeader>
+        </Card>
+      )}
+
+      {/* No Workflow Warning */}
+      {hasNoWorkflow && (
+        <Card className="border-yellow-500/50 bg-yellow-500/10">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2 text-yellow-700 dark:text-yellow-300">
+              <AlertTriangle className="h-4 w-4" />
+              No Workflow Assigned
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">
+              This project doesn't have a workflow scheme assigned or the workflow has no steps defined. 
+              Assign a workflow scheme in Administration → Workflow Schemes to enable workflow-driven columns.
+            </p>
+          </CardContent>
         </Card>
       )}
 
@@ -504,29 +427,20 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2 text-yellow-700 dark:text-yellow-300">
               <AlertTriangle className="h-4 w-4" />
-              Unmapped Statuses ({unmappedStatuses.length})
+              Unmapped Workflow Statuses ({unmappedStatuses.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-xs text-muted-foreground mb-3">
-              These statuses are not mapped to any column. Issues with these statuses won't appear on the board.
+              These workflow statuses are not mapped to any column. Click "Sync with Workflow" to create columns for them.
             </p>
             <div className="flex flex-wrap gap-2">
               {unmappedStatuses.map(status => (
                 <Badge
                   key={status.id}
                   variant="outline"
-                  className={`cursor-pointer hover:bg-accent ${getCategoryColor(status.category)}`}
-                  onClick={() => {
-                    const targetColumn = columns.find(c => 
-                      c.statuses.some(s => s.category === status.category)
-                    ) || columns[0];
-                    if (targetColumn) {
-                      handleAddStatusToColumn(targetColumn.id, status.id);
-                    }
-                  }}
+                  className={getCategoryColor(status.category)}
                 >
-                  <Plus className="h-3 w-3 mr-1" />
                   {status.name}
                 </Badge>
               ))}
@@ -535,20 +449,21 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
         </Card>
       )}
 
-      {/* Add New Column */}
-      <div className="flex gap-2">
-        <Input
-          placeholder="New column name..."
-          value={newColumnName}
-          onChange={(e) => setNewColumnName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleAddColumn()}
-          disabled={saving}
-        />
-        <Button onClick={handleAddColumn} disabled={!newColumnName.trim() || saving}>
-          <Plus className="h-4 w-4 mr-1" />
-          Add Column
-        </Button>
-      </div>
+      {/* Read-only Notice */}
+      <Card className="border-muted bg-muted/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground">
+            <Lock className="h-4 w-4" />
+            Workflow-Driven Columns
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-muted-foreground">
+            Columns are automatically generated from your workflow. You can adjust WIP limits and column order, 
+            but column names and statuses are controlled by the workflow. To change columns, modify the workflow in the Workflow Designer.
+          </p>
+        </CardContent>
+      </Card>
 
       <Separator />
 
@@ -587,29 +502,10 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
                         <ChevronDown className="h-3 w-3" />
                       </Button>
                     </div>
-                    {editingColumnId === column.id ? (
-                      <Input
-                        value={editingColumnName}
-                        onChange={(e) => setEditingColumnName(e.target.value)}
-                        onBlur={() => handleRenameColumn(column.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleRenameColumn(column.id);
-                          if (e.key === 'Escape') setEditingColumnId(null);
-                        }}
-                        className="h-7 w-48"
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        className="font-medium cursor-pointer hover:text-primary"
-                        onClick={() => {
-                          setEditingColumnId(column.id);
-                          setEditingColumnName(column.name);
-                        }}
-                      >
-                        {column.name}
-                      </span>
-                    )}
+                    {/* Read-only column name */}
+                    <span className="font-medium text-foreground">
+                      {column.name}
+                    </span>
                     <Badge variant="secondary" className="text-xs">
                       {column.statuses.length} status{column.statuses.length !== 1 ? 'es' : ''}
                     </Badge>
@@ -645,24 +541,15 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
                         className="h-7 w-16 text-center"
                       />
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
-                      onClick={() => setDeleteColumnId(column.id)}
-                      disabled={columns.length <= 1}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Mapped Statuses with transition info */}
+                {/* Read-only Mapped Statuses with transition info */}
                 <div className="flex flex-wrap gap-2 min-h-[2rem]">
                   {column.statuses.length === 0 ? (
                     <span className="text-xs text-muted-foreground italic">
-                      No statuses mapped. Add statuses from the unmapped list above.
+                      No statuses mapped. Click "Sync with Workflow" to update.
                     </span>
                   ) : (
                     column.statuses.map(status => {
@@ -670,14 +557,8 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
                       return (
                         <Tooltip key={status.id}>
                           <TooltipTrigger>
-                            <Badge className={`${getCategoryColor(status.category)} pr-1`}>
+                            <Badge className={getCategoryColor(status.category)}>
                               {status.name}
-                              <button
-                                className="ml-1 hover:bg-destructive/20 rounded p-0.5"
-                                onClick={() => handleRemoveStatusFromColumn(column.id, status.id)}
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs text-xs">
@@ -700,26 +581,6 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
                     })
                   )}
                 </div>
-
-                {/* Available statuses to add */}
-                {unmappedStatuses.length > 0 && (
-                  <div className="mt-3 pt-3 border-t">
-                    <Label className="text-xs text-muted-foreground mb-2 block">Add status:</Label>
-                    <div className="flex flex-wrap gap-1">
-                      {unmappedStatuses.map(status => (
-                        <Badge
-                          key={status.id}
-                          variant="outline"
-                          className="cursor-pointer hover:bg-accent text-xs"
-                          onClick={() => handleAddStatusToColumn(column.id, status.id)}
-                        >
-                          <Plus className="h-3 w-3 mr-1" />
-                          {status.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           );
@@ -728,31 +589,9 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
 
       {columns.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          <p>No columns configured. Add a column to get started.</p>
+          <p>No columns configured. Click "Sync with Workflow" to generate columns from your workflow.</p>
         </div>
       )}
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteColumnId} onOpenChange={() => setDeleteColumnId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Column?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will remove the column from the board. Any status mappings will also be removed.
-              Issues will not be deleted, but they won't appear in any column until remapped.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteColumn}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Sync Confirmation Dialog */}
       <AlertDialog open={showSyncConfirm} onOpenChange={setShowSyncConfirm}>

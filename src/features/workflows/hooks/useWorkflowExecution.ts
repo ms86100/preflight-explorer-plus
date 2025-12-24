@@ -91,11 +91,18 @@ export function useAssignWorkflowScheme() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ projectId, schemeId }: { projectId: string; schemeId: string }) =>
-      executionService.assignWorkflowSchemeToProject(projectId, schemeId),
-    onSuccess: (_, { projectId }) => {
+    mutationFn: async ({ projectId, schemeId }: { projectId: string; schemeId: string }) => {
+      // First assign the scheme
+      await executionService.assignWorkflowSchemeToProject(projectId, schemeId);
+      // Then regenerate board columns for all boards in the project
+      const boardsUpdated = await executionService.regenerateBoardColumnsForProject(projectId);
+      return { boardsUpdated };
+    },
+    onSuccess: ({ boardsUpdated }, { projectId }) => {
       queryClient.invalidateQueries({ queryKey: ['project-workflow-scheme', projectId] });
-      toast.success('Workflow scheme assigned');
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      queryClient.invalidateQueries({ queryKey: ['board-columns'] });
+      toast.success(`Workflow scheme assigned. ${boardsUpdated} board(s) updated.`);
     },
     onError: (error: Error) => {
       toast.error('Failed to assign workflow scheme: ' + error.message);

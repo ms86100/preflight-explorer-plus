@@ -126,8 +126,8 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
 
   const handlePublishDraft = (draftId: string) => {
     publishDraft.mutate(draftId, {
-      onSuccess: (workflow) => {
-        onSelectWorkflow(workflow.id);
+      onSuccess: (result) => {
+        onSelectWorkflow(result.workflow.id);
         setPublishConfirmId(null);
       }
     });

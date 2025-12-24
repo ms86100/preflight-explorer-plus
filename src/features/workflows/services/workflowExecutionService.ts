@@ -278,3 +278,52 @@ export async function deleteWorkflowSchemeMapping(mappingId: string): Promise<vo
 
   if (error) throw error;
 }
+
+/**
+ * Get all projects using a specific workflow (via any scheme mapping)
+ */
+export async function getProjectsUsingWorkflow(workflowId: string): Promise<string[]> {
+  // First, find all scheme mappings that use this workflow
+  const { data: mappings, error: mappingsError } = await supabase
+    .from('workflow_scheme_mappings')
+    .select('scheme_id')
+    .eq('workflow_id', workflowId);
+
+  if (mappingsError) throw mappingsError;
+  if (!mappings || mappings.length === 0) return [];
+
+  // Get unique scheme IDs
+  const schemeIds = [...new Set(mappings.map(m => m.scheme_id))];
+
+  // Find all projects using these schemes
+  const { data: projectSchemes, error: projectError } = await supabase
+    .from('project_workflow_schemes')
+    .select('project_id')
+    .in('scheme_id', schemeIds);
+
+  if (projectError) throw projectError;
+  return projectSchemes?.map(ps => ps.project_id) || [];
+}
+
+/**
+ * Regenerate board columns for all boards in a project
+ */
+export async function regenerateBoardColumnsForProject(projectId: string): Promise<number> {
+  // Import dynamically to avoid circular dependency
+  const { boardService } = await import('@/features/boards/services/boardService');
+  
+  // Get all boards for this project
+  const boards = await boardService.getByProject(projectId);
+  
+  let updatedCount = 0;
+  for (const board of boards) {
+    try {
+      await boardService.generateColumnsFromWorkflow(board.id, projectId, true);
+      updatedCount++;
+    } catch (error) {
+      console.error(`Failed to regenerate columns for board ${board.id}:`, error);
+    }
+  }
+  
+  return updatedCount;
+}

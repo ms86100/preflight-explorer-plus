@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import * as workflowService from '../services/workflowService';
+import * as executionService from '../services/workflowExecutionService';
 
 export function useWorkflows(projectId?: string, includeDrafts = true) {
   return useQuery({
@@ -216,11 +217,36 @@ export function usePublishWorkflowDraft() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: workflowService.publishWorkflowDraft,
-    onSuccess: (workflow) => {
+    mutationFn: async (draftId: string) => {
+      // Publish the draft
+      const workflow = await workflowService.publishWorkflowDraft(draftId);
+      
+      // Find all projects using this workflow and sync their boards
+      const projectIds = await executionService.getProjectsUsingWorkflow(workflow.id);
+      let boardsUpdated = 0;
+      
+      for (const projectId of projectIds) {
+        try {
+          const count = await executionService.regenerateBoardColumnsForProject(projectId);
+          boardsUpdated += count;
+        } catch (error) {
+          console.error(`Failed to sync boards for project ${projectId}:`, error);
+        }
+      }
+      
+      return { workflow, projectIds, boardsUpdated };
+    },
+    onSuccess: ({ workflow, projectIds, boardsUpdated }) => {
       queryClient.invalidateQueries({ queryKey: ['workflows'] });
       queryClient.invalidateQueries({ queryKey: ['workflow'] });
-      toast.success('Draft published successfully');
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      queryClient.invalidateQueries({ queryKey: ['board-columns'] });
+      
+      if (projectIds.length > 0) {
+        toast.success(`Draft published. ${boardsUpdated} board(s) in ${projectIds.length} project(s) synced.`);
+      } else {
+        toast.success('Draft published successfully');
+      }
     },
     onError: (error: Error) => {
       toast.error('Failed to publish draft: ' + error.message);
