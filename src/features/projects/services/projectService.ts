@@ -55,6 +55,7 @@ export interface ProjectInsert {
   classification?: ClassificationLevel;
   program_id?: string;
   lead_id?: string;
+  workflow_scheme_id?: string;
 }
 
 /**
@@ -279,14 +280,19 @@ export const projectService = {
       owner_id: userId,
     }).select().single();
 
-    // Assign default workflow scheme to project if not already assigned
-    const { data: defaultScheme } = await supabase
-      .from('workflow_schemes')
-      .select('id')
-      .eq('is_default', true)
-      .maybeSingle();
+    // Assign workflow scheme to project - use provided scheme or fall back to default
+    let schemeId = project.workflow_scheme_id;
+    
+    if (!schemeId) {
+      const { data: defaultScheme } = await supabase
+        .from('workflow_schemes')
+        .select('id')
+        .eq('is_default', true)
+        .maybeSingle();
+      schemeId = defaultScheme?.id;
+    }
 
-    if (defaultScheme) {
+    if (schemeId) {
       // Check if project already has a scheme
       const { data: existingScheme } = await supabase
         .from('project_workflow_schemes')
@@ -297,7 +303,7 @@ export const projectService = {
       if (!existingScheme) {
         await supabase.from('project_workflow_schemes').insert({
           project_id: projectData.id,
-          scheme_id: defaultScheme.id,
+          scheme_id: schemeId,
         });
       }
     }
