@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MoreHorizontal, Plus, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,15 +13,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { IssueCard } from './IssueCard';
 import type { ClassificationLevel } from '@/types/jira';
 
@@ -101,6 +93,7 @@ export function BoardColumn({
   const [isDragOver, setIsDragOver] = useState(false);
   const [dragOverStatusId, setDragOverStatusId] = useState<string | null>(null);
   const [dropError, setDropError] = useState<string | null>(null);
+  const dropErrorTimeoutRef = useRef<number | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [showSubStatuses, setShowSubStatuses] = useState(false);
   
@@ -108,6 +101,25 @@ export function BoardColumn({
   const isOverLimit = maxIssues !== undefined && issueCount > maxIssues;
   const isUnderLimit = minIssues !== undefined && issueCount < minIssues;
   const hasMultipleStatuses = statuses.length > 1;
+
+  const showDropError = (message: string) => {
+    setDropError(message);
+    if (dropErrorTimeoutRef.current) {
+      globalThis.clearTimeout(dropErrorTimeoutRef.current);
+    }
+    dropErrorTimeoutRef.current = globalThis.setTimeout(() => {
+      setDropError(null);
+      dropErrorTimeoutRef.current = null;
+    }, 3000) as unknown as number;
+  };
+
+  useEffect(() => {
+    return () => {
+      if (dropErrorTimeoutRef.current) {
+        globalThis.clearTimeout(dropErrorTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Get issues for a specific status within this column
   const getIssuesForStatus = (statusId: string) => {
@@ -157,17 +169,20 @@ export function BoardColumn({
       try {
         const result = await onValidateDrop(issueId, finalTargetStatusId);
         if (!result.valid) {
-          setDropError(result.error || 'This transition is not allowed');
+          showDropError(result.error || 'This transition is not allowed by the workflow');
           setIsValidating(false);
           return;
         }
-      } catch (error) {
-        setDropError('Failed to validate transition');
+      } catch {
+        showDropError('Failed to validate transition');
         setIsValidating(false);
         return;
       }
       setIsValidating(false);
     }
+
+    // Clear any previous error on successful validation
+    setDropError(null);
 
     if (onDrop) {
       onDrop(issueId, finalTargetStatusId);
@@ -294,21 +309,16 @@ export function BoardColumn({
         )}
       </div>
 
-      {/* Drop Error Modal */}
-      <AlertDialog open={!!dropError} onOpenChange={(open) => !open && setDropError(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              Transition Not Allowed
-            </AlertDialogTitle>
-            <AlertDialogDescription>{dropError}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setDropError(null)}>Dismiss</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Drop Error */}
+      {dropError && (
+        <div className="p-2">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Transition not allowed</AlertTitle>
+            <AlertDescription>{dropError}</AlertDescription>
+          </Alert>
+        </div>
+      )}
 
       {/* Sub-Status Drop Zones */}
       {renderSubStatusDropZones()}
