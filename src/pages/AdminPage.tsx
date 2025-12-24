@@ -2,8 +2,9 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { ComplianceDashboard, DataExportControls } from '@/features/compliance';
 import { AuditLogsViewer, PermissionSchemesManager } from '@/features/enterprise';
 import { GitIntegrationPanel } from '@/features/git-integration/components/GitIntegrationPanel';
+import { StatusManager } from '@/features/statuses';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, FileText, Lock, Download, GitBranch } from 'lucide-react';
+import { Shield, FileText, Lock, Download, GitBranch, CircleDot } from 'lucide-react';
 
 export default function AdminPage() {
   return (
@@ -17,8 +18,12 @@ export default function AdminPage() {
           <p className="text-muted-foreground">Enterprise features, compliance, and security controls</p>
         </div>
 
-        <Tabs defaultValue="compliance" className="space-y-6">
+        <Tabs defaultValue="statuses" className="space-y-6">
           <TabsList>
+            <TabsTrigger value="statuses" className="gap-2">
+              <CircleDot className="h-4 w-4" />
+              Statuses
+            </TabsTrigger>
             <TabsTrigger value="compliance" className="gap-2">
               <Shield className="h-4 w-4" />
               Compliance
@@ -41,6 +46,9 @@ export default function AdminPage() {
             </TabsTrigger>
           </TabsList>
 
+          <TabsContent value="statuses">
+            <StatusManager />
+          </TabsContent>
           <TabsContent value="compliance">
             <ComplianceDashboard />
           </TabsContent>
