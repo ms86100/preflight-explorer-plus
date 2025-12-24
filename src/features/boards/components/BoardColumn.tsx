@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, Plus } from 'lucide-react';
+import { MoreHorizontal, Plus, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -7,6 +7,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 import { IssueCard } from './IssueCard';
 import type { ClassificationLevel } from '@/types/jira';
 
@@ -27,6 +33,12 @@ interface BoardIssue {
   readonly epic_color?: string;
 }
 
+interface StatusInfo {
+  readonly id: string;
+  readonly name: string;
+  readonly category?: string;
+}
+
 interface BoardColumnProps {
   readonly id: string;
   readonly name: string;
@@ -34,9 +46,15 @@ interface BoardColumnProps {
   readonly statusCategory: 'todo' | 'in_progress' | 'done';
   readonly minIssues?: number;
   readonly maxIssues?: number;
+  /** Multiple statuses mapped to this column */
+  readonly statuses?: readonly StatusInfo[];
   readonly onCreateIssue?: () => void;
   readonly onIssueSelect?: (issueId: string) => void;
-  readonly onDrop?: (issueId: string, columnId: string) => void;
+  readonly onDrop?: (issueId: string, targetStatusId: string) => void;
+  /** Callback to check if a transition is valid before dropping */
+  readonly onValidateDrop?: (issueId: string, targetStatusId: string) => Promise<{ valid: boolean; error?: string }>;
+  /** Map of issue ID to its current status */
+  readonly issueStatusMap?: Map<string, string>;
 }
 
 const STATUS_CATEGORY_STYLES = {
@@ -64,30 +82,88 @@ export function BoardColumn({
   statusCategory,
   minIssues,
   maxIssues,
+  statuses = [],
   onCreateIssue,
   onIssueSelect,
   onDrop,
+  onValidateDrop,
+  issueStatusMap,
 }: BoardColumnProps) {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [dragOverStatusId, setDragOverStatusId] = useState<string | null>(null);
+  const [dropError, setDropError] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [showSubStatuses, setShowSubStatuses] = useState(false);
+  
   const issueCount = issues.length;
   const isOverLimit = maxIssues !== undefined && issueCount > maxIssues;
   const isUnderLimit = minIssues !== undefined && issueCount < minIssues;
+  const hasMultipleStatuses = statuses.length > 1;
 
-  const handleDragOver = (e: React.DragEvent) => {
+  // Get issues for a specific status within this column
+  const getIssuesForStatus = (statusId: string) => {
+    if (!issueStatusMap) return [];
+    return issues.filter(issue => issueStatusMap.get(issue.id) === statusId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, statusId?: string) => {
     e.preventDefault();
     setIsDragOver(true);
+    if (statusId) {
+      setDragOverStatusId(statusId);
+    }
+    setDropError(null);
   };
 
-  const handleDragLeave = () => {
-    setIsDragOver(false);
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only set drag over to false if we're leaving the column entirely
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const { clientX, clientY } = e;
+    if (
+      clientX < rect.left ||
+      clientX > rect.right ||
+      clientY < rect.top ||
+      clientY > rect.bottom
+    ) {
+      setIsDragOver(false);
+      setDragOverStatusId(null);
+      setDropError(null);
+    }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent, targetStatusId?: string) => {
     e.preventDefault();
     setIsDragOver(false);
+    setDragOverStatusId(null);
+    
     const issueId = e.dataTransfer.getData('issueId');
-    if (issueId && onDrop) {
-      onDrop(issueId, id);
+    if (!issueId) return;
+
+    // Determine the target status ID
+    const finalTargetStatusId = targetStatusId || (statuses.length > 0 ? statuses[0].id : id);
+
+    // Validate transition if validator is provided
+    if (onValidateDrop) {
+      setIsValidating(true);
+      try {
+        const result = await onValidateDrop(issueId, finalTargetStatusId);
+        if (!result.valid) {
+          setDropError(result.error || 'This transition is not allowed');
+          setTimeout(() => setDropError(null), 3000);
+          setIsValidating(false);
+          return;
+        }
+      } catch (error) {
+        setDropError('Failed to validate transition');
+        setTimeout(() => setDropError(null), 3000);
+        setIsValidating(false);
+        return;
+      }
+      setIsValidating(false);
+    }
+
+    if (onDrop) {
+      onDrop(issueId, finalTargetStatusId);
     }
   };
 
@@ -95,15 +171,57 @@ export function BoardColumn({
     e.dataTransfer.setData('issueId', issueId);
   };
 
+  // Render sub-status drop zones when column has multiple statuses
+  const renderSubStatusDropZones = () => {
+    if (!hasMultipleStatuses || !showSubStatuses) return null;
+
+    return (
+      <div className="px-2 pb-2 space-y-1">
+        {statuses.map(status => {
+          const statusIssues = getIssuesForStatus(status.id);
+          const isStatusDragOver = dragOverStatusId === status.id;
+          
+          return (
+            <div
+              key={status.id}
+              className={`p-2 rounded border-2 border-dashed transition-colors ${
+                isStatusDragOver 
+                  ? 'border-primary bg-primary/10' 
+                  : 'border-muted-foreground/20 hover:border-muted-foreground/40'
+              }`}
+              onDragOver={(e) => handleDragOver(e, status.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, status.id)}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-muted-foreground">
+                  {status.name}
+                </span>
+                <Badge variant="secondary" className="text-xs h-5">
+                  {statusIssues.length}
+                </Badge>
+              </div>
+              {statusIssues.length === 0 && (
+                <p className="text-xs text-muted-foreground italic">
+                  Drop here for "{status.name}"
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <section
       aria-label={`Board column: ${name}`}
-      className={`flex flex-col min-w-[280px] max-w-[320px] bg-muted/30 rounded-lg ${
-        isDragOver ? 'ring-2 ring-primary ring-offset-2' : ''
-      }`}
-      onDragOver={handleDragOver}
+      className={`flex flex-col min-w-[280px] max-w-[320px] bg-muted/30 rounded-lg transition-all ${
+        isDragOver && !hasMultipleStatuses ? 'ring-2 ring-primary ring-offset-2' : ''
+      } ${dropError ? 'ring-2 ring-destructive ring-offset-2' : ''}`}
+      onDragOver={!hasMultipleStatuses ? (e) => handleDragOver(e) : undefined}
       onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      onDrop={!hasMultipleStatuses ? (e) => handleDrop(e) : undefined}
     >
       {/* Column Header */}
       <div className={`px-3 py-2 rounded-t-lg border-b ${STATUS_CATEGORY_STYLES[statusCategory]}`}>
@@ -119,6 +237,27 @@ export function BoardColumn({
               {issueCount}
               {maxIssues !== undefined && ` / ${maxIssues}`}
             </span>
+            {hasMultipleStatuses && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    onClick={() => setShowSubStatuses(!showSubStatuses)}
+                  >
+                    {showSubStatuses ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {showSubStatuses ? 'Hide' : 'Show'} sub-statuses ({statuses.length})
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
 
           <DropdownMenu>
@@ -137,10 +276,38 @@ export function BoardColumn({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
+        {/* Show mapped statuses indicator */}
+        {hasMultipleStatuses && (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {statuses.map(status => (
+              <Badge key={status.id} variant="outline" className="text-xs py-0 h-5">
+                {status.name}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
 
+      {/* Drop Error Message */}
+      {dropError && (
+        <div className="mx-2 mt-2 p-2 bg-destructive/10 border border-destructive/30 rounded text-xs text-destructive flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          <span>{dropError}</span>
+        </div>
+      )}
+
+      {/* Sub-Status Drop Zones */}
+      {renderSubStatusDropZones()}
+
       {/* Issue List */}
-      <ul className="flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-300px)]">
+      <ul 
+        className={`flex-1 p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-300px)] ${
+          hasMultipleStatuses && isDragOver && !showSubStatuses ? 'ring-2 ring-primary ring-inset rounded' : ''
+        }`}
+        onDragOver={hasMultipleStatuses ? (e) => handleDragOver(e) : undefined}
+        onDrop={hasMultipleStatuses && !showSubStatuses ? (e) => handleDrop(e) : undefined}
+      >
         {issues.map((issue) => (
           <li
             key={issue.id}

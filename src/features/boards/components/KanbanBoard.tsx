@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Filter, Search, MoreHorizontal, Maximize2, Clock, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { BoardColumn } from './BoardColumn';
+import { useBoardTransitionValidation } from '../hooks/useBoardTransitionValidation';
 import type { ClassificationLevel } from '@/types/jira';
 
 interface BoardIssue {
@@ -31,6 +32,12 @@ interface BoardIssue {
   readonly updated_at?: string;
 }
 
+interface ColumnStatus {
+  readonly id: string;
+  readonly name: string;
+  readonly category?: string;
+}
+
 interface KanbanBoardProps {
   readonly projectKey: string;
   readonly projectName: string;
@@ -42,6 +49,8 @@ interface KanbanBoardProps {
     readonly minIssues?: number;
     /** All status IDs that belong to this column */
     readonly statusIds?: readonly string[];
+    /** Status details for multi-status columns */
+    readonly statuses?: readonly ColumnStatus[];
   }[];
   readonly issues: readonly BoardIssue[];
   readonly teamMembers?: readonly {
@@ -91,10 +100,27 @@ export function KanbanBoard({
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const { createDropValidator } = useBoardTransitionValidation();
+
   // Sync local state with prop changes (for real-time updates)
   useEffect(() => {
     setIssues(initialIssues);
   }, [initialIssues]);
+
+  // Build issue status map for validation
+  const issueStatusMap = useMemo(() => {
+    const map = new Map<string, string>();
+    issues.forEach(issue => {
+      map.set(issue.id, issue.status);
+    });
+    return map;
+  }, [issues]);
+
+  // Create the drop validator
+  const validateDrop = useMemo(
+    () => createDropValidator(issueStatusMap),
+    [createDropValidator, issueStatusMap]
+  );
 
   // Helper to check if issue belongs to a column
   const issueInColumn = (issue: BoardIssue, column: typeof columns[0]): boolean => {
@@ -150,12 +176,13 @@ export function KanbanBoard({
     [filteredIssues, columns]
   );
 
-  // Handle drag and drop
-  const handleIssueDrop = (issueId: string, columnId: string) => {
+  // Handle drag and drop - now with workflow validation
+  const handleIssueDrop = (issueId: string, targetStatusId: string) => {
+    // Optimistic update
     setIssues((prev) =>
-      prev.map((issue) => (issue.id === issueId ? { ...issue, status: columnId } : issue))
+      prev.map((issue) => (issue.id === issueId ? { ...issue, status: targetStatusId } : issue))
     );
-    onIssueMove?.(issueId, columnId);
+    onIssueMove?.(issueId, targetStatusId);
   };
 
   // Toggle assignee filter
@@ -163,6 +190,17 @@ export function KanbanBoard({
     setSelectedAssignees((prev) =>
       prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
     );
+  };
+
+  // Build status info for columns with multiple statuses
+  const getColumnStatuses = (column: typeof columns[0]): { id: string; name: string; category?: string }[] => {
+    if (column.statuses && column.statuses.length > 0) {
+      return [...column.statuses];
+    }
+    if (column.statusIds && column.statusIds.length > 1) {
+      return column.statusIds.map(id => ({ id, name: id }));
+    }
+    return [];
   };
 
   return (
@@ -281,6 +319,7 @@ export function KanbanBoard({
             const wipStatus = getWipStatus(column);
             const columnIssues = getColumnIssues(column);
             const dropStatusId = column.statusIds?.[0] || column.id;
+            const columnStatuses = getColumnStatuses(column);
             
             return (
               <div key={column.id} className="flex flex-col">
@@ -296,9 +335,12 @@ export function KanbanBoard({
                   issues={columnIssues}
                   statusCategory={column.statusCategory}
                   maxIssues={column.maxIssues}
+                  statuses={columnStatuses.length > 1 ? columnStatuses : undefined}
+                  issueStatusMap={issueStatusMap}
                   onIssueSelect={onIssueSelect}
                   onCreateIssue={() => onCreateIssue?.(dropStatusId)}
                   onDrop={handleIssueDrop}
+                  onValidateDrop={validateDrop}
                 />
               </div>
             );

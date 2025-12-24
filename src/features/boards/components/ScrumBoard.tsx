@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Filter, Search, MoreHorizontal, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SprintHeader } from './SprintHeader';
 import { BoardColumn } from './BoardColumn';
+import { useBoardTransitionValidation } from '../hooks/useBoardTransitionValidation';
 import type { ClassificationLevel, SprintState } from '@/types/jira';
 
 interface BoardIssue {
@@ -31,6 +32,12 @@ interface BoardIssue {
   readonly epic_color?: string;
 }
 
+interface ColumnStatus {
+  readonly id: string;
+  readonly name: string;
+  readonly category?: string;
+}
+
 interface ScrumBoardProps {
   readonly projectKey: string;
   readonly projectName: string;
@@ -49,6 +56,8 @@ interface ScrumBoardProps {
     readonly maxIssues?: number;
     /** All status IDs that belong to this column */
     readonly statusIds?: readonly string[];
+    /** Status details for multi-status columns */
+    readonly statuses?: readonly ColumnStatus[];
   }[];
   readonly issues: readonly BoardIssue[];
   /** Map of status ID to status category for stats calculation */
@@ -89,10 +98,27 @@ export function ScrumBoard({
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const { createDropValidator } = useBoardTransitionValidation();
+
   // Sync local state with prop changes (for real-time updates)
   useEffect(() => {
     setIssues(initialIssues);
   }, [initialIssues]);
+
+  // Build issue status map for validation
+  const issueStatusMap = useMemo(() => {
+    const map = new Map<string, string>();
+    issues.forEach(issue => {
+      map.set(issue.id, issue.status);
+    });
+    return map;
+  }, [issues]);
+
+  // Create the drop validator
+  const validateDrop = useMemo(
+    () => createDropValidator(issueStatusMap),
+    [createDropValidator, issueStatusMap]
+  );
 
   // Helper to check if an issue is done (by status category)
   const isIssueDone = (issue: BoardIssue): boolean => {
@@ -140,12 +166,24 @@ export function ScrumBoard({
     [filteredIssues, columns]
   );
 
-  // Handle drag and drop
-  const handleIssueDrop = (issueId: string, columnId: string) => {
+  // Handle drag and drop - now with workflow validation
+  const handleIssueDrop = (issueId: string, targetStatusId: string) => {
+    // Optimistic update
     setIssues((prev) =>
-      prev.map((issue) => (issue.id === issueId ? { ...issue, status: columnId } : issue))
+      prev.map((issue) => (issue.id === issueId ? { ...issue, status: targetStatusId } : issue))
     );
-    onIssueMove?.(issueId, columnId);
+    onIssueMove?.(issueId, targetStatusId);
+  };
+
+  // Build status info for columns with multiple statuses
+  const getColumnStatuses = (column: typeof columns[0]): ColumnStatus[] => {
+    if (column.statuses && column.statuses.length > 0) {
+      return [...column.statuses];
+    }
+    if (column.statusIds && column.statusIds.length > 1) {
+      return column.statusIds.map(id => ({ id, name: id }));
+    }
+    return [];
   };
 
   // Toggle assignee filter
@@ -250,6 +288,7 @@ export function ScrumBoard({
           {columns.map((column) => {
             // Use the first status ID for dropping issues, or fall back to column ID
             const dropStatusId = column.statusIds?.[0] || column.id;
+            const columnStatuses = getColumnStatuses(column);
             return (
               <BoardColumn
                 key={column.id}
@@ -258,9 +297,12 @@ export function ScrumBoard({
                 issues={getColumnIssues(column)}
                 statusCategory={column.statusCategory}
                 maxIssues={column.maxIssues}
+                statuses={columnStatuses.length > 1 ? columnStatuses : undefined}
+                issueStatusMap={issueStatusMap}
                 onIssueSelect={onIssueSelect}
                 onCreateIssue={() => onCreateIssue?.(dropStatusId)}
                 onDrop={handleIssueDrop}
+                onValidateDrop={validateDrop}
               />
             );
           })}
