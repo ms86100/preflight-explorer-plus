@@ -201,14 +201,23 @@ export default function BoardPage() {
     setDetailModalOpen(true);
   };
 
-  // Transform columns to board format
-  const boardColumns = columns?.map(col => ({
-    id: col.column_statuses?.[0]?.status?.id || col.id,
-    name: col.name,
-    statusCategory: (col.column_statuses?.[0]?.status?.category || 'todo') as 'todo' | 'in_progress' | 'done',
-    maxIssues: col.max_issues || undefined,
-    minIssues: col.min_issues || undefined,
-  })) || [];
+  // Transform columns to board format with ALL mapped statuses
+  const boardColumns = columns?.map(col => {
+    // Collect all status IDs that belong to this column
+    const statusIds = (col.column_statuses || [])
+      .map((cs: any) => cs.status?.id)
+      .filter(Boolean) as string[];
+    
+    return {
+      id: col.id, // Use column ID as the identifier
+      name: col.name,
+      statusCategory: (col.column_statuses?.[0]?.status?.category || 'todo') as 'todo' | 'in_progress' | 'done',
+      maxIssues: col.max_issues || undefined,
+      minIssues: col.min_issues || undefined,
+      // Store all status IDs that map to this column
+      statusIds,
+    };
+  }) || [];
 
   // Transform issues to board format
   const boardIssues = (issuesData || []).map((issue: any) => ({
@@ -339,10 +348,13 @@ export default function BoardPage() {
 
   // Render appropriate board type based on template
   const renderBoard = () => {
-    // Build status category map from columns for accurate stats calculation
+    // Build status category map from all status IDs in each column
     const statusCategoryMap = new Map<string, string>();
     boardColumns.forEach(col => {
-      statusCategoryMap.set(col.id, col.statusCategory);
+      // Map each status ID to its category
+      (col.statusIds || []).forEach(statusId => {
+        statusCategoryMap.set(statusId, col.statusCategory);
+      });
     });
 
     const commonProps = {

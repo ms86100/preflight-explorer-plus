@@ -40,6 +40,8 @@ interface KanbanBoardProps {
     readonly statusCategory: 'todo' | 'in_progress' | 'done';
     readonly maxIssues?: number;
     readonly minIssues?: number;
+    /** All status IDs that belong to this column */
+    readonly statusIds?: readonly string[];
   }[];
   readonly issues: readonly BoardIssue[];
   readonly teamMembers?: readonly {
@@ -92,14 +94,21 @@ export function KanbanBoard({
     setIssues(initialIssues);
   }, [initialIssues]);
 
+  // Helper to check if issue belongs to a column
+  const issueInColumn = (issue: BoardIssue, column: typeof columns[0]): boolean => {
+    const statusIds = column.statusIds || [];
+    if (statusIds.length === 0) return issue.status === column.id;
+    return statusIds.includes(issue.status);
+  };
+
   // Calculate Kanban metrics
   const metrics = {
     totalIssues: issues.length,
     wipIssues: issues.filter(i => 
-      columns.find(c => c.id === i.status)?.statusCategory === 'in_progress'
+      columns.find(c => issueInColumn(i, c))?.statusCategory === 'in_progress'
     ).length,
     completedThisWeek: issues.filter(i => {
-      const col = columns.find(c => c.id === i.status);
+      const col = columns.find(c => issueInColumn(i, c));
       if (col?.statusCategory !== 'done' || !i.updated_at) return false;
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
@@ -110,7 +119,7 @@ export function KanbanBoard({
 
   // Check WIP limit violations
   const getWipStatus = (column: typeof columns[0]) => {
-    const count = issues.filter(i => i.status === column.id).length;
+    const count = issues.filter(i => issueInColumn(i, column)).length;
     if (!column.maxIssues) return 'normal';
     if (count >= column.maxIssues) return 'exceeded';
     if (count >= column.maxIssues * 0.8) return 'warning';
@@ -131,10 +140,12 @@ export function KanbanBoard({
     return matchesSearch && matchesAssignee;
   });
 
-  // Get issues by column
+  // Get issues by column - match any status in the column's statusIds array
   const getColumnIssues = useCallback(
-    (columnId: string) => filteredIssues.filter((issue) => issue.status === columnId),
-    [filteredIssues]
+    (column: typeof columns[0]) => {
+      return filteredIssues.filter((issue) => issueInColumn(issue, column));
+    },
+    [filteredIssues, columns]
   );
 
   // Handle drag and drop
@@ -266,24 +277,25 @@ export function KanbanBoard({
         <div className="flex gap-4 h-full min-w-max">
           {columns.map((column) => {
             const wipStatus = getWipStatus(column);
-            const issueCount = getColumnIssues(column.id).length;
+            const columnIssues = getColumnIssues(column);
+            const dropStatusId = column.statusIds?.[0] || column.id;
             
             return (
               <div key={column.id} className="flex flex-col">
                 {/* WIP Limit Header */}
                 {!!column.maxIssues && (
                   <div className={`text-xs text-center py-1 mb-1 rounded ${getWipStatusClass(wipStatus)}`}>
-                    {issueCount}/{column.maxIssues} WIP
+                    {columnIssues.length}/{column.maxIssues} WIP
                   </div>
                 )}
                 <BoardColumn
-                  id={column.id}
+                  id={dropStatusId}
                   name={column.name}
-                  issues={getColumnIssues(column.id)}
+                  issues={columnIssues}
                   statusCategory={column.statusCategory}
                   maxIssues={column.maxIssues}
                   onIssueSelect={onIssueSelect}
-                  onCreateIssue={() => onCreateIssue?.(column.id)}
+                  onCreateIssue={() => onCreateIssue?.(dropStatusId)}
                   onDrop={handleIssueDrop}
                 />
               </div>

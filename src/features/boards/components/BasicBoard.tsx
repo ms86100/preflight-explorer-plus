@@ -38,6 +38,8 @@ interface BasicBoardProps {
     readonly id: string;
     readonly name: string;
     readonly statusCategory: 'todo' | 'in_progress' | 'done';
+    /** All status IDs that belong to this column */
+    readonly statusIds?: readonly string[];
   }[];
   readonly issues: readonly BoardIssue[];
   readonly teamMembers?: readonly {
@@ -77,12 +79,19 @@ export function BasicBoard({
     setIssues(initialIssues);
   }, [initialIssues]);
 
+  // Helper to check if issue belongs to a column
+  const issueInColumn = (issue: BoardIssue, column: typeof columns[0]): boolean => {
+    const statusIds = column.statusIds || [];
+    if (statusIds.length === 0) return issue.status === column.id;
+    return statusIds.includes(issue.status);
+  };
+
   // Calculate progress stats
   const stats = {
     total: issues.length,
-    todo: issues.filter(i => columns.find(c => c.id === i.status)?.statusCategory === 'todo').length,
-    inProgress: issues.filter(i => columns.find(c => c.id === i.status)?.statusCategory === 'in_progress').length,
-    done: issues.filter(i => columns.find(c => c.id === i.status)?.statusCategory === 'done').length,
+    todo: issues.filter(i => columns.find(c => issueInColumn(i, c))?.statusCategory === 'todo').length,
+    inProgress: issues.filter(i => columns.find(c => issueInColumn(i, c))?.statusCategory === 'in_progress').length,
+    done: issues.filter(i => columns.find(c => issueInColumn(i, c))?.statusCategory === 'done').length,
   };
   
   const progressPercentage = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
@@ -101,10 +110,12 @@ export function BasicBoard({
     return matchesSearch && matchesAssignee;
   });
 
-  // Get issues by column
+  // Get issues by column - match any status in the column's statusIds array
   const getColumnIssues = useCallback(
-    (columnId: string) => filteredIssues.filter((issue) => issue.status === columnId),
-    [filteredIssues]
+    (column: typeof columns[0]) => {
+      return filteredIssues.filter((issue) => issueInColumn(issue, column));
+    },
+    [filteredIssues, columns]
   );
 
   // Handle drag and drop
@@ -246,18 +257,21 @@ export function BasicBoard({
       {/* Board Columns */}
       <div className="flex-1 overflow-x-auto p-4">
         <div className="flex gap-4 h-full min-w-max">
-          {columns.map((column) => (
-            <BoardColumn
-              key={column.id}
-              id={column.id}
-              name={column.name}
-              issues={getColumnIssues(column.id)}
-              statusCategory={column.statusCategory}
-              onIssueSelect={onIssueSelect}
-              onCreateIssue={() => onCreateIssue?.(column.id)}
-              onDrop={handleIssueDrop}
-            />
-          ))}
+          {columns.map((column) => {
+            const dropStatusId = column.statusIds?.[0] || column.id;
+            return (
+              <BoardColumn
+                key={column.id}
+                id={dropStatusId}
+                name={column.name}
+                issues={getColumnIssues(column)}
+                statusCategory={column.statusCategory}
+                onIssueSelect={onIssueSelect}
+                onCreateIssue={() => onCreateIssue?.(dropStatusId)}
+                onDrop={handleIssueDrop}
+              />
+            );
+          })}
         </div>
       </div>
     </div>
