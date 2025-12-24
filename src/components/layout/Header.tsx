@@ -240,22 +240,9 @@ export function Header() {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Search */}
-      <div className="relative w-64 hidden xl:block">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-        <Input
-          type="search"
-          placeholder="Search work items..."
-          className="pl-10 h-9 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-primary/50 rounded-lg text-sm"
-        />
-      </div>
-
       {/* Right Actions */}
       <div className="flex items-center gap-1">
         <NotificationBell />
-        <Button variant="ghost" size="icon" className="text-white/70 hover:text-white hover:bg-white/10 h-9 w-9 rounded-lg">
-          <HelpCircle className="h-5 w-5" />
-        </Button>
         <Button variant="ghost" size="icon" className="text-white/70 hover:text-white hover:bg-white/10 h-9 w-9 rounded-lg" asChild>
           <Link to="/admin">
             <Settings className="h-5 w-5" />

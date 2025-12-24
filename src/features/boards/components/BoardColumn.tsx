@@ -13,6 +13,15 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { IssueCard } from './IssueCard';
 import type { ClassificationLevel } from '@/types/jira';
 
@@ -149,13 +158,11 @@ export function BoardColumn({
         const result = await onValidateDrop(issueId, finalTargetStatusId);
         if (!result.valid) {
           setDropError(result.error || 'This transition is not allowed');
-          setTimeout(() => setDropError(null), 3000);
           setIsValidating(false);
           return;
         }
       } catch (error) {
         setDropError('Failed to validate transition');
-        setTimeout(() => setDropError(null), 3000);
         setIsValidating(false);
         return;
       }
@@ -271,8 +278,6 @@ export function BoardColumn({
                 <Plus className="h-4 w-4 mr-2" />
                 Create issue
               </DropdownMenuItem>
-              <DropdownMenuItem>Set column limit</DropdownMenuItem>
-              <DropdownMenuItem>Column settings</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -289,13 +294,21 @@ export function BoardColumn({
         )}
       </div>
 
-      {/* Drop Error Message */}
-      {dropError && (
-        <div className="mx-2 mt-2 p-2 bg-destructive/10 border border-destructive/30 rounded text-xs text-destructive flex items-center gap-2">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          <span>{dropError}</span>
-        </div>
-      )}
+      {/* Drop Error Modal */}
+      <AlertDialog open={!!dropError} onOpenChange={(open) => !open && setDropError(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              Transition Not Allowed
+            </AlertDialogTitle>
+            <AlertDialogDescription>{dropError}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setDropError(null)}>Dismiss</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Sub-Status Drop Zones */}
       {renderSubStatusDropZones()}
@@ -328,20 +341,6 @@ export function BoardColumn({
         )}
       </ul>
 
-      {/* Add Issue Button */}
-      <div className="p-2 border-t border-border/50">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start text-muted-foreground hover:text-foreground"
-          onClick={onCreateIssue}
-          aria-label="Create new issue in this column"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create issue
-        </Button>
-      </div>
     </section>
   );
 }

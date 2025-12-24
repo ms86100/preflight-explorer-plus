@@ -167,9 +167,6 @@ export function SprintHeader({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={onEditSprint}>Edit sprint</DropdownMenuItem>
-                    <DropdownMenuItem>Move issues to backlog</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive">Delete sprint</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

@@ -193,10 +193,6 @@ export function BasicBoard({
               );
             })}
           </div>
-          <div className="flex items-center gap-2">
-            <button className="quick-filter quick-filter-inactive"><Filter className="h-3.5 w-3.5 mr-1" />My Tasks</button>
-            <button className="quick-filter quick-filter-inactive">Due Soon</button>
-          </div>
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={() => onCreateIssue?.()} size="sm"><Plus className="h-4 w-4 mr-1" />Add Task</Button>
@@ -205,7 +201,6 @@ export function BasicBoard({
             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onOpenSettings}>Board settings</DropdownMenuItem>
-              <DropdownMenuItem>Export tasks</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

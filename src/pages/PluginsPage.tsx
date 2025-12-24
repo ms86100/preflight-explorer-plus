@@ -192,41 +192,9 @@ export default function PluginsPage() {
               <CardContent className="py-12 text-center">
                 <Download className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
                 <h3 className="text-lg font-semibold mb-2">Plugin Marketplace</h3>
-                <p className="text-muted-foreground mb-4">
-                  Browse and install plugins from the marketplace to extend functionality.
+                <p className="text-muted-foreground">
+                  Coming Soon - Browse and install plugins from the marketplace to extend functionality.
                 </p>
-                <div className="flex justify-center gap-4 flex-wrap">
-                  <Card className="p-4 text-left max-w-xs cursor-pointer hover:bg-accent/50 transition-colors">
-                    <div className="flex items-center gap-3 mb-2">
-                      <FileText className="h-8 w-8 text-blue-500" />
-                      <div>
-                        <p className="font-medium">Document Composer</p>
-                        <p className="text-xs text-muted-foreground">Export to PDF/Excel/Word</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Coming Soon</p>
-                  </Card>
-                  <Card className="p-4 text-left max-w-xs cursor-pointer hover:bg-accent/50 transition-colors">
-                    <div className="flex items-center gap-3 mb-2">
-                      <BarChart3 className="h-8 w-8 text-green-500" />
-                      <div>
-                        <p className="font-medium">Structured Data Blocks</p>
-                        <p className="text-xs text-muted-foreground">Schema-defined data matrices</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Coming Soon</p>
-                  </Card>
-                  <Card className="p-4 text-left max-w-xs cursor-pointer hover:bg-accent/50 transition-colors">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Lock className="h-8 w-8 text-purple-500" />
-                      <div>
-                        <p className="font-medium">Guided Operations</p>
-                        <p className="text-xs text-muted-foreground">Multi-step bulk actions</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Coming Soon</p>
-                  </Card>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -280,20 +248,15 @@ function PluginCard({ plugin, onToggle, isToggling }: Readonly<PluginCardProps>)
           <Badge variant="outline" className="text-xs">
             {CATEGORY_LABELS[plugin.category] || plugin.category}
           </Badge>
-          <div className="flex items-center gap-2">
-            {plugin.is_enabled ? (
-              <span className="flex items-center gap-1 text-xs text-green-500">
-                <CheckCircle className="h-3 w-3" /> Active
-              </span>
-            ) : (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <XCircle className="h-3 w-3" /> Disabled
-              </span>
-            )}
-            <Button variant="ghost" size="icon" className="h-6 w-6">
-              <Settings className="h-3 w-3" />
-            </Button>
-          </div>
+          {plugin.is_enabled ? (
+            <span className="flex items-center gap-1 text-xs text-green-500">
+              <CheckCircle className="h-3 w-3" /> Active
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <XCircle className="h-3 w-3" /> Disabled
+            </span>
+          )}
         </div>
       </CardContent>
     </Card>

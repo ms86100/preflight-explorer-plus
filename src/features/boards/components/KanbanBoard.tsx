@@ -276,16 +276,6 @@ export function KanbanBoard({
             })}
           </div>
 
-          {/* Quick Filters */}
-          <div className="flex items-center gap-2">
-            <button className="quick-filter quick-filter-inactive">
-              <Filter className="h-3.5 w-3.5 mr-1" />
-              Only My Issues
-            </button>
-            <button className="quick-filter quick-filter-inactive">
-              Blocked Items
-            </button>
-          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -306,7 +296,6 @@ export function KanbanBoard({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onOpenSettings}>Board settings</DropdownMenuItem>
               <DropdownMenuItem onClick={onOpenSettings}>Configure WIP limits</DropdownMenuItem>
-              <DropdownMenuItem>Swimlanes</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

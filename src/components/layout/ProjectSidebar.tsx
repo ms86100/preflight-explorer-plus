@@ -151,23 +151,6 @@ export function ProjectSidebar({
             return <div key={item.href}>{linkContent}</div>;
           })}
 
-          {/* Program Shortcuts Section */}
-          {!isCollapsed && (
-            <div className="mt-8 mx-2 p-4 bg-muted/30 rounded-xl border border-border/50">
-              <div className="text-xs font-semibold text-foreground mb-2">
-                Quick Links
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed mb-3">
-                Add shortcuts to important resources for your team.
-              </p>
-              <button
-                className="flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                Add Link
-              </button>
-            </div>
-          )}
         </nav>
 
         {/* Program Settings & Collapse */}

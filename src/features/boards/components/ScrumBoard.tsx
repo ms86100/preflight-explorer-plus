@@ -239,16 +239,6 @@ export function ScrumBoard({
             })}
           </div>
 
-          {/* Quick Filters */}
-          <div className="flex items-center gap-2">
-            <button className="quick-filter quick-filter-inactive">
-              <Filter className="h-3.5 w-3.5 mr-1" />
-              Only My Issues
-            </button>
-            <button className="quick-filter quick-filter-inactive">
-              Recently Updated
-            </button>
-          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -269,7 +259,6 @@ export function ScrumBoard({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onOpenSettings}>Board settings</DropdownMenuItem>
               <DropdownMenuItem onClick={onOpenSettings}>Configure columns</DropdownMenuItem>
-              <DropdownMenuItem>Quick filters</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
