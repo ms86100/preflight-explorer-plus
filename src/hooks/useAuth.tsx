@@ -21,7 +21,7 @@
  * ```
  */
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, useMemo, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { ClassificationLevel, AppRole } from '@/types/jira';
@@ -328,24 +328,26 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
   };
 
   const clearanceLevel: ClassificationLevel = profile?.clearance_level || 'public';
+  const isAuthenticated = !!user;
+
+  // Memoize the context value to prevent unnecessary re-renders (S6481)
+  const contextValue = useMemo<AuthContextType>(() => ({
+    user,
+    session,
+    profile,
+    roles,
+    clearanceLevel,
+    isLoading,
+    isAuthenticated,
+    signIn,
+    signUp,
+    signOut,
+    hasRole,
+    hasClearance,
+  }), [user, session, profile, roles, clearanceLevel, isLoading, isAuthenticated]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        profile,
-        roles,
-        clearanceLevel,
-        isLoading,
-        isAuthenticated: !!user,
-        signIn,
-        signUp,
-        signOut,
-        hasRole,
-        hasClearance,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

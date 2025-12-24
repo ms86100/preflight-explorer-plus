@@ -1,12 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import {
-  Search,
-  HelpCircle,
   Settings,
   ChevronDown,
   Workflow,
   Puzzle,
-  Zap,
   BarChart3,
   Shield,
   Upload,
@@ -17,8 +15,6 @@ import {
   LayoutDashboard,
   FolderKanban,
   ListChecks,
-  Layers,
-  Calendar,
   Menu,
   X,
 } from 'lucide-react';
@@ -32,11 +28,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { NotificationBell } from '@/features/notifications/components/NotificationBell';
-import { useState } from 'react';
 
 // Original terminology - legally distinct naming
 const NAV_ITEMS = [

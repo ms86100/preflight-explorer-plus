@@ -9,7 +9,7 @@ import { CreateIssueModal } from '@/features/issues/components/CreateIssueModal'
 import { IssueDetailModal } from '@/features/issues/components/IssueDetailModal';
 import { useExecuteTransition } from '@/features/workflows';
 import { useIssuesByProject } from '@/features/issues';
-import { Loader2, LayoutList, ArrowRight, Play, Calendar, Settings } from 'lucide-react';
+import { Loader2, LayoutList, ArrowRight, Play, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';

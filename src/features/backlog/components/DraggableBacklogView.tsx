@@ -80,8 +80,6 @@ import {
   useMoveIssuesToBacklog 
 } from '@/features/boards';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-
-import { SprintCompletionModal } from './SprintCompletionModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';

@@ -8,7 +8,6 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Plus,
   Layers,
   Target,
   Calendar,

@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,10 +12,8 @@ import {
   Clock,
   Lock,
   Globe,
-  Activity,
-  TrendingUp
 } from 'lucide-react';
-import { format, subDays } from 'date-fns';
+import { subDays } from 'date-fns';
 
 
 interface ComplianceStats {

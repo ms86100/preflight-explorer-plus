@@ -10,7 +10,7 @@ import { usePlugins, useTogglePlugin } from '@/features/plugins';
 import type { Plugin } from '@/features/plugins';
 import {
   Puzzle, Search, Download, Settings, CheckCircle, XCircle,
-  Zap, BarChart3, Shield, Workflow, Bell, Layout, FileText, Lock, GitBranch,
+  Zap, BarChart3, Shield, Workflow, Bell, Layout, FileText, GitBranch,
 } from 'lucide-react';
 import { GitIntegrationPanel } from '@/features/git-integration/components/GitIntegrationPanel';
 

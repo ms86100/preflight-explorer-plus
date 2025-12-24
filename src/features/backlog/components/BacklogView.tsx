@@ -58,13 +58,11 @@ import {
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { AppLayout } from '@/components/layout';
 import { ClassificationBadge } from '@/components/compliance/ClassificationBanner';
 import { CreateIssueModal, IssueDetailModal, useIssuesByProject, useStatuses, useDeleteIssue, useUpdateIssue } from '@/features/issues';
 import { useProject } from '@/features/projects';
 import { useBoardsByProject, useSprintsByBoard, useCreateSprint, useStartSprint, useAddIssueToSprint, useDeleteSprint, useMoveIssuesToBacklog } from '@/features/boards';
-// SprintPlanningModal import removed - unused (S1128)
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { ClassificationLevel, SprintState } from '@/types/jira';
