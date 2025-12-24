@@ -161,8 +161,9 @@ export function BacklogView() {
     if (assigneeDialogOpen && project?.id) {
       setLoadingMembers(true);
       supabase
-        .from('profiles')
+        .from('user_directory')
         .select('id, display_name, avatar_url')
+        .eq('is_active', true)
         .then(({ data }) => {
           setTeamMembers(data || []);
           setLoadingMembers(false);

@@ -97,36 +97,21 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
     }
   };
 
-  // Fetch team members for assignee selection (from user_directory + profiles)
+  // Fetch team members for assignee selection from user_directory
   useEffect(() => {
     if (open) {
       const fetchAssignees = async () => {
-        // Fetch from user_directory (dummy users)
         const { data: directoryUsers } = await supabase
           .from('user_directory')
           .select('id, display_name, avatar_url')
           .eq('is_active', true)
           .order('display_name');
         
-        // Also fetch real profiles
-        const { data: profileUsers } = await supabase
-          .rpc('search_public_profiles', { _search_term: null, _limit: 100 });
-        
-        // Combine both sources
-        const combined = [
-          ...(directoryUsers || []).map(p => ({
-            id: p.id,
-            display_name: p.display_name,
-            avatar_url: p.avatar_url,
-          })),
-          ...(profileUsers || []).map(p => ({
-            id: p.id,
-            display_name: p.display_name,
-            avatar_url: p.avatar_url,
-          })),
-        ];
-        
-        setTeamMembers(combined);
+        setTeamMembers((directoryUsers || []).map(p => ({
+          id: p.id,
+          display_name: p.display_name,
+          avatar_url: p.avatar_url,
+        })));
       };
       fetchAssignees();
     }

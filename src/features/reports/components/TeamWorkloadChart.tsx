@@ -22,9 +22,9 @@ export function TeamWorkloadChart({ projectId }: TeamWorkloadChartProps) {
         .eq('project_id', projectId)
         .not('assignee_id', 'is', null);
 
-      // Get profiles separately
+      // Get user data from user_directory
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('user_directory')
         .select('id, display_name');
 
       const profileMap = new Map(profiles?.map(p => [p.id, p.display_name]) || []);

@@ -40,7 +40,7 @@ export function ContributorPerformance({ projectId }: ContributorPerformanceProp
         .not('assignee_id', 'is', null);
 
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('user_directory')
         .select('id, display_name');
 
       const profileMap = new Map(profiles?.map(p => [p.id, p.display_name]) || []);
