@@ -1,7 +1,7 @@
 // Create Branch Modal Component
 // Modal for creating a new branch linked to an issue
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -52,9 +52,9 @@ export function CreateBranchModal({
     },
   });
 
-  const handleOpenChange = (isOpen: boolean) => {
-    onOpenChange(isOpen);
-    if (isOpen) {
+  // Load repositories when modal opens
+  useEffect(() => {
+    if (open && projectId) {
       loadRepositories(projectId);
       form.reset({
         repository_id: '',
@@ -62,7 +62,7 @@ export function CreateBranchModal({
         from_branch: 'main',
       });
     }
-  };
+  }, [open, projectId, issueKey]);
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
@@ -104,7 +104,7 @@ export function CreateBranchModal({
   const selectedRepo = repositories.find(r => r.id === form.watch('repository_id'));
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
