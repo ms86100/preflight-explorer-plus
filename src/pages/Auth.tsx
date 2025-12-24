@@ -110,7 +110,7 @@ export default function AuthPage() {
                 <path d="M13 17.5L16 10l3 7.5H13z" fill="currentColor"/>
               </svg>
             </div>
-            <h1 className="text-xl font-semibold text-foreground">Jira Software</h1>
+            <h1 className="text-xl font-semibold text-foreground">Vertex Software</h1>
           </div>
 
           <Card className="shadow-sm border">
@@ -300,10 +300,6 @@ export default function AuthPage() {
             </CardContent>
           </Card>
 
-          {/* Footer */}
-          <p className="text-center text-xs text-muted-foreground mt-4">
-            Atlassian · Privacy policy · User notice
-          </p>
         </div>
       </div>
     </div>
