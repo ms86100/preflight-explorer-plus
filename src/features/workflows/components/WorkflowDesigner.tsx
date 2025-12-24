@@ -103,6 +103,9 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
   const [isCreateStatusOpen, setIsCreateStatusOpen] = useState(false);
   const [newStatusName, setNewStatusName] = useState('');
   const [newStatusColor, setNewStatusColor] = useState('#6B7280');
+  
+  // Bi-directional transition option
+  const [createBidirectional, setCreateBidirectional] = useState(true);
 
   // Initialize edit form when workflow loads
   useEffect(() => {
@@ -200,12 +203,30 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
       
       if (!existingTransition) {
         const fromStep = workflow?.steps.find(s => s.id === connectionState.fromStepId);
+        
+        // Create the forward transition
         addTransition.mutate({
           workflow_id: workflowId,
           from_step_id: connectionState.fromStepId,
           to_step_id: step.id,
           name: `${fromStep?.status?.name} → ${step.status?.name}`,
         });
+        
+        // If bi-directional is enabled, also create the reverse transition
+        if (createBidirectional) {
+          const reverseExists = workflow?.transitions.find(
+            t => t.from_step_id === step.id && t.to_step_id === connectionState.fromStepId
+          );
+          
+          if (!reverseExists) {
+            addTransition.mutate({
+              workflow_id: workflowId,
+              from_step_id: step.id,
+              to_step_id: connectionState.fromStepId,
+              name: `${step.status?.name} → ${fromStep?.status?.name}`,
+            });
+          }
+        }
       }
       setConnectionState(null);
     }
@@ -367,7 +388,19 @@ export function WorkflowDesigner({ workflowId }: WorkflowDesignerProps) {
             <Edit2 className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="bidirectional"
+              checked={createBidirectional}
+              onChange={(e) => setCreateBidirectional(e.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            <Label htmlFor="bidirectional" className="text-sm text-muted-foreground cursor-pointer">
+              Bi-directional transitions
+            </Label>
+          </div>
           <Button 
             size="sm" 
             variant="outline"

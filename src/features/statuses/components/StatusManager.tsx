@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, GripVertical, Circle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -122,6 +122,20 @@ export function StatusManager() {
   const openDeleteDialog = (status: IssueStatus) => {
     setStatusToDelete(status);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handleCategoryChange = async (statusId: string, newCategory: StatusCategory) => {
+    const { error } = await supabase
+      .from('issue_statuses')
+      .update({ category: newCategory })
+      .eq('id', statusId);
+
+    if (error) {
+      toast.error('Failed to update status category');
+    } else {
+      toast.success('Status moved to ' + CATEGORY_LABELS[newCategory]);
+      fetchStatuses();
+    }
   };
 
   const handleSave = async () => {
@@ -262,7 +276,6 @@ export function StatusManager() {
                       className="flex items-center justify-between p-2 rounded-md border bg-card hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-center gap-2">
-                        <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
                         <Circle
                           className="h-4 w-4"
                           style={{ color: status.color || '#6B7280', fill: status.color || '#6B7280' }}
@@ -270,6 +283,20 @@ export function StatusManager() {
                         <span className="font-medium">{status.name}</span>
                       </div>
                       <div className="flex items-center gap-1">
+                        {/* Move to different category */}
+                        <Select
+                          value={status.category}
+                          onValueChange={(newCategory) => handleCategoryChange(status.id, newCategory as StatusCategory)}
+                        >
+                          <SelectTrigger className="h-7 w-[90px] text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="todo">To Do</SelectItem>
+                            <SelectItem value="in_progress">In Progress</SelectItem>
+                            <SelectItem value="done">Done</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <Button
                           variant="ghost"
                           size="icon"

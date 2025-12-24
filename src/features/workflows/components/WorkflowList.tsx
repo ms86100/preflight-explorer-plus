@@ -75,6 +75,7 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [publishConfirmId, setPublishConfirmId] = useState<string | null>(null);
   const [discardConfirmId, setDiscardConfirmId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [cloneSourceId, setCloneSourceId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -330,7 +331,7 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
                               className="text-destructive focus:text-destructive"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteWorkflow.mutate(workflow.id);
+                                setDeleteConfirmId(workflow.id);
                               }}
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
@@ -436,6 +437,34 @@ export function WorkflowList({ projectId, onSelectWorkflow, selectedWorkflowId }
             disabled={discardDraft.isPending}
           >
             {discardDraft.isPending ? 'Discarding...' : 'Discard Draft'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* Delete Workflow Confirmation */}
+    <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Workflow?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will permanently delete this workflow and all its steps and transitions.
+            This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={() => {
+              if (deleteConfirmId) {
+                deleteWorkflow.mutate(deleteConfirmId);
+                setDeleteConfirmId(null);
+              }
+            }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={deleteWorkflow.isPending}
+          >
+            {deleteWorkflow.isPending ? 'Deleting...' : 'Delete Workflow'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
