@@ -40,6 +40,7 @@ export default function Dashboard() {
     template: 'scrum' | 'kanban' | 'basic';
     classification: ClassificationLevel;
     program_id?: string;
+    workflow_scheme_id?: string;
   }) => {
     const result = await createProject.mutateAsync({
       name: data.name,
@@ -48,6 +49,7 @@ export default function Dashboard() {
       template: data.template as ProjectTemplate,
       classification: data.classification,
       program_id: data.program_id,
+      workflow_scheme_id: data.workflow_scheme_id,
     });
     navigate(`/projects/${result.pkey}/board`);
   };
