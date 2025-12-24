@@ -178,7 +178,7 @@ export const boardService = {
   },
 
   /**
-   * Creates a new board column.
+   * Creates a new board column and auto-maps a matching status if found.
    */
   async createColumn(boardId: string, name: string, position: number, maxIssues?: number) {
     const { data, error } = await supabase
@@ -193,7 +193,30 @@ export const boardService = {
       .single();
 
     if (error) throw error;
-    return data as BoardColumnRow;
+    
+    const column = data as BoardColumnRow;
+    
+    // Try to auto-map a status with matching name (case-insensitive)
+    const { data: statuses } = await supabase
+      .from('issue_statuses')
+      .select('id, name')
+      .order('position');
+    
+    if (statuses && statuses.length > 0) {
+      const normalizedColumnName = name.toLowerCase().trim();
+      const matchingStatus = statuses.find(
+        s => s.name.toLowerCase().trim() === normalizedColumnName
+      );
+      
+      if (matchingStatus) {
+        await supabase.from('board_column_statuses').insert({
+          column_id: column.id,
+          status_id: matchingStatus.id,
+        });
+      }
+    }
+    
+    return column;
   },
 
   /**

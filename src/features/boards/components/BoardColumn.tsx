@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { MoreHorizontal, Plus, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { MoreHorizontal, Plus, AlertCircle, ChevronDown, ChevronRight, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -101,6 +101,7 @@ export function BoardColumn({
   const isOverLimit = maxIssues !== undefined && issueCount > maxIssues;
   const isUnderLimit = minIssues !== undefined && issueCount < minIssues;
   const hasMultipleStatuses = statuses.length > 1;
+  const hasNoStatusMappings = statuses.length === 0;
 
   const showDropError = (message: string) => {
     setDropError(message);
@@ -160,8 +161,14 @@ export function BoardColumn({
     const issueId = e.dataTransfer.getData('issueId');
     if (!issueId) return;
 
-    // Determine the target status ID
-    const finalTargetStatusId = targetStatusId || (statuses.length > 0 ? statuses[0].id : id);
+    // Check if column has status mappings - block drop if not configured
+    if (statuses.length === 0) {
+      showDropError('This column has no status mapped. Please configure column statuses in board settings.');
+      return;
+    }
+
+    // Determine the target status ID from mapped statuses
+    const finalTargetStatusId = targetStatusId || statuses[0].id;
 
     // Validate transition if validator is provided
     if (onValidateDrop) {
@@ -246,10 +253,10 @@ export function BoardColumn({
       onDrop={!hasMultipleStatuses ? (e) => handleDrop(e) : undefined}
     >
       {/* Column Header */}
-      <div className={`px-3 py-2 rounded-t-lg border-b ${STATUS_CATEGORY_STYLES[statusCategory]}`}>
+      <div className={`px-3 py-2 rounded-t-lg border-b ${STATUS_CATEGORY_STYLES[statusCategory]} ${hasNoStatusMappings ? 'border-warning/50' : ''}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${STATUS_CATEGORY_DOT[statusCategory]}`} />
+            <span className={`w-2 h-2 rounded-full ${hasNoStatusMappings ? 'bg-warning' : STATUS_CATEGORY_DOT[statusCategory]}`} />
             <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground">
               {name}
             </h3>
@@ -259,6 +266,20 @@ export function BoardColumn({
               {issueCount}
               {maxIssues !== undefined && ` / ${maxIssues}`}
             </span>
+            {hasNoStatusMappings && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="text-xs py-0 h-5 border-warning text-warning gap-1">
+                    <Settings className="h-3 w-3" />
+                    No status
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>This column has no status mapped.</p>
+                  <p className="text-muted-foreground">Configure column statuses in board settings.</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
             {hasMultipleStatuses && (
               <Tooltip>
                 <TooltipTrigger asChild>
