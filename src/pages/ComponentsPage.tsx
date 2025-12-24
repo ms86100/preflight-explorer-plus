@@ -90,10 +90,10 @@ export default function ComponentsPage() {
         .order('name');
       if (error) throw error;
       
-      // Fetch leads separately
+      // Fetch leads from user_directory
       const leadIds = data.filter(c => c.lead_id).map(c => c.lead_id);
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('user_directory')
         .select('id, display_name, avatar_url')
         .in('id', leadIds);
       
@@ -111,8 +111,9 @@ export default function ComponentsPage() {
     queryKey: ['team-members'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url');
+        .from('user_directory')
+        .select('id, display_name, avatar_url')
+        .eq('is_active', true);
       if (error) throw error;
       return data as TeamMember[];
     },

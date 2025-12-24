@@ -38,9 +38,9 @@ export function OverdueAnalysis({ projectId }: OverdueAnalysisProps) {
         .eq('project_id', projectId)
         .not('due_date', 'is', null);
 
-      // Get profiles for assignees
+      // Get user data from user_directory
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('user_directory')
         .select('id, display_name');
 
       const profileMap = new Map(profiles?.map(p => [p.id, p.display_name]) || []);

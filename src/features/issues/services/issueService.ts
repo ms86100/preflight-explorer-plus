@@ -261,10 +261,10 @@ export const issueService = {
     if (error) throw error;
     if (!issue) return null as unknown as IssueWithRelations;
     
-    // Fetch profiles
+    // Fetch user data from user_directory
     const userIds = [issue.reporter_id, issue.assignee_id].filter(Boolean);
     const { data: profiles } = await supabase
-      .from('profiles')
+      .from('user_directory')
       .select('id, display_name, avatar_url')
       .in('id', userIds.length > 0 ? userIds : ['00000000-0000-0000-0000-000000000000']);
 
@@ -302,10 +302,10 @@ export const issueService = {
     if (error) throw error;
     if (!issue) return null as unknown as IssueWithRelations;
     
-    // Fetch profiles
+    // Fetch user data from user_directory
     const userIds = [issue.reporter_id, issue.assignee_id].filter(Boolean);
     const { data: profiles } = await supabase
-      .from('profiles')
+      .from('user_directory')
       .select('id, display_name, avatar_url')
       .in('id', userIds.length > 0 ? userIds : ['00000000-0000-0000-0000-000000000000']);
 

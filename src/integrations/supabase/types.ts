@@ -3590,7 +3590,6 @@ export type Database = {
           avatar_url: string
           display_name: string
           id: string
-          is_active: boolean
         }[]
       }
       get_workflow_for_issue: {
@@ -3628,12 +3627,12 @@ export type Database = {
         Returns: boolean
       }
       search_public_profiles: {
-        Args: { _limit?: number; _search_term?: string }
+        Args: { _limit?: number; _search_term: string }
         Returns: {
           avatar_url: string
           display_name: string
+          email: string
           id: string
-          is_active: boolean
         }[]
       }
       suggest_git_user_mapping: {

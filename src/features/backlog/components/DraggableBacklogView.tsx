@@ -218,7 +218,7 @@ export function DraggableBacklogView() {
       let profileMap = new Map<string, any>();
       if (assigneeIds.length > 0) {
         const { data: profiles } = await supabase
-          .from('profiles')
+          .from('user_directory')
           .select('id, display_name, avatar_url')
           .in('id', assigneeIds);
         profileMap = new Map((profiles || []).map(p => [p.id, p]));

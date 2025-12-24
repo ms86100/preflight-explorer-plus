@@ -72,14 +72,29 @@ export function IssueHistorySection({ issueId }: IssueHistorySectionProps) {
           old_value,
           new_value,
           changed_by,
-          changed_at,
-          changer:profiles!issue_history_changed_by_fkey(display_name, avatar_url)
+          changed_at
         `)
         .eq('issue_id', issueId)
         .order('changed_at', { ascending: false });
 
       if (error) throw error;
-      return data as unknown as HistoryEntry[];
+      
+      // Fetch user data from user_directory
+      const changerIds = [...new Set(data?.map(h => h.changed_by).filter(Boolean) || [])];
+      let changerMap = new Map<string, { display_name: string | null; avatar_url: string | null }>();
+      
+      if (changerIds.length > 0) {
+        const { data: changers } = await supabase
+          .from('user_directory')
+          .select('id, display_name, avatar_url')
+          .in('id', changerIds);
+        changerMap = new Map((changers || []).map(c => [c.id, { display_name: c.display_name, avatar_url: c.avatar_url }]));
+      }
+      
+      return (data || []).map(h => ({
+        ...h,
+        changer: h.changed_by ? changerMap.get(h.changed_by) || null : null
+      })) as unknown as HistoryEntry[];
     },
     enabled: !!issueId,
   });
