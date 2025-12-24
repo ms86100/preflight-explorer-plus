@@ -246,9 +246,6 @@ export function Header() {
               <DropdownMenuItem asChild className="text-sm rounded-md">
                 <Link to="/profile">Profile Settings</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-sm rounded-md">
-                <Link to="/settings">Preferences</Link>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={signOut} className="text-destructive text-sm rounded-md">
                 Sign Out

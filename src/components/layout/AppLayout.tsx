@@ -2,7 +2,6 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { Header } from './Header';
 import { ProjectSidebar } from './ProjectSidebar';
-import { ClassificationBanner } from '@/components/compliance/ClassificationBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -40,9 +39,6 @@ export function AppLayout({ children, showSidebar = true, projectKey }: AppLayou
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Classification Banner - Compliance */}
-      <ClassificationBanner level={clearanceLevel} />
-      
       {/* Header */}
       <Header />
 
