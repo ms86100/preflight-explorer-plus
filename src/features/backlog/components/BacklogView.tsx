@@ -20,7 +20,6 @@ import {
   Eye,
   UserPlus,
   ArrowRight,
-  Pencil,
   ArrowLeftRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -64,7 +63,7 @@ import { AppLayout } from '@/components/layout';
 import { ClassificationBadge } from '@/components/compliance/ClassificationBanner';
 import { CreateIssueModal, IssueDetailModal, useIssuesByProject, useStatuses, useDeleteIssue, useUpdateIssue } from '@/features/issues';
 import { useProject } from '@/features/projects';
-import { useBoardsByProject, useSprintsByBoard, useCreateSprint, useStartSprint, useCompleteSprint, useAddIssueToSprint, useUpdateSprint, useDeleteSprint, useMoveIssuesToBacklog } from '@/features/boards';
+import { useBoardsByProject, useSprintsByBoard, useCreateSprint, useStartSprint, useAddIssueToSprint, useDeleteSprint, useMoveIssuesToBacklog } from '@/features/boards';
 // SprintPlanningModal import removed - unused (S1128)
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -142,10 +141,6 @@ export function BacklogView() {
   // Sprint action state
   const [sprintDeleteConfirmOpen, setSprintDeleteConfirmOpen] = useState(false);
   const [sprintToDelete, setSprintToDelete] = useState<{ id: string; name: string } | null>(null);
-  const [editSprintDialogOpen, setEditSprintDialogOpen] = useState(false);
-  const [sprintToEdit, setSprintToEdit] = useState<{ id: string; name: string; goal: string | null } | null>(null);
-  const [editSprintName, setEditSprintName] = useState('');
-  const [editSprintGoal, setEditSprintGoal] = useState('');
 
   const { data: project, isLoading: projectLoading } = useProject(projectKey || '');
   const { data: issues, isLoading: issuesLoading } = useIssuesByProject(project?.id || '');
@@ -155,11 +150,9 @@ export function BacklogView() {
   
   const createSprint = useCreateSprint();
   const startSprint = useStartSprint();
-  const completeSprint = useCompleteSprint();
   const deleteIssue = useDeleteIssue();
   const updateIssue = useUpdateIssue();
   const addIssueToSprint = useAddIssueToSprint();
-  const updateSprint = useUpdateSprint();
   const deleteSprint = useDeleteSprint();
   const moveIssuesToBacklog = useMoveIssuesToBacklog();
 
@@ -251,9 +244,6 @@ export function BacklogView() {
     });
   };
 
-  const handleCompleteSprint = async (sprintId: string) => {
-    await completeSprint.mutateAsync(sprintId);
-  };
 
   const openCreateIssue = (statusId?: string) => {
     setCreateIssueContext(statusId);
@@ -453,15 +443,6 @@ export function BacklogView() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => {
-                    setSprintToEdit({ id: sprint.id, name: sprint.name, goal: sprint.goal });
-                    setEditSprintName(sprint.name);
-                    setEditSprintGoal(sprint.goal || '');
-                    setEditSprintDialogOpen(true);
-                  }}>
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Edit sprint
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={async () => {
                     await moveIssuesToBacklog.mutateAsync(sprint.id);
                   }}>
@@ -732,55 +713,6 @@ export function BacklogView() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit Sprint Dialog */}
-      <Dialog open={editSprintDialogOpen} onOpenChange={setEditSprintDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Sprint</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="sprint-name" className="text-sm font-medium">Name</Label>
-              <Input
-                id="sprint-name"
-                value={editSprintName}
-                onChange={(e) => setEditSprintName(e.target.value)}
-                placeholder="Sprint name"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="sprint-goal" className="text-sm font-medium">Goal</Label>
-              <Input
-                id="sprint-goal"
-                value={editSprintGoal}
-                onChange={(e) => setEditSprintGoal(e.target.value)}
-                placeholder="Sprint goal (optional)"
-                className="mt-1"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditSprintDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={async () => {
-                  if (sprintToEdit) {
-                    await updateSprint.mutateAsync({
-                      id: sprintToEdit.id,
-                      updates: { name: editSprintName, goal: editSprintGoal || null }
-                    });
-                    setEditSprintDialogOpen(false);
-                    setSprintToEdit(null);
-                  }
-                }}
-              >
-                Save
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

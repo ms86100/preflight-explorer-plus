@@ -102,3 +102,18 @@ export function useArchiveProject() {
     },
   });
 }
+
+export function useDeleteProject() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => projectService.deleteProject(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast.success('Project and all associated data deleted permanently!');
+    },
+    onError: () => {
+      toast.error('Failed to delete project. Please try again.');
+    },
+  });
+}

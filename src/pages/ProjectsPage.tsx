@@ -12,6 +12,7 @@ import {
   Archive,
   Settings,
   Loader2,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,9 +31,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { AppLayout } from '@/components/layout';
 import { ClassificationBadge } from '@/components/compliance/ClassificationBanner';
-import { CreateProjectModal, useProjects, useCreateProject, useArchiveProject } from '@/features/projects';
+import { CreateProjectModal, useProjects, useCreateProject, useArchiveProject, useDeleteProject } from '@/features/projects';
 import type { ClassificationLevel, ProjectTemplate } from '@/types/jira';
 
 type ViewMode = 'grid' | 'list';
@@ -43,11 +54,14 @@ export default function ProjectsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string } | null>(null);
   const navigate = useNavigate();
 
   const { data: projects, isLoading } = useProjects();
   const createProject = useCreateProject();
   const archiveProject = useArchiveProject();
+  const deleteProject = useDeleteProject();
 
   const handleCreateProject = async (data: {
     name: string;
@@ -212,6 +226,16 @@ export default function ProjectsPage() {
                             <Archive className="h-4 w-4 mr-2" />
                             Archive project
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => {
+                              setProjectToDelete({ id: project.id, name: project.name });
+                              setDeleteConfirmOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete permanently
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -272,6 +296,16 @@ export default function ProjectsPage() {
                         <Archive className="h-4 w-4 mr-2" />
                         Archive project
                       </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => {
+                          setProjectToDelete({ id: project.id, name: project.name });
+                          setDeleteConfirmOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete permanently
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -280,6 +314,40 @@ export default function ProjectsPage() {
           )}
         </div>
       </AppLayout>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project Permanently?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the project 
+              <strong className="mx-1">"{projectToDelete?.name}"</strong>
+              and all associated data including:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>All issues and their history</li>
+                <li>All sprints and boards</li>
+                <li>All comments and attachments</li>
+                <li>All components and labels</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (projectToDelete) {
+                  deleteProject.mutate(projectToDelete.id);
+                  setProjectToDelete(null);
+                }
+              }}
+            >
+              Delete Permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

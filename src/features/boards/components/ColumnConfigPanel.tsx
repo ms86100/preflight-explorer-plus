@@ -372,17 +372,17 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
 
       {/* No Workflow Warning */}
       {hasNoWorkflow && (
-        <Card className="border-yellow-500/50 bg-yellow-500/10">
+        <Card className="border-muted bg-muted/30">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2 text-yellow-700 dark:text-yellow-300">
+            <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground">
               <AlertTriangle className="h-4 w-4" />
-              No Workflow Assigned
+              Basic Column Mode
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-xs text-muted-foreground">
-              This project doesn't have a workflow scheme assigned or the workflow has no steps defined. 
-              Assign a workflow scheme in Administration → Workflow Schemes to enable workflow-driven columns.
+              This board is using basic columns without a workflow scheme. You can manage columns manually, 
+              or assign a workflow scheme in Administration → Workflow Schemes for workflow-driven columns.
             </p>
           </CardContent>
         </Card>
@@ -449,18 +449,19 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
         </Card>
       )}
 
-      {/* Read-only Notice */}
+      {/* Column Management Notice */}
       <Card className="border-muted bg-muted/30">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2 text-muted-foreground">
             <Lock className="h-4 w-4" />
-            Workflow-Driven Columns
+            Column Configuration
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-xs text-muted-foreground">
-            Columns are automatically generated from your workflow. You can adjust WIP limits and column order, 
-            but column names and statuses are controlled by the workflow. To change columns, modify the workflow in the Workflow Designer.
+            {workflowName 
+              ? "Columns are automatically generated from your workflow. You can adjust WIP limits and column order. To change columns, modify the workflow in the Workflow Designer."
+              : "You can configure columns, adjust WIP limits, and reorder them as needed. For workflow-driven columns, assign a workflow scheme to this project."}
           </p>
         </CardContent>
       </Card>

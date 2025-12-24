@@ -370,4 +370,116 @@ export const projectService = {
 
     if (error) throw error;
   },
+
+  /**
+   * Permanently deletes a project and all associated data.
+   * This is a destructive operation and cannot be undone.
+   * 
+   * @param id - UUID of the project to delete
+   * @throws {Error} If database delete fails
+   * 
+   * @remarks
+   * This method deletes all related data in the following order:
+   * 1. Sprint issues
+   * 2. Sprints
+   * 3. Board columns and column statuses
+   * 4. Boards
+   * 5. Issue attachments, comments, history, labels, links
+   * 6. Issues
+   * 7. Components, labels
+   * 8. Project role actors
+   * 9. Project workflow schemes
+   * 10. The project itself
+   */
+  async deleteProject(id: string): Promise<void> {
+    // Get boards for this project
+    const { data: boards } = await supabase
+      .from('boards')
+      .select('id')
+      .eq('project_id', id);
+
+    const boardIds = boards?.map(b => b.id) || [];
+
+    // Get sprints for these boards
+    if (boardIds.length > 0) {
+      const { data: sprints } = await supabase
+        .from('sprints')
+        .select('id')
+        .in('board_id', boardIds);
+
+      const sprintIds = sprints?.map(s => s.id) || [];
+
+      // Delete sprint issues
+      if (sprintIds.length > 0) {
+        await supabase.from('sprint_issues').delete().in('sprint_id', sprintIds);
+        await supabase.from('sprint_history').delete().in('sprint_id', sprintIds);
+      }
+
+      // Delete sprints
+      await supabase.from('sprints').delete().in('board_id', boardIds);
+
+      // Get columns for these boards
+      const { data: columns } = await supabase
+        .from('board_columns')
+        .select('id')
+        .in('board_id', boardIds);
+
+      const columnIds = columns?.map(c => c.id) || [];
+
+      // Delete column statuses
+      if (columnIds.length > 0) {
+        await supabase.from('board_column_statuses').delete().in('column_id', columnIds);
+      }
+
+      // Delete columns
+      await supabase.from('board_columns').delete().in('board_id', boardIds);
+    }
+
+    // Delete boards
+    await supabase.from('boards').delete().eq('project_id', id);
+
+    // Get issues for this project
+    const { data: issues } = await supabase
+      .from('issues')
+      .select('id')
+      .eq('project_id', id);
+
+    const issueIds = issues?.map(i => i.id) || [];
+
+    if (issueIds.length > 0) {
+      // Delete issue-related data
+      await supabase.from('attachments').delete().in('issue_id', issueIds);
+      await supabase.from('comments').delete().in('issue_id', issueIds);
+      await supabase.from('issue_history').delete().in('issue_id', issueIds);
+      await supabase.from('issue_labels').delete().in('issue_id', issueIds);
+      await supabase.from('issue_links').delete().in('source_issue_id', issueIds);
+      await supabase.from('issue_links').delete().in('target_issue_id', issueIds);
+      await supabase.from('custom_field_values').delete().in('issue_id', issueIds);
+      
+      // Clear epic references before deleting
+      await supabase.from('issues').update({ epic_id: null }).in('epic_id', issueIds);
+      await supabase.from('issues').update({ parent_id: null }).in('parent_id', issueIds);
+    }
+
+    // Delete issues
+    await supabase.from('issues').delete().eq('project_id', id);
+
+    // Delete components and labels
+    await supabase.from('components').delete().eq('project_id', id);
+    await supabase.from('labels').delete().eq('project_id', id);
+
+    // Delete project role actors
+    await supabase.from('project_role_actors').delete().eq('project_id', id);
+
+    // Delete project workflow schemes
+    await supabase.from('project_workflow_schemes').delete().eq('project_id', id);
+
+    // Delete git repositories linked to project
+    await supabase.from('git_repositories').delete().eq('project_id', id);
+
+    // Finally, delete the project
+    const { error } = await supabase.from('projects').delete().eq('id', id);
+
+    if (error) throw error;
+  },
 };
