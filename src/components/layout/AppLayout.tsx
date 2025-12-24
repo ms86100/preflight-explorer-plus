@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { Header } from './Header';
 import { ProjectSidebar } from './ProjectSidebar';
+import { MobileBottomNav } from './MobileBottomNav';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -43,7 +44,7 @@ export function AppLayout({ children, showSidebar = true, projectKey }: AppLayou
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
+      {/* Header - Compact on mobile */}
       <Header 
         onMobileSidebarToggle={() => setMobileSidebarOpen(true)} 
         showMobileSidebarToggle={!!(showSidebar && isProjectView)}
@@ -75,14 +76,17 @@ export function AppLayout({ children, showSidebar = true, projectKey }: AppLayou
           </Sheet>
         )}
 
-        {/* Main Content */}
+        {/* Main Content - Add bottom padding for mobile nav */}
         <main className={cn(
-          'flex-1 overflow-auto',
+          'flex-1 overflow-auto pb-safe-nav',
           isProjectView ? 'bg-gradient-vertex' : 'bg-background'
         )}>
           {children || <Outlet />}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 }

@@ -108,13 +108,13 @@ export function Header({ onMobileSidebarToggle, showMobileSidebarToggle }: Heade
   };
 
   return (
-    <header className="h-[60px] bg-gradient-to-r from-header to-[hsl(222,47%,12%)] text-header-foreground flex items-center px-3 sm:px-4 gap-2 sm:gap-3 shadow-lg relative z-50">
+    <header className="h-14 sm:h-[60px] bg-gradient-to-r from-header to-[hsl(222,47%,12%)] text-header-foreground flex items-center px-3 sm:px-4 gap-2 sm:gap-3 shadow-lg relative z-50 safe-area-pt">
       {/* Mobile Sidebar Toggle - for project views */}
       {showMobileSidebarToggle && (
         <Button
           variant="ghost"
           size="icon"
-          className="lg:hidden text-white/80 hover:text-white hover:bg-white/10 h-9 w-9"
+          className="lg:hidden text-white/80 hover:text-white hover:bg-white/10 h-10 w-10 sm:h-9 sm:w-9 active:scale-95 transition-transform"
           onClick={onMobileSidebarToggle}
         >
           <Menu className="h-5 w-5" />
@@ -123,8 +123,8 @@ export function Header({ onMobileSidebarToggle, showMobileSidebarToggle }: Heade
 
       {/* Logo */}
       <Link to="/" className="flex items-center gap-2 sm:gap-2.5 font-semibold text-base mr-1 sm:mr-2">
-        <div className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gradient-to-br from-primary to-primary/70 shadow-glow">
-          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-primary/70 shadow-glow">
+          <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M12 2L2 7l10 5 10-5-10-5z" />
             <path d="M2 17l10 5 10-5" />
             <path d="M2 12l10 5 10-5" />
@@ -136,11 +136,14 @@ export function Header({ onMobileSidebarToggle, showMobileSidebarToggle }: Heade
         </div>
       </Link>
 
-      {/* Mobile Menu Toggle */}
+      {/* Spacer for mobile - push menu to right */}
+      <div className="flex-1 lg:hidden" />
+
+      {/* Mobile Menu Toggle - Moved to right side */}
       <Button
         variant="ghost"
         size="icon"
-        className="lg:hidden text-white/80 hover:text-white hover:bg-white/10 h-9 w-9 ml-auto sm:ml-0"
+        className="lg:hidden text-white/80 hover:text-white hover:bg-white/10 h-10 w-10 sm:h-9 sm:w-9 active:scale-95 transition-transform"
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
       >
         {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -229,11 +232,11 @@ export function Header({ onMobileSidebarToggle, showMobileSidebarToggle }: Heade
         </Button>
       </nav>
 
-      {/* Spacer */}
-      <div className="flex-1" />
+      {/* Spacer - Desktop only */}
+      <div className="hidden lg:flex flex-1" />
 
-      {/* Right Actions */}
-      <div className="flex items-center gap-1">
+      {/* Right Actions - Hide some on mobile */}
+      <div className="hidden lg:flex items-center gap-1">
         <NotificationBell />
         <Button variant="ghost" size="icon" className="text-white/70 hover:text-white hover:bg-white/10 h-9 w-9 rounded-lg" asChild>
           <Link to="/admin">
@@ -245,7 +248,7 @@ export function Header({ onMobileSidebarToggle, showMobileSidebarToggle }: Heade
         {isAuthenticated ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 ml-1 ring-2 ring-white/20 hover:ring-primary/50 transition-all">
+              <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 ml-1 ring-2 ring-white/20 hover:ring-primary/50 transition-all active:scale-95">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={profile?.avatar_url} alt={`${profile?.display_name || 'User'} avatar`} />
                   <AvatarFallback className="bg-primary/80 text-primary-foreground text-xs font-semibold">
@@ -276,30 +279,88 @@ export function Header({ onMobileSidebarToggle, showMobileSidebarToggle }: Heade
         )}
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Right Actions - Minimal */}
+      <div className="flex lg:hidden items-center">
+        <NotificationBell />
+      </div>
+
+      {/* Mobile Menu - Full screen slide down */}
       {mobileMenuOpen && (
-        <div className="absolute top-full left-0 right-0 bg-header border-t border-white/10 shadow-2xl lg:hidden animate-fade-in">
-          <nav className="p-4 space-y-2">
+        <div className="fixed inset-x-0 top-14 bottom-0 bg-header/98 backdrop-blur-lg lg:hidden animate-fade-in z-40 overflow-y-auto">
+          <nav className="p-4 space-y-1 pb-24">
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 to={item.href}
-                className="flex items-center gap-3 px-4 py-3 text-white/90 hover:bg-white/10 rounded-lg transition-colors"
+                className="flex items-center gap-4 px-4 py-4 text-white/90 hover:bg-white/10 active:bg-white/20 rounded-xl transition-colors active:scale-[0.98]"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <item.icon className="h-5 w-5 opacity-70" />
-                {item.label}
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                  <item.icon className="h-5 w-5" />
+                </div>
+                <span className="text-base font-medium">{item.label}</span>
               </Link>
             ))}
-            <div className="border-t border-white/10 pt-2 mt-2">
+            
+            {/* Admin items for mobile */}
+            {hasRole('admin') && (
+              <>
+                <div className="border-t border-white/10 my-4 pt-4">
+                  <p className="px-4 text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">Administration</p>
+                </div>
+                {ADMIN_ITEMS.slice(0, 4).map((item) => (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className="flex items-center gap-4 px-4 py-3 text-white/80 hover:bg-white/10 active:bg-white/20 rounded-xl transition-colors active:scale-[0.98]"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <item.icon className="h-5 w-5 opacity-70" />
+                    <span className="text-sm">{item.label}</span>
+                  </Link>
+                ))}
+              </>
+            )}
+
+            {/* Create button */}
+            <div className="pt-4 mt-4 border-t border-white/10">
               <Link
                 to={createHref}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg font-semibold"
+                className="flex items-center justify-center gap-2 px-4 py-4 bg-primary text-primary-foreground rounded-xl font-semibold text-base active:scale-[0.98] transition-transform"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 + New Work Item
               </Link>
             </div>
+
+            {/* User section at bottom */}
+            {isAuthenticated && (
+              <div className="pt-4 mt-4 border-t border-white/10">
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-3 px-4 py-3 text-white/90 hover:bg-white/10 rounded-xl"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={profile?.avatar_url} alt="User avatar" />
+                    <AvatarFallback className="bg-primary/80 text-primary-foreground text-sm font-semibold">
+                      {getInitials(profile?.display_name || user?.email || 'U')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium text-sm">{profile?.display_name}</p>
+                    <p className="text-xs text-white/60">{user?.email}</p>
+                  </div>
+                </Link>
+                <Button
+                  variant="ghost"
+                  className="w-full mt-2 text-destructive hover:bg-destructive/10 h-12 rounded-xl"
+                  onClick={() => { signOut(); setMobileMenuOpen(false); }}
+                >
+                  Sign Out
+                </Button>
+              </div>
+            )}
           </nav>
         </div>
       )}
