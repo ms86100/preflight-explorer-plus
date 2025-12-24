@@ -178,29 +178,108 @@ export const boardService = {
   },
 
   /**
-   * Creates default columns for a new board.
-   * 
-   * Sets up To Do, In Progress, and Done columns with appropriate
-   * status mappings based on status categories.
-   * 
-   * @param boardId - The board ID to create columns for
-   * 
-   * @example
-   * ```typescript
-   * // After creating a new board
-   * await boardService.createDefaultColumns(newBoard.id);
-   * ```
+   * Creates a new board column.
    */
+  async createColumn(boardId: string, name: string, position: number, maxIssues?: number) {
+    const { data, error } = await supabase
+      .from('board_columns')
+      .insert({
+        board_id: boardId,
+        name,
+        position,
+        max_issues: maxIssues,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as BoardColumnRow;
+  },
+
+  /**
+   * Updates a board column.
+   */
+  async updateColumn(columnId: string, updates: { name?: string; position?: number; max_issues?: number | null; min_issues?: number | null }) {
+    const { data, error } = await supabase
+      .from('board_columns')
+      .update(updates)
+      .eq('id', columnId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as BoardColumnRow;
+  },
+
+  /**
+   * Deletes a board column and its status mappings.
+   */
+  async deleteColumn(columnId: string) {
+    // First delete status mappings
+    await supabase
+      .from('board_column_statuses')
+      .delete()
+      .eq('column_id', columnId);
+
+    const { error } = await supabase
+      .from('board_columns')
+      .delete()
+      .eq('id', columnId);
+
+    if (error) throw error;
+  },
+
+  /**
+   * Adds a status to a column.
+   */
+  async addStatusToColumn(columnId: string, statusId: string) {
+    const { error } = await supabase
+      .from('board_column_statuses')
+      .insert({ column_id: columnId, status_id: statusId });
+
+    if (error) throw error;
+  },
+
+  /**
+   * Removes a status from a column.
+   */
+  async removeStatusFromColumn(columnId: string, statusId: string) {
+    const { error } = await supabase
+      .from('board_column_statuses')
+      .delete()
+      .eq('column_id', columnId)
+      .eq('status_id', statusId);
+
+    if (error) throw error;
+  },
+
+  /**
+   * Gets all statuses (for mapping UI).
+   */
+  async getAllStatuses() {
+    const { data, error } = await supabase
+      .from('issue_statuses')
+      .select('id, name, color, category')
+      .order('position');
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Reorders columns by updating their positions.
+   */
+  async reorderColumns(columns: { id: string; position: number }[]) {
+    for (const col of columns) {
+      await supabase
+        .from('board_columns')
+        .update({ position: col.position })
+        .eq('id', col.id);
+    }
+  },
+
   /**
    * Creates default columns for a board based on project template.
-   * 
-   * @param boardId - The board ID to create columns for
-   * @param template - The project template ('scrum', 'kanban', 'basic')
-   * 
-   * Template-specific column configurations:
-   * - Scrum: To Do, In Progress (WIP 5), Done - Sprint-focused workflow
-   * - Kanban: Backlog, Selected, In Progress (WIP 5), Review (WIP 3), Done - Flow-based with WIP limits
-   * - Basic: To Do, In Progress, Done - Simple task tracking
    */
   async createDefaultColumns(boardId: string, template: 'scrum' | 'kanban' | 'basic' = 'scrum') {
     // Get all statuses
