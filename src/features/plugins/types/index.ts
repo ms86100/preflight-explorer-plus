@@ -49,8 +49,8 @@ export const FEATURE_PLUGIN_MAP: Record<string, string[]> = {
   'automation': ['com.jira.automation'],
   'automation-rules': ['com.jira.automation'],
   
-  // Custom fields
-  'custom-fields': ['com.jira.customfields'],
+  // Custom fields - now a plugin
+  'custom-fields': ['com.app.custom-fields'],
   
   // Reports
   'reports': ['com.jira.reports'],
@@ -80,6 +80,12 @@ export const FEATURE_PLUGIN_MAP: Record<string, string[]> = {
   'bulk-actions': ['com.app.guided-operations'],
   'approval-flows': ['com.app.guided-operations'],
   'guided-workflows': ['com.app.guided-operations'],
+
+  // Git Integration plugin features
+  'git-integration': ['com.app.git-integration'],
+  'git-branches': ['com.app.git-integration'],
+  'git-commits': ['com.app.git-integration'],
+  'git-pull-requests': ['com.app.git-integration'],
 };
 
 // Plugin categories

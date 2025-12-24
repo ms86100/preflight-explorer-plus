@@ -1,10 +1,9 @@
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ComplianceDashboard, DataExportControls } from '@/features/compliance';
-import { AuditLogsViewer, PermissionSchemesManager } from '@/features/enterprise';
-import { GitIntegrationPanel } from '@/features/git-integration/components/GitIntegrationPanel';
+import { AuditLogsViewer, AccessControlManager } from '@/features/enterprise';
 import { StatusManager } from '@/features/statuses';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, FileText, Lock, Download, GitBranch, CircleDot } from 'lucide-react';
+import { Shield, FileText, Download, CircleDot, Users } from 'lucide-react';
 
 export default function AdminPage() {
   return (
@@ -28,17 +27,13 @@ export default function AdminPage() {
               <Shield className="h-4 w-4" />
               Compliance
             </TabsTrigger>
-            <TabsTrigger value="git" className="gap-2">
-              <GitBranch className="h-4 w-4" />
-              Git Integration
+            <TabsTrigger value="access-control" className="gap-2">
+              <Users className="h-4 w-4" />
+              Access Control
             </TabsTrigger>
             <TabsTrigger value="audit" className="gap-2">
               <FileText className="h-4 w-4" />
               Audit Logs
-            </TabsTrigger>
-            <TabsTrigger value="permissions" className="gap-2">
-              <Lock className="h-4 w-4" />
-              Permissions
             </TabsTrigger>
             <TabsTrigger value="exports" className="gap-2">
               <Download className="h-4 w-4" />
@@ -52,14 +47,11 @@ export default function AdminPage() {
           <TabsContent value="compliance">
             <ComplianceDashboard />
           </TabsContent>
-          <TabsContent value="git">
-            <GitIntegrationPanel />
+          <TabsContent value="access-control">
+            <AccessControlManager />
           </TabsContent>
           <TabsContent value="audit">
             <AuditLogsViewer />
-          </TabsContent>
-          <TabsContent value="permissions">
-            <PermissionSchemesManager />
           </TabsContent>
           <TabsContent value="exports">
             <DataExportControls />

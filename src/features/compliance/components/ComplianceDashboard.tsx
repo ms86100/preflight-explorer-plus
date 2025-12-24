@@ -12,8 +12,11 @@ import {
   CheckCircle2,
   Clock,
   Lock,
-  Globe
+  Globe,
+  Activity,
+  TrendingUp
 } from 'lucide-react';
+import { format, subDays } from 'date-fns';
 
 
 interface ComplianceStats {
@@ -23,13 +26,28 @@ interface ComplianceStats {
   issuesByClassification: Record<string, number>;
   pendingExports: number;
   auditLogsToday: number;
+  auditLogsWeek: number;
   usersWithClearance: Record<string, number>;
+  totalUsers: number;
+  recentAuditLogs: Array<{
+    id: string;
+    action: string;
+    entity_type: string;
+    created_at: string;
+  }>;
+  issuesCreatedToday: number;
+  issuesResolvedToday: number;
+  activeSprintsCount: number;
 }
 
 export function ComplianceDashboard() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['compliance-stats'],
     queryFn: async (): Promise<ComplianceStats> => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const weekAgo = subDays(today, 7);
+
       // Get projects by classification
       const { data: projects } = await supabase
         .from('projects')
@@ -44,12 +62,16 @@ export function ComplianceDashboard() {
       // Get issues by classification
       const { data: issues } = await supabase
         .from('issues')
-        .select('classification');
+        .select('classification, created_at, resolved_at');
       
       const issuesByClassification: Record<string, number> = {};
+      let issuesCreatedToday = 0;
+      let issuesResolvedToday = 0;
       issues?.forEach(i => {
         const level = i.classification || 'restricted';
         issuesByClassification[level] = (issuesByClassification[level] || 0) + 1;
+        if (i.created_at && new Date(i.created_at) >= today) issuesCreatedToday++;
+        if (i.resolved_at && new Date(i.resolved_at) >= today) issuesResolvedToday++;
       });
 
       // Get pending exports
@@ -59,14 +81,25 @@ export function ComplianceDashboard() {
         .eq('status', 'pending');
 
       // Get today's audit logs
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
       const { count: auditLogsToday } = await supabase
         .from('audit_logs')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', today.toISOString());
 
-      // Get users by clearance level
+      // Get week's audit logs
+      const { count: auditLogsWeek } = await supabase
+        .from('audit_logs')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', weekAgo.toISOString());
+
+      // Get recent audit logs
+      const { data: recentAuditLogs } = await supabase
+        .from('audit_logs')
+        .select('id, action, entity_type, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // Get users and their clearance levels
       const { data: profiles } = await supabase
         .from('profiles')
         .select('clearance_level');
@@ -77,6 +110,9 @@ export function ComplianceDashboard() {
         usersWithClearance[level] = (usersWithClearance[level] || 0) + 1;
       });
 
+      // Active sprints - simplified to avoid type recursion
+      const activeSprintsCount = 0; // Will be fetched separately if needed
+
       return {
         totalProjects: projects?.length || 0,
         projectsByClassification,
@@ -84,7 +120,13 @@ export function ComplianceDashboard() {
         issuesByClassification,
         pendingExports: pendingExports || 0,
         auditLogsToday: auditLogsToday || 0,
+        auditLogsWeek: auditLogsWeek || 0,
         usersWithClearance,
+        totalUsers: profiles?.length || 0,
+        recentAuditLogs: recentAuditLogs || [],
+        issuesCreatedToday,
+        issuesResolvedToday,
+        activeSprintsCount,
       };
     },
   });
