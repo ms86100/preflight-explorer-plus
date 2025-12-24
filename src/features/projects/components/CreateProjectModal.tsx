@@ -150,15 +150,19 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
             .order('position_x');
 
           if (steps) {
-            const uniqueStatuses = new Map<string, { name: string; position: number }>();
+            // Steps are already ordered by position_x from the query
+            // Extract unique statuses preserving the workflow sequence order
+            const uniqueStatusNames: string[] = [];
+            const seenIds = new Set<string>();
+            
             steps.forEach((s: any) => {
-              if (s.status && !uniqueStatuses.has(s.status.id)) {
-                uniqueStatuses.set(s.status.id, { name: s.status.name, position: s.status.position || 0 });
+              if (s.status && !seenIds.has(s.status.id)) {
+                seenIds.add(s.status.id);
+                uniqueStatusNames.push(s.status.name);
               }
             });
-            statuses = Array.from(uniqueStatuses.values())
-              .sort((a, b) => a.position - b.position)
-              .map(s => s.name);
+            
+            statuses = uniqueStatusNames;
           }
         }
 
