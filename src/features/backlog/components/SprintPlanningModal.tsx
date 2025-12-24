@@ -10,10 +10,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarIcon, Loader2 } from 'lucide-react';
-import { format, addDays } from 'date-fns';
+import { Loader2, Play, Info } from 'lucide-react';
+import { format } from 'date-fns';
 import { useStartSprint } from '@/features/boards';
 import { toast } from 'sonner';
 
@@ -39,29 +37,22 @@ export function SprintPlanningModal({
   initialEndDate,
   initialGoal,
 }: SprintPlanningModalProps) {
-  const [startDate, setStartDate] = useState<Date>(new Date());
-  const [endDate, setEndDate] = useState<Date>(addDays(new Date(), 14));
   const [goal, setGoal] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const startSprint = useStartSprint();
 
-  // Initialize dates from sprint's saved configuration when modal opens
+  // Initialize goal from sprint's saved configuration when modal opens
   useEffect(() => {
     if (open) {
-      if (initialStartDate) {
-        setStartDate(new Date(initialStartDate));
-      } else {
-        setStartDate(new Date());
-      }
-      if (initialEndDate) {
-        setEndDate(new Date(initialEndDate));
-      } else {
-        setEndDate(addDays(new Date(), 14));
-      }
       setGoal(initialGoal || '');
     }
-  }, [open, initialStartDate, initialEndDate, initialGoal]);
+  }, [open, initialGoal]);
+
+  // Use pre-configured dates or defaults
+  const startDate = initialStartDate ? new Date(initialStartDate) : new Date();
+  const endDate = initialEndDate ? new Date(initialEndDate) : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+  const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
   const handleStart = async () => {
     setIsSubmitting(true);
@@ -84,51 +75,38 @@ export function SprintPlanningModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Start {sprintName}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Play className="h-5 w-5 text-primary" />
+            Start {sprintName}
+          </DialogTitle>
           <DialogDescription>
-            Configure sprint dates and goal before starting
+            Ready to begin working on sprint items
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="sprint-start-date">Start Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button id="sprint-start-date" variant="outline" className="w-full justify-start">
-                    <CalendarIcon className="h-4 w-4 mr-2" />
-                    {format(startDate, 'MMM d, yyyy')}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={(date) => date && setStartDate(date)}
-                  />
-                </PopoverContent>
-              </Popover>
+          {/* Sprint Summary - Read-only dates */}
+          <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Start Date</span>
+              <span className="font-medium">{format(startDate, 'MMM d, yyyy')}</span>
             </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">End Date</span>
+              <span className="font-medium">{format(endDate, 'MMM d, yyyy')}</span>
+            </div>
+            <div className="flex justify-between text-sm border-t border-border pt-2 mt-2">
+              <span className="text-muted-foreground">Duration</span>
+              <span className="font-medium">{duration} days</span>
+            </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="sprint-end-date">End Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button id="sprint-end-date" variant="outline" className="w-full justify-start">
-                    <CalendarIcon className="h-4 w-4 mr-2" />
-                    {format(endDate, 'MMM d, yyyy')}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={(date) => date && setEndDate(date)}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+          <div className="flex items-start gap-2 p-3 bg-info/10 rounded-lg text-sm">
+            <Info className="h-4 w-4 text-info mt-0.5 flex-shrink-0" />
+            <span className="text-muted-foreground">
+              Sprint dates are configured when creating the sprint. 
+              You can edit sprint details from the sprint settings.
+            </span>
           </div>
 
           <div className="space-y-2">
@@ -140,13 +118,6 @@ export function SprintPlanningModal({
               onChange={(e) => setGoal(e.target.value)}
               rows={3}
             />
-          </div>
-
-          <div className="bg-muted/50 rounded-lg p-3 text-sm">
-            <p className="font-medium">Duration</p>
-            <p className="text-muted-foreground">
-              {Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))} days
-            </p>
           </div>
         </div>
 

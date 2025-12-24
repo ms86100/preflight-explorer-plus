@@ -3132,6 +3132,56 @@ export type Database = {
           },
         ]
       }
+      user_directory: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          department: string | null
+          display_name: string
+          email: string
+          id: string
+          is_active: boolean | null
+          is_simulated: boolean | null
+          job_title: string | null
+          linked_profile_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          department?: string | null
+          display_name: string
+          email: string
+          id?: string
+          is_active?: boolean | null
+          is_simulated?: boolean | null
+          job_title?: string | null
+          linked_profile_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          department?: string | null
+          display_name?: string
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          is_simulated?: boolean | null
+          job_title?: string | null
+          linked_profile_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_directory_linked_profile_id_fkey"
+            columns: ["linked_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null

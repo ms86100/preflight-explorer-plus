@@ -89,9 +89,7 @@ const NAV_ITEMS = [
 
 const ADMIN_ITEMS = [
   { label: 'Lifecycles', href: '/workflows', icon: Workflow },
-  { label: 'Custom Fields', href: '/custom-fields', icon: Settings },
   { label: 'Extensions', href: '/plugins', icon: Puzzle },
-  { label: 'Automation Hub', href: '/automation', icon: Zap },
   { label: 'Insights', href: '/reports', icon: BarChart3 },
   { label: 'Data Import', href: '/migration', icon: Upload },
   { label: 'Directory Sync', href: '/ldap', icon: Users },
@@ -105,7 +103,7 @@ const PLUGIN_FEATURE_ITEMS = [
 ];
 
 export function Header() {
-  const { user, profile, signOut, isAuthenticated } = useAuth();
+  const { user, profile, signOut, isAuthenticated, hasRole } = useAuth();
   const location = useLocation();
   const { isFeatureEnabled, isLoading: pluginsLoading } = usePluginContext();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -184,48 +182,50 @@ export function Header() {
           </DropdownMenu>
         ))}
 
-        {/* Settings/Admin Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white/80 hover:text-white hover:bg-white/10 gap-1 h-9 px-3 font-medium text-sm rounded-lg"
-            >
-              <Settings className="h-4 w-4 opacity-70" />
-              Configure
-              <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-60 rounded-lg shadow-xl border-border/50">
-            {ADMIN_ITEMS.map((item) => (
-              <DropdownMenuItem key={item.href} asChild className="text-sm rounded-md">
-                <Link to={item.href} className="flex items-center gap-2.5">
-                  <item.icon className="h-4 w-4 text-muted-foreground" />
-                  {item.label}
-                </Link>
-              </DropdownMenuItem>
-            ))}
-            {!pluginsLoading && PLUGIN_FEATURE_ITEMS.some(item => isFeatureEnabled(item.feature)) && (
-              <>
-                <DropdownMenuSeparator />
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Extensions
-                </div>
-                {PLUGIN_FEATURE_ITEMS.map((item) => (
-                  isFeatureEnabled(item.feature) && (
-                    <DropdownMenuItem key={item.href} asChild className="text-sm rounded-md">
-                      <Link to={item.href} className="flex items-center gap-2.5">
-                        <item.icon className="h-4 w-4 text-muted-foreground" />
-                        {item.label}
-                      </Link>
-                    </DropdownMenuItem>
-                  )
-                ))}
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Settings/Admin Dropdown - Only show for admins */}
+        {hasRole('admin') && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white/80 hover:text-white hover:bg-white/10 gap-1 h-9 px-3 font-medium text-sm rounded-lg"
+              >
+                <Settings className="h-4 w-4 opacity-70" />
+                Configure
+                <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-60 rounded-lg shadow-xl border-border/50">
+              {ADMIN_ITEMS.map((item) => (
+                <DropdownMenuItem key={item.href} asChild className="text-sm rounded-md">
+                  <Link to={item.href} className="flex items-center gap-2.5">
+                    <item.icon className="h-4 w-4 text-muted-foreground" />
+                    {item.label}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+              {!pluginsLoading && PLUGIN_FEATURE_ITEMS.some(item => isFeatureEnabled(item.feature)) && (
+                <>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Extensions
+                  </div>
+                  {PLUGIN_FEATURE_ITEMS.map((item) => (
+                    isFeatureEnabled(item.feature) && (
+                      <DropdownMenuItem key={item.href} asChild className="text-sm rounded-md">
+                        <Link to={item.href} className="flex items-center gap-2.5">
+                          <item.icon className="h-4 w-4 text-muted-foreground" />
+                          {item.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    )
+                  ))}
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         {/* Create Button */}
         <Button

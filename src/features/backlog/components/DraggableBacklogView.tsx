@@ -81,6 +81,7 @@ import {
 } from '@/features/boards';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { SprintPlanningModal } from './SprintPlanningModal';
+import { SprintCompletionModal } from './SprintCompletionModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
@@ -179,6 +180,14 @@ export function DraggableBacklogView() {
   const [sprintToEdit, setSprintToEdit] = useState<{ id: string; name: string; goal: string | null } | null>(null);
   const [editSprintName, setEditSprintName] = useState('');
   const [editSprintGoal, setEditSprintGoal] = useState('');
+  
+  // Sprint completion modal state
+  const [isSprintCompletionOpen, setIsSprintCompletionOpen] = useState(false);
+  const [completionSprintId, setCompletionSprintId] = useState<string>('');
+  const [completionSprintName, setCompletionSprintName] = useState<string>('');
+  const [completionIncompleteCount, setCompletionIncompleteCount] = useState(0);
+  const [completionCompletedCount, setCompletionCompletedCount] = useState(0);
+  const [nextSprintForCompletion, setNextSprintForCompletion] = useState<{ id: string; name: string } | null>(null);
 
   const { data: project, isLoading: projectLoading } = useProject(projectKey || '');
   const { data: issues, isLoading: issuesLoading } = useIssuesByProject(project?.id || '');
