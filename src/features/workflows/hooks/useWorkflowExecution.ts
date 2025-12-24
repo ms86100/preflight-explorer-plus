@@ -92,20 +92,29 @@ export function useAssignWorkflowScheme() {
 
   return useMutation({
     mutationFn: async ({ projectId, schemeId }: { projectId: string; schemeId: string }) => {
+      console.log('[useAssignWorkflowScheme] Assigning scheme', schemeId, 'to project', projectId);
       // First assign the scheme
       await executionService.assignWorkflowSchemeToProject(projectId, schemeId);
+      console.log('[useAssignWorkflowScheme] Scheme assigned, regenerating board columns...');
       // Then regenerate board columns for all boards in the project
       const boardsUpdated = await executionService.regenerateBoardColumnsForProject(projectId);
-      return { boardsUpdated };
+      console.log('[useAssignWorkflowScheme] Regeneration complete, boards updated:', boardsUpdated);
+      return { boardsUpdated, projectId };
     },
-    onSuccess: ({ boardsUpdated }, { projectId }) => {
+    onSuccess: ({ boardsUpdated, projectId }) => {
+      // Invalidate all board-related queries to force refresh
       queryClient.invalidateQueries({ queryKey: ['project-workflow-scheme', projectId] });
       queryClient.invalidateQueries({ queryKey: ['boards'] });
+      queryClient.invalidateQueries({ queryKey: ['boards', 'project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['boardColumns'] });
       queryClient.invalidateQueries({ queryKey: ['board-columns'] });
-      toast.success(`Workflow scheme assigned. ${boardsUpdated} board(s) updated.`);
+      // Force refetch all board column queries
+      queryClient.refetchQueries({ queryKey: ['boardColumns'] });
+      queryClient.refetchQueries({ queryKey: ['board-columns'] });
+      toast.success(`Workflow scheme assigned. ${boardsUpdated} board(s) updated. Please refresh the board page to see changes.`);
     },
     onError: (error: Error) => {
+      console.error('[useAssignWorkflowScheme] Error:', error);
       toast.error('Failed to assign workflow scheme: ' + error.message);
     },
   });
