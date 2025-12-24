@@ -10,8 +10,9 @@ import { usePlugins, useTogglePlugin } from '@/features/plugins';
 import type { Plugin } from '@/features/plugins';
 import {
   Puzzle, Search, Download, Settings, CheckCircle, XCircle,
-  Zap, BarChart3, Shield, Workflow, Bell, Layout, FileText, Lock,
+  Zap, BarChart3, Shield, Workflow, Bell, Layout, FileText, Lock, GitBranch,
 } from 'lucide-react';
+import { GitIntegrationPanel } from '@/features/git-integration/components/GitIntegrationPanel';
 
 const CATEGORY_ICONS: Record<string, typeof Puzzle> = {
   core: Layout,
@@ -46,6 +47,11 @@ export default function PluginsPage() {
   const togglePlugin = useTogglePlugin();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showGitConfig, setShowGitConfig] = useState(false);
+  
+  // Check if Git Integration plugin is enabled
+  const gitIntegrationPlugin = plugins.find(p => p.key === 'com.app.git-integration');
+  const isGitIntegrationEnabled = gitIntegrationPlugin?.is_enabled ?? false;
 
   const handleTogglePlugin = (plugin: Plugin) => {
     if (plugin.is_system) {
@@ -133,6 +139,12 @@ export default function PluginsPage() {
               Enabled ({enabledPlugins.length})
             </TabsTrigger>
             <TabsTrigger value="system">System ({systemPlugins.length})</TabsTrigger>
+            {isGitIntegrationEnabled && (
+              <TabsTrigger value="git-config" className="gap-2">
+                <GitBranch className="h-4 w-4" />
+                Git Configuration
+              </TabsTrigger>
+            )}
             <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
           </TabsList>
 
@@ -144,6 +156,7 @@ export default function PluginsPage() {
                   plugin={plugin}
                   onToggle={() => handleTogglePlugin(plugin)}
                   isToggling={togglePlugin.isPending}
+                  onConfigure={plugin.key === 'com.app.git-integration' && plugin.is_enabled ? () => setShowGitConfig(true) : undefined}
                 />
               ))}
             </div>
@@ -163,6 +176,7 @@ export default function PluginsPage() {
                   plugin={plugin}
                   onToggle={() => handleTogglePlugin(plugin)}
                   isToggling={togglePlugin.isPending}
+                  onConfigure={plugin.key === 'com.app.git-integration' ? () => setShowGitConfig(true) : undefined}
                 />
               ))}
             </div>
@@ -187,6 +201,12 @@ export default function PluginsPage() {
             </div>
           </TabsContent>
 
+          {isGitIntegrationEnabled && (
+            <TabsContent value="git-config" className="space-y-4">
+              <GitIntegrationPanel />
+            </TabsContent>
+          )}
+
           <TabsContent value="marketplace" className="space-y-4">
             <Card>
               <CardContent className="py-12 text-center">
@@ -208,9 +228,10 @@ interface PluginCardProps {
   readonly plugin: Plugin;
   readonly onToggle: () => void;
   readonly isToggling?: boolean;
+  readonly onConfigure?: () => void;
 }
 
-function PluginCard({ plugin, onToggle, isToggling }: Readonly<PluginCardProps>) {
+function PluginCard({ plugin, onToggle, isToggling, onConfigure }: Readonly<PluginCardProps>) {
   const CategoryIcon = CATEGORY_ICONS[plugin.category] || Puzzle;
 
   return (
@@ -248,15 +269,23 @@ function PluginCard({ plugin, onToggle, isToggling }: Readonly<PluginCardProps>)
           <Badge variant="outline" className="text-xs">
             {CATEGORY_LABELS[plugin.category] || plugin.category}
           </Badge>
-          {plugin.is_enabled ? (
-            <span className="flex items-center gap-1 text-xs text-green-500">
-              <CheckCircle className="h-3 w-3" /> Active
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <XCircle className="h-3 w-3" /> Disabled
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {onConfigure && (
+              <Button variant="ghost" size="sm" onClick={onConfigure} className="h-7 text-xs">
+                <Settings className="h-3 w-3 mr-1" />
+                Configure
+              </Button>
+            )}
+            {plugin.is_enabled ? (
+              <span className="flex items-center gap-1 text-xs text-green-500">
+                <CheckCircle className="h-3 w-3" /> Active
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <XCircle className="h-3 w-3" /> Disabled
+              </span>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

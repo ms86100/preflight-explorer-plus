@@ -43,15 +43,32 @@ export function MentionTextarea({
   }, [projectId]);
 
   const fetchUsers = async () => {
-    // Use secure RPC to fetch public profiles (non-sensitive fields only)
-    const { data } = await supabase
+    // Fetch from user_directory (dummy users for simulation)
+    const { data: directoryUsers } = await supabase
+      .from('user_directory')
+      .select('id, display_name, avatar_url, email')
+      .eq('is_active', true)
+      .order('display_name');
+    
+    // Also fetch real profiles as fallback
+    const { data: profileUsers } = await supabase
       .rpc('search_public_profiles', { _search_term: null, _limit: 100 });
     
-    setAllUsers((data || []).map(u => ({
-      id: u.id,
-      display_name: u.display_name || 'Unknown',
-      avatar_url: u.avatar_url,
-    })));
+    // Combine both sources, directory users first
+    const combined = [
+      ...(directoryUsers || []).map(u => ({
+        id: u.id,
+        display_name: u.display_name || 'Unknown',
+        avatar_url: u.avatar_url,
+      })),
+      ...(profileUsers || []).map(u => ({
+        id: u.id,
+        display_name: u.display_name || 'Unknown',
+        avatar_url: u.avatar_url,
+      })),
+    ];
+    
+    setAllUsers(combined);
   };
 
   const handleInput = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {

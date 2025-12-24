@@ -46,6 +46,7 @@ import { CustomFieldsForm } from '@/features/custom-fields/components/CustomFiel
 import { MentionTextarea, renderMentions } from '@/features/comments';
 import { Jobs, submitJob } from '@/lib/backgroundJobs';
 import { DevelopmentPanel } from '@/features/git-integration';
+import { useIsFeatureEnabled } from '@/features/plugins/context/PluginContext';
 
 const ISSUE_TYPE_ICONS: Record<string, typeof Bug> = {
   Epic: Zap,
@@ -85,6 +86,10 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
   const updateIssue = useUpdateIssue();
   const executeTransition = useExecuteTransition();
   const cloneIssue = useCloneIssue();
+  
+  // Check if feature plugins are enabled
+  const isCustomFieldsEnabled = useIsFeatureEnabled('custom-fields');
+  const isGitIntegrationEnabled = useIsFeatureEnabled('git-integration');
 
   const handleClone = () => {
     if (issueId) {
@@ -92,19 +97,38 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
     }
   };
 
-  // Fetch team members for assignee selection
+  // Fetch team members for assignee selection (from user_directory + profiles)
   useEffect(() => {
     if (open) {
-      // Use secure RPC to fetch public profiles (non-sensitive fields only)
-      supabase
-        .rpc('search_public_profiles', { _search_term: null, _limit: 100 })
-        .then(({ data }) => {
-          setTeamMembers((data || []).map(p => ({
+      const fetchAssignees = async () => {
+        // Fetch from user_directory (dummy users)
+        const { data: directoryUsers } = await supabase
+          .from('user_directory')
+          .select('id, display_name, avatar_url')
+          .eq('is_active', true)
+          .order('display_name');
+        
+        // Also fetch real profiles
+        const { data: profileUsers } = await supabase
+          .rpc('search_public_profiles', { _search_term: null, _limit: 100 });
+        
+        // Combine both sources
+        const combined = [
+          ...(directoryUsers || []).map(p => ({
             id: p.id,
             display_name: p.display_name,
             avatar_url: p.avatar_url,
-          })));
-        });
+          })),
+          ...(profileUsers || []).map(p => ({
+            id: p.id,
+            display_name: p.display_name,
+            avatar_url: p.avatar_url,
+          })),
+        ];
+        
+        setTeamMembers(combined);
+      };
+      fetchAssignees();
     }
   }, [open]);
 
@@ -522,21 +546,27 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
                   />
                 </div>
 
-                <Separator />
+                {/* Development Panel - Git Integration (only if plugin enabled) */}
+                {isGitIntegrationEnabled && (
+                  <>
+                    <Separator />
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-3 block flex items-center gap-2">
+                        <GitBranch className="h-4 w-4" />
+                        Development
+                      </Label>
+                      <DevelopmentPanel issueId={issueId} issueKey={issue.issue_key} projectId={issue.project_id} />
+                    </div>
+                  </>
+                )}
 
-                {/* Development Panel - Git Integration */}
-                <div>
-                  <Label className="text-xs text-muted-foreground mb-3 block flex items-center gap-2">
-                    <GitBranch className="h-4 w-4" />
-                    Development
-                  </Label>
-                  <DevelopmentPanel issueId={issueId} issueKey={issue.issue_key} projectId={issue.project_id} />
-                </div>
-
-                <Separator />
-
-                {/* Custom Fields */}
-                <CustomFieldsForm issueId={issueId} />
+                {/* Custom Fields (only if plugin enabled) */}
+                {isCustomFieldsEnabled && (
+                  <>
+                    <Separator />
+                    <CustomFieldsForm issueId={issueId} />
+                  </>
+                )}
 
                 {/* Dates */}
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t text-xs text-muted-foreground">
