@@ -124,6 +124,14 @@ export async function executeTransition(
     .eq('id', issueId);
 
   if (updateError) {
+    // Handle foreign key constraint errors with a user-friendly message
+    if (updateError.message?.includes('foreign key constraint') || 
+        updateError.code === '23503') {
+      return { 
+        success: false, 
+        error: 'This transition is not allowed by the workflow' 
+      };
+    }
     return { success: false, error: updateError.message };
   }
 
