@@ -182,14 +182,6 @@ export default function AuthPage() {
                     </Button>
                   </form>
 
-                  <div className="text-center">
-                    <Link
-                      to="/forgot-password"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Can't access your account?
-                    </Link>
-                  </div>
 
                   <div className="relative my-3">
                     <Separator />
