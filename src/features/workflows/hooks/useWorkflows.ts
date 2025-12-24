@@ -127,14 +127,29 @@ export function useDeleteWorkflowStep() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, workflowId }: { id: string; workflowId: string }) =>
-      workflowService.deleteWorkflowStep(id),
+    mutationFn: async ({ id, workflowId, statusId }: { id: string; workflowId: string; statusId: string }) => {
+      // Check if any issues use this status
+      const { count, error: countError } = await import('@/integrations/supabase/client')
+        .then(({ supabase }) => supabase
+          .from('issues')
+          .select('id', { count: 'exact', head: true })
+          .eq('status_id', statusId)
+        );
+      
+      if (countError) throw countError;
+      
+      if (count && count > 0) {
+        throw new Error(`Cannot remove this status: ${count} issue(s) are currently using it. Move the issues to a different status first.`);
+      }
+      
+      return workflowService.deleteWorkflowStep(id);
+    },
     onSuccess: (_, { workflowId }) => {
       queryClient.invalidateQueries({ queryKey: ['workflow', workflowId, 'details'] });
       toast.success('Status removed from workflow');
     },
     onError: (error: Error) => {
-      toast.error('Failed to remove status: ' + error.message);
+      toast.error(error.message);
     },
   });
 }

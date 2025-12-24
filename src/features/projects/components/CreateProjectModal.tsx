@@ -23,7 +23,8 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClassificationBadge } from '@/components/compliance/ClassificationBanner';
-import { FolderKanban, LayoutGrid, ListTodo, AlertTriangle, Shield } from 'lucide-react';
+import { FolderKanban, LayoutGrid, ListTodo, AlertTriangle, Shield, GitBranch } from 'lucide-react';
+import { useWorkflowSchemes } from '@/features/workflows/hooks/useWorkflowExecution';
 import type { ClassificationLevel } from '@/types/jira';
 
 const projectSchema = z.object({
@@ -36,6 +37,7 @@ const projectSchema = z.object({
   template: z.enum(['scrum', 'kanban', 'basic']),
   classification: z.enum(['public', 'restricted', 'confidential', 'export_controlled']),
   program_id: z.string().optional(),
+  workflow_scheme_id: z.string().optional(),
 });
 
 type ProjectFormData = z.infer<typeof projectSchema>;
@@ -89,6 +91,9 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
   const [step, setStep] = useState<'template' | 'details' | 'compliance'>('template');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const { data: workflowSchemes } = useWorkflowSchemes();
+  const defaultScheme = workflowSchemes?.find(s => s.is_default);
+
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
@@ -98,6 +103,7 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
       template: 'scrum',
       classification: 'restricted', // Default to RESTRICTED per MRTT+ compliance
       program_id: '',
+      workflow_scheme_id: '',
     },
   });
 
@@ -332,6 +338,34 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
               </Select>
               <p className="text-xs text-muted-foreground">
                 Linking to a program enforces program-level access controls
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="workflow-scheme">Workflow Scheme</Label>
+              <Select
+                value={watch('workflow_scheme_id') || ''}
+                onValueChange={(value) => setValue('workflow_scheme_id', value)}
+              >
+                <SelectTrigger id="workflow-scheme">
+                  <SelectValue placeholder={defaultScheme ? `${defaultScheme.name} (Default)` : 'Select workflow scheme'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {workflowSchemes?.map((scheme) => (
+                    <SelectItem key={scheme.id} value={scheme.id}>
+                      <div className="flex items-center gap-2">
+                        <GitBranch className="h-4 w-4 text-muted-foreground" />
+                        <span>{scheme.name}</span>
+                        {scheme.is_default && (
+                          <span className="text-xs text-muted-foreground">(Default)</span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Determines the issue workflows and board columns for this project
               </p>
             </div>
 
