@@ -118,6 +118,19 @@ export function CreateBranchModal({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Show helpful message when no repositories are linked */}
+            {!loadingRepos && repositories.length === 0 && (
+              <div className="rounded-lg border border-dashed border-border p-4 text-center">
+                <GitBranch className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground mb-2">
+                  No repositories linked to this project
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Go to <span className="font-medium text-primary">Plugins → Git Integration → Repositories</span> to link a repository first.
+                </p>
+              </div>
+            )}
+            
             <FormField
               control={form.control}
               name="repository_id"
@@ -127,11 +140,17 @@ export function CreateBranchModal({
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    disabled={loadingRepos}
+                    disabled={loadingRepos || repositories.length === 0}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder={loadingRepos ? 'Loading...' : 'Select repository'} />
+                        <SelectValue placeholder={
+                          loadingRepos 
+                            ? 'Loading...' 
+                            : repositories.length === 0 
+                              ? 'No repositories available' 
+                              : 'Select repository'
+                        } />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
