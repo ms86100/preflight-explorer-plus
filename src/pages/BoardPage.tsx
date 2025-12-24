@@ -202,21 +202,27 @@ export default function BoardPage() {
     setDetailModalOpen(true);
   };
 
-  // Transform columns to board format with ALL mapped statuses
+  // Transform columns to board format with ALL mapped statuses including full status objects
   const boardColumns = columns?.map(col => {
-    // Collect all status IDs that belong to this column
-    const statusIds = (col.column_statuses || [])
-      .map((cs: any) => cs.status?.id)
-      .filter(Boolean) as string[];
+    // Get full status objects with id, name, and category
+    const statusObjects = (col.column_statuses || [])
+      .map((cs: any) => cs.status)
+      .filter(Boolean)
+      .map((s: any) => ({ id: s.id, name: s.name, category: s.category }));
+    
+    // Collect all status IDs for backward compatibility
+    const statusIds = statusObjects.map(s => s.id);
     
     return {
       id: col.id, // Use column ID as the identifier
       name: col.name,
-      statusCategory: (col.column_statuses?.[0]?.status?.category || 'todo') as 'todo' | 'in_progress' | 'done',
+      statusCategory: (statusObjects[0]?.category || 'todo') as 'todo' | 'in_progress' | 'done',
       maxIssues: col.max_issues || undefined,
       minIssues: col.min_issues || undefined,
       // Store all status IDs that map to this column
       statusIds,
+      // Store full status objects with names for display
+      statuses: statusObjects,
     };
   }) || [];
 

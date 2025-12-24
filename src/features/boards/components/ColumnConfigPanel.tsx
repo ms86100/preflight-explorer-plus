@@ -20,7 +20,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Plus, Trash2, X, GripVertical, AlertTriangle, Loader2, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, X, GripVertical, AlertTriangle, Loader2, AlertCircle, ArrowRight, CheckCircle2, ChevronUp, ChevronDown } from 'lucide-react';
 import { boardService } from '../services/boardService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -344,6 +344,35 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
     }
   };
 
+  // Move column up or down
+  const handleMoveColumn = async (columnId: string, direction: 'up' | 'down') => {
+    const currentIndex = columns.findIndex(c => c.id === columnId);
+    if (direction === 'up' && currentIndex === 0) return;
+    if (direction === 'down' && currentIndex === columns.length - 1) return;
+
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+    // Create a new array with swapped positions
+    const newColumns = [...columns];
+    [newColumns[currentIndex], newColumns[newIndex]] = [newColumns[newIndex], newColumns[currentIndex]];
+
+    // Update positions for all columns
+    const reorderData = newColumns.map((col, index) => ({ id: col.id, position: index }));
+
+    setSaving(true);
+    try {
+      await boardService.reorderColumns(reorderData);
+      await loadData();
+      onColumnsChanged();
+      toast.success('Column order updated');
+    } catch (error) {
+      console.error('Failed to reorder columns:', error);
+      toast.error('Failed to reorder columns');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const getCategoryColor = (category: string | null) => {
     switch (category) {
       case 'todo':
@@ -467,7 +496,30 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 flex-1">
-                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+                    {/* Position and reorder controls */}
+                    <div className="flex flex-col items-center gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => handleMoveColumn(column.id, 'up')}
+                        disabled={index === 0 || saving}
+                        title="Move column up"
+                      >
+                        <ChevronUp className="h-3 w-3" />
+                      </Button>
+                      <span className="text-xs text-muted-foreground font-mono w-4 text-center">{index + 1}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => handleMoveColumn(column.id, 'down')}
+                        disabled={index === columns.length - 1 || saving}
+                        title="Move column down"
+                      >
+                        <ChevronDown className="h-3 w-3" />
+                      </Button>
+                    </div>
                     {editingColumnId === column.id ? (
                       <Input
                         value={editingColumnName}
