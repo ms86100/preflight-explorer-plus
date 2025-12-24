@@ -317,7 +317,7 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
               <Label htmlFor="name">Project Name *</Label>
               <Input
                 id="name"
-                placeholder="e.g., MRTT Avionics Integration"
+                placeholder="e.g., Fleet Management System"
                 {...register('name')}
                 onChange={handleNameChange}
               />
@@ -330,13 +330,13 @@ export function CreateProjectModal({ open, onOpenChange, onSubmit }: CreateProje
               <Label htmlFor="pkey">Project Key *</Label>
               <Input
                 id="pkey"
-                placeholder="e.g., MRTT"
+                placeholder="e.g., FMS"
                 maxLength={10}
                 {...register('pkey')}
                 className="uppercase"
               />
               <p className="text-xs text-muted-foreground">
-                Used as prefix for issue keys (e.g., MRTT-123)
+                Used as prefix for issue keys (e.g., FMS-123)
               </p>
               {errors.pkey && (
                 <p className="text-sm text-destructive">{errors.pkey.message}</p>
