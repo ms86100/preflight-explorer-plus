@@ -170,22 +170,50 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
    * @param authUser - The authenticated Supabase user
    */
   const fetchUserData = async (authUser: User): Promise<void> => {
-    // For now, create a profile from auth user metadata
-    // Once tables are created, this will fetch from the profiles table
-    const displayName = authUser.user_metadata?.display_name || 
-      authUser.email?.split('@')[0] || 
-      'User';
-    
-    setProfile({
-      id: authUser.id,
-      email: authUser.email || '',
-      display_name: displayName,
-      avatar_url: authUser.user_metadata?.avatar_url,
-      clearance_level: 'restricted', // Default for demo
-    });
+    // Try to fetch profile from database
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authUser.id)
+      .single();
 
-    // Default role for demo
-    setRoles(['developer']);
+    if (profileData) {
+      setProfile({
+        id: profileData.id,
+        email: profileData.email || authUser.email || '',
+        display_name: profileData.display_name || authUser.email?.split('@')[0] || 'User',
+        avatar_url: profileData.avatar_url,
+        job_title: profileData.job_title,
+        department: profileData.department,
+        clearance_level: profileData.clearance_level || 'restricted',
+      });
+    } else {
+      // Fallback to auth user metadata
+      const displayName = authUser.user_metadata?.display_name || 
+        authUser.email?.split('@')[0] || 
+        'User';
+      
+      setProfile({
+        id: authUser.id,
+        email: authUser.email || '',
+        display_name: displayName,
+        avatar_url: authUser.user_metadata?.avatar_url,
+        clearance_level: 'restricted',
+      });
+    }
+
+    // Fetch user roles from database
+    const { data: rolesData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', authUser.id);
+
+    if (rolesData && rolesData.length > 0) {
+      setRoles(rolesData.map(r => r.role as AppRole));
+    } else {
+      // Default role if none assigned
+      setRoles(['developer']);
+    }
   };
 
   /**
