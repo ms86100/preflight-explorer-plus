@@ -33,6 +33,7 @@ export default function BoardPage() {
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [isInitializingColumns, setIsInitializingColumns] = useState(false);
+  const [isCreatingBoard, setIsCreatingBoard] = useState(false);
   const [didAttemptInitColumns, setDidAttemptInitColumns] = useState(false);
   const [boardSettingsOpen, setBoardSettingsOpen] = useState(false);
   
@@ -47,8 +48,37 @@ export default function BoardPage() {
   const project = projects?.find(p => p.pkey === projectKey);
 
   // Get board for project
-  const { data: boards, isLoading: boardsLoading } = useBoardsByProject(project?.id || '');
+  const { data: boards, isLoading: boardsLoading, refetch: refetchBoards } = useBoardsByProject(project?.id || '');
   const board = boards?.[0]; // Use first board
+
+  // Auto-create board if project exists but no board
+  useEffect(() => {
+    if (!project?.id || boardsLoading || isCreatingBoard) return;
+    if (boards && boards.length > 0) return;
+
+    const createBoard = async () => {
+      setIsCreatingBoard(true);
+      try {
+        const template = project.template || 'scrum';
+        const boardType = template === 'kanban' ? 'kanban' : 'scrum';
+        
+        await supabase.from('boards').insert({
+          name: `${project.name} Board`,
+          project_id: project.id,
+          board_type: boardType,
+        });
+        
+        await refetchBoards();
+      } catch (error) {
+        console.error('Failed to create board:', error);
+        toast.error('Failed to create board');
+      } finally {
+        setIsCreatingBoard(false);
+      }
+    };
+
+    createBoard();
+  }, [project?.id, project?.name, project?.template, boards, boardsLoading, isCreatingBoard, refetchBoards]);
 
   // Get columns for board
   const { data: columns, isLoading: columnsLoading, refetch: refetchColumns } = useBoardColumns(board?.id || '');
@@ -80,7 +110,7 @@ export default function BoardPage() {
   const refetchIssues = isScrum ? refetchSprintIssues : refetchProjectIssues;
 
   const isLoading = projectsLoading || boardsLoading || columnsLoading || 
-    (isScrum && sprintLoading) || issuesLoading || isInitializingColumns;
+    (isScrum && sprintLoading) || issuesLoading || isInitializingColumns || isCreatingBoard;
 
   // Ensure the board has columns - prefer workflow-based generation
   useEffect(() => {
