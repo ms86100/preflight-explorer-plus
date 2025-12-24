@@ -490,12 +490,26 @@ function AddMemberDialog({
   }, [open]);
 
   const fetchUsers = async () => {
-    const { data } = await supabase
+    // Fetch from user_directory (dummy users) and profiles
+    const { data: directoryUsers } = await supabase
+      .from('user_directory')
+      .select('id, display_name, email')
+      .eq('is_active', true)
+      .order('display_name');
+    
+    const { data: profileUsers } = await supabase
       .from('profiles')
       .select('id, display_name, email')
       .eq('is_active', true)
       .order('display_name');
-    setUsers(data || []);
+    
+    // Combine both sources
+    const combined = [
+      ...(directoryUsers || []),
+      ...(profileUsers || []),
+    ];
+    
+    setUsers(combined);
   };
 
   const filteredUsers = users.filter(
