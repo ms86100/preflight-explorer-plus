@@ -409,17 +409,28 @@ export const boardService = {
       throw new Error('Project has no workflow scheme assigned');
     }
 
-    // 2. Get workflow mappings for this scheme (get the default workflow)
-    const { data: mappings } = await supabase
+    // 2. Get workflow mappings for this scheme (try default first, then any)
+    let { data: mappings } = await supabase
       .from('workflow_scheme_mappings')
       .select('workflow_id')
       .eq('scheme_id', schemeData.scheme_id)
-      .is('issue_type_id', null) // Get the default mapping
+      .is('issue_type_id', null) // Try default mapping first
       .maybeSingle();
+
+    // If no default mapping, get any workflow from the scheme
+    if (!mappings?.workflow_id) {
+      const { data: anyMapping } = await supabase
+        .from('workflow_scheme_mappings')
+        .select('workflow_id')
+        .eq('scheme_id', schemeData.scheme_id)
+        .limit(1)
+        .maybeSingle();
+      mappings = anyMapping;
+    }
 
     const workflowId = mappings?.workflow_id;
     if (!workflowId) {
-      throw new Error('No default workflow found in scheme');
+      throw new Error('No workflow found in scheme');
     }
 
     // 3. Get workflow steps with status information
@@ -533,13 +544,24 @@ export const boardService = {
       return { added: 0, removed: 0 };
     }
 
-    // Get default workflow from scheme
-    const { data: mappings } = await supabase
+    // Get default workflow from scheme (or fallback to any)
+    let { data: mappings } = await supabase
       .from('workflow_scheme_mappings')
       .select('workflow_id')
       .eq('scheme_id', schemeData.scheme_id)
       .is('issue_type_id', null)
       .maybeSingle();
+
+    // Fallback to any workflow if no default
+    if (!mappings?.workflow_id) {
+      const { data: anyMapping } = await supabase
+        .from('workflow_scheme_mappings')
+        .select('workflow_id')
+        .eq('scheme_id', schemeData.scheme_id)
+        .limit(1)
+        .maybeSingle();
+      mappings = anyMapping;
+    }
 
     if (!mappings?.workflow_id) {
       return { added: 0, removed: 0 };
