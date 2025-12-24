@@ -47,11 +47,25 @@ export default function PluginsPage() {
   const togglePlugin = useTogglePlugin();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [showGitConfig, setShowGitConfig] = useState(false);
+  const [activeConfigTab, setActiveConfigTab] = useState<string | null>(null);
   
-  // Check if Git Integration plugin is enabled
+  // Check if plugins are enabled
   const gitIntegrationPlugin = plugins.find(p => p.key === 'com.app.git-integration');
   const isGitIntegrationEnabled = gitIntegrationPlugin?.is_enabled ?? false;
+  
+  const customFieldsPlugin = plugins.find(p => p.key === 'com.app.custom-fields');
+  const isCustomFieldsEnabled = customFieldsPlugin?.is_enabled ?? false;
+  
+  const getConfigureHandler = (plugin: Plugin) => {
+    if (!plugin.is_enabled) return undefined;
+    if (plugin.key === 'com.app.git-integration') {
+      return () => setActiveConfigTab('git-config');
+    }
+    if (plugin.key === 'com.app.custom-fields') {
+      return () => setActiveConfigTab('custom-fields-config');
+    }
+    return undefined;
+  };
 
   const handleTogglePlugin = (plugin: Plugin) => {
     if (plugin.is_system) {
@@ -130,7 +144,7 @@ export default function PluginsPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="all" className="space-y-4">
+        <Tabs defaultValue="all" value={activeConfigTab || "all"} onValueChange={(v) => setActiveConfigTab(v === "all" ? null : v)} className="space-y-4">
           <TabsList>
             <TabsTrigger value="all">
               All Plugins ({nonSystemPlugins.length})
@@ -145,6 +159,12 @@ export default function PluginsPage() {
                 Git Configuration
               </TabsTrigger>
             )}
+            {isCustomFieldsEnabled && (
+              <TabsTrigger value="custom-fields-config" className="gap-2">
+                <Settings className="h-4 w-4" />
+                Custom Fields
+              </TabsTrigger>
+            )}
             <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
           </TabsList>
 
@@ -156,7 +176,7 @@ export default function PluginsPage() {
                   plugin={plugin}
                   onToggle={() => handleTogglePlugin(plugin)}
                   isToggling={togglePlugin.isPending}
-                  onConfigure={plugin.key === 'com.app.git-integration' && plugin.is_enabled ? () => setShowGitConfig(true) : undefined}
+                  onConfigure={getConfigureHandler(plugin)}
                 />
               ))}
             </div>
@@ -176,7 +196,7 @@ export default function PluginsPage() {
                   plugin={plugin}
                   onToggle={() => handleTogglePlugin(plugin)}
                   isToggling={togglePlugin.isPending}
-                  onConfigure={plugin.key === 'com.app.git-integration' ? () => setShowGitConfig(true) : undefined}
+                  onConfigure={getConfigureHandler(plugin)}
                 />
               ))}
             </div>
@@ -204,6 +224,22 @@ export default function PluginsPage() {
           {isGitIntegrationEnabled && (
             <TabsContent value="git-config" className="space-y-4">
               <GitIntegrationPanel />
+            </TabsContent>
+          )}
+
+          {isCustomFieldsEnabled && (
+            <TabsContent value="custom-fields-config" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Custom Fields Configuration</CardTitle>
+                  <CardDescription>Manage custom fields for your issues</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Go to <a href="/admin" className="text-primary hover:underline">Administration → Custom Fields</a> to manage your custom field definitions.
+                  </p>
+                </CardContent>
+              </Card>
             </TabsContent>
           )}
 
