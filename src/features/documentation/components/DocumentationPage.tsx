@@ -46,7 +46,6 @@ export const DocumentationPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center gap-4">
           {isMobile && (
@@ -74,12 +73,11 @@ export const DocumentationPage: React.FC = () => {
             Back to App
           </Button>
           <div className="flex-1" />
-          <span className="text-sm font-medium">Vertex PM Documentation</span>
+          <span className="text-sm font-medium hidden md:inline">Vertex PM Documentation</span>
         </div>
       </header>
 
       <div className="container flex">
-        {/* Desktop Sidebar */}
         {!isMobile && (
           <aside className="w-64 flex-shrink-0 border-r">
             <ScrollArea className="h-[calc(100vh-3.5rem)] py-6 pr-4">
@@ -91,7 +89,6 @@ export const DocumentationPage: React.FC = () => {
           </aside>
         )}
 
-        {/* Main Content */}
         <main className="flex-1 min-w-0">
           <ScrollArea className="h-[calc(100vh-3.5rem)]">
             <div className="py-6 px-4 md:px-8 max-w-4xl">
