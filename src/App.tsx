@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { PluginProvider } from "@/features/plugins";
+import { SiteAccessGate } from "@/components/auth/SiteAccessGate";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -27,6 +28,7 @@ import PluginFeaturesPage from "./pages/PluginFeaturesPage";
 import ReleasesPage from "./pages/ReleasesPage";
 import ComponentsPage from "./pages/ComponentsPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
+import DocsPage from "./pages/DocsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -327,6 +329,9 @@ function AppRoutes() {
       {/* OAuth Callback for Git Providers */}
       <Route path="/oauth/git/callback" element={<OAuthCallbackPage />} />
 
+      {/* Documentation */}
+      <Route path="/docs" element={<DocsPage />} />
+
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -339,11 +344,13 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <PluginProvider>
-            <AppRoutes />
-          </PluginProvider>
-        </AuthProvider>
+        <SiteAccessGate>
+          <AuthProvider>
+            <PluginProvider>
+              <AppRoutes />
+            </PluginProvider>
+          </AuthProvider>
+        </SiteAccessGate>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
