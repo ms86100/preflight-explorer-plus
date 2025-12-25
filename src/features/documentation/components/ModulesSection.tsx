@@ -259,13 +259,146 @@ export const ModulesSection: React.FC = () => {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pt-4 space-y-6">
-                <div ref={(el) => { moduleRefs.current[module.id] = el; }}>
-                {/* Visual Diagrams - Now at the top! */}
+                <div ref={(el) => { moduleRefs.current[module.id] = el; }} className="space-y-6">
+                
+                {/* 1. Purpose & Business Intent - FIRST */}
+                <Card className="border-primary/30 bg-primary/5">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <Folder className="w-4 h-4 text-primary" />
+                      </div>
+                      Purpose & Business Intent
+                    </CardTitle>
+                    <CardDescription>
+                      Why this module exists and the business value it provides
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="bg-background rounded-lg p-4 border">
+                      <h4 className="font-semibold text-sm mb-2 text-foreground">Overview</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{module.purpose}</p>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="bg-background rounded-lg p-4 border">
+                        <h4 className="font-semibold text-sm mb-2 text-foreground flex items-center gap-2">
+                          <span className="text-yellow-500">⚡</span> Preconditions
+                        </h4>
+                        <ul className="space-y-1.5">
+                          {module.preconditions.map((pre, i) => (
+                            <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <span className="text-yellow-500 mt-0.5">•</span>
+                              <span>{pre}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="bg-background rounded-lg p-4 border">
+                        <h4 className="font-semibold text-sm mb-2 text-foreground flex items-center gap-2">
+                          <span className="text-green-500">✓</span> Postconditions
+                        </h4>
+                        <ul className="space-y-1.5">
+                          {module.postconditions.map((post, i) => (
+                            <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <span className="text-green-500 mt-0.5">•</span>
+                              <span>{post}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* 2. User Flow - SECOND */}
+                <Card className="border-blue-500/30 bg-blue-500/5">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                        <GitBranch className="w-4 h-4 text-blue-600" />
+                      </div>
+                      User Flow & Journey
+                    </CardTitle>
+                    <CardDescription>
+                      Step-by-step walkthrough of how users interact with this module
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="relative">
+                      {/* Connection line */}
+                      <div className="absolute left-4 top-6 bottom-6 w-0.5 bg-blue-200 dark:bg-blue-800" />
+                      
+                      <ol className="space-y-4">
+                        {module.userFlow.map((step, i) => (
+                          <li key={i} className="flex items-start gap-4 relative">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500 text-white text-sm flex items-center justify-center font-semibold z-10 shadow-md">
+                              {i + 1}
+                            </div>
+                            <div className="flex-1 bg-background rounded-lg p-3 border shadow-sm mt-0.5">
+                              <p className="text-sm text-foreground">{step}</p>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* 3. Role-Based Behavior - THIRD */}
+                <Card className="border-purple-500/30 bg-purple-500/5">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                        <Users className="w-4 h-4 text-purple-600" />
+                      </div>
+                      Role-Based Behavior
+                    </CardTitle>
+                    <CardDescription>
+                      What different user roles can do within this module
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="bg-background rounded-lg p-4 border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Badge variant="default" className="bg-purple-600">Admin</Badge>
+                          <span className="text-xs text-muted-foreground">Full access</span>
+                        </div>
+                        <ul className="space-y-2">
+                          {module.roles.admin.map((cap, i) => (
+                            <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <span className="text-purple-500 mt-0.5">▸</span>
+                              <span>{cap}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="bg-background rounded-lg p-4 border">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Badge variant="secondary">User</Badge>
+                          <span className="text-xs text-muted-foreground">Standard access</span>
+                        </div>
+                        <ul className="space-y-2">
+                          {module.roles.user.map((cap, i) => (
+                            <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <span className="text-muted-foreground mt-0.5">▸</span>
+                              <span>{cap}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* 4. Visual Diagrams */}
                 {moduleDiagrams.length > 0 && (
                   <Card className="border-primary/20">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Image className="w-4 h-4" />
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                          <Image className="w-4 h-4 text-primary" />
+                        </div>
                         Visual Diagrams
                       </CardTitle>
                       <CardDescription>
@@ -296,12 +429,14 @@ export const ModulesSection: React.FC = () => {
                   </Card>
                 )}
 
-                {/* API Documentation */}
+                {/* 5. API Documentation */}
                 {module.apiDocumentation && module.apiDocumentation.length > 0 && (
                   <Card className="border-blue-500/20">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Code className="w-4 h-4" />
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                          <Code className="w-4 h-4 text-blue-600" />
+                        </div>
                         API Documentation
                       </CardTitle>
                       <CardDescription>
@@ -350,12 +485,14 @@ export const ModulesSection: React.FC = () => {
                   </Card>
                 )}
 
-                {/* Implementation Details */}
+                {/* 6. Implementation Details */}
                 {module.implementationDetails && module.implementationDetails.length > 0 && (
                   <Card className="border-green-500/20">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Settings className="w-4 h-4" />
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
+                          <Settings className="w-4 h-4 text-green-600" />
+                        </div>
                         Implementation Details
                       </CardTitle>
                       <CardDescription>
@@ -397,183 +534,94 @@ export const ModulesSection: React.FC = () => {
                   </Card>
                 )}
 
-                {/* Purpose */}
+                {/* 7. File Structure */}
                 <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Purpose & Business Intent</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">{module.purpose}</p>
-                  </CardContent>
-                </Card>
-
-                {/* File Structure */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Code className="w-4 h-4" />
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                        <Code className="w-4 h-4" />
+                      </div>
                       File Structure
                     </CardTitle>
+                    <CardDescription>
+                      Source code organization for this module
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid md:grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <h4 className="font-medium mb-2">Components</h4>
+                      <div className="bg-muted/30 rounded-lg p-4 border">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-blue-500" />
+                          Components
+                        </h4>
                         {module.components.length > 0 ? (
-                          <ul className="space-y-1 text-muted-foreground">
+                          <ul className="space-y-1.5 text-muted-foreground">
                             {module.components.map((comp, i) => (
-                              <li key={i} className="font-mono text-xs">{comp}</li>
+                              <li key={i} className="font-mono text-xs bg-background rounded px-2 py-1">{comp}</li>
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-muted-foreground italic">No components</p>
+                          <p className="text-muted-foreground italic text-xs">No components</p>
                         )}
                       </div>
-                      <div>
-                        <h4 className="font-medium mb-2">Hooks</h4>
+                      <div className="bg-muted/30 rounded-lg p-4 border">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-purple-500" />
+                          Hooks
+                        </h4>
                         {module.hooks.length > 0 ? (
-                          <ul className="space-y-1 text-muted-foreground">
+                          <ul className="space-y-1.5 text-muted-foreground">
                             {module.hooks.map((hook, i) => (
-                              <li key={i} className="font-mono text-xs">{hook}</li>
+                              <li key={i} className="font-mono text-xs bg-background rounded px-2 py-1">{hook}</li>
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-muted-foreground italic">No hooks</p>
+                          <p className="text-muted-foreground italic text-xs">No hooks</p>
                         )}
                       </div>
-                      <div>
-                        <h4 className="font-medium mb-2">Services</h4>
+                      <div className="bg-muted/30 rounded-lg p-4 border">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-green-500" />
+                          Services
+                        </h4>
                         {module.services.length > 0 ? (
-                          <ul className="space-y-1 text-muted-foreground">
+                          <ul className="space-y-1.5 text-muted-foreground">
                             {module.services.map((svc, i) => (
-                              <li key={i} className="font-mono text-xs">{svc}</li>
+                              <li key={i} className="font-mono text-xs bg-background rounded px-2 py-1">{svc}</li>
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-muted-foreground italic">No services</p>
+                          <p className="text-muted-foreground italic text-xs">No services</p>
                         )}
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* User Flow */}
+                {/* 8. Edge Cases */}
                 <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">User Flow</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ol className="space-y-2">
-                      {module.userFlow.map((step, i) => (
-                        <li key={i} className="flex items-start gap-3 text-sm">
-                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-medium">
-                            {i + 1}
-                          </span>
-                          <span className="text-muted-foreground pt-0.5">{step}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  </CardContent>
-                </Card>
-
-                {/* Role-Based Behavior */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Users className="w-4 h-4" />
-                      Role-Based Behavior
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-24">Role</TableHead>
-                          <TableHead>Capabilities</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell>
-                            <Badge variant="default">Admin</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <ul className="list-disc list-inside text-sm text-muted-foreground">
-                              {module.roles.admin.map((cap, i) => (
-                                <li key={i}>{cap}</li>
-                              ))}
-                            </ul>
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell>
-                            <Badge variant="secondary">User</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <ul className="list-disc list-inside text-sm text-muted-foreground">
-                              {module.roles.user.map((cap, i) => (
-                                <li key={i}>{cap}</li>
-                              ))}
-                            </ul>
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-
-                {/* Conditions */}
-                <div className="grid md:grid-cols-2 gap-4">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Preconditions</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-1">
-                        {module.preconditions.map((pre, i) => (
-                          <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                            <span className="text-yellow-500">•</span>
-                            {pre}
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Postconditions</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-1">
-                        {module.postconditions.map((post, i) => (
-                          <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                            <span className="text-green-500">•</span>
-                            {post}
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Edge Cases */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Settings className="w-4 h-4" />
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                        <AlertCircle className="w-4 h-4 text-orange-600" />
+                      </div>
                       Edge Cases & Error Handling
                     </CardTitle>
+                    <CardDescription>
+                      Known edge cases and how they are handled
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
                       {module.edgeCases.map((edge, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">
+                        <Badge key={i} variant="outline" className="text-xs py-1.5 px-3 bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800">
                           {edge}
                         </Badge>
                       ))}
                     </div>
                   </CardContent>
                 </Card>
+
                 </div>
               </AccordionContent>
             </AccordionItem>
