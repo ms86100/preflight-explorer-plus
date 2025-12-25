@@ -93,9 +93,9 @@ export const DeploymentSection: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="lovable">
+          <Tabs defaultValue="managed">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="lovable">Lovable Hosting</TabsTrigger>
+              <TabsTrigger value="managed">Managed Cloud</TabsTrigger>
               <TabsTrigger value="docker">Self-Hosted Docker</TabsTrigger>
               <TabsTrigger value="static">Static Hosting</TabsTrigger>
             </TabsList>

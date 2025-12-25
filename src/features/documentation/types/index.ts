@@ -14,6 +14,7 @@ export interface ModuleDoc {
   preconditions: string[];
   postconditions: string[];
   edgeCases: string[];
+  associatedDiagrams?: string[]; // Array of diagram IDs linked to this module
 }
 
 export interface DiagramData {
@@ -56,4 +57,44 @@ export type DocSection =
   | 'diagrams' 
   | 'database' 
   | 'tech-stack' 
-  | 'deployment';
+  | 'deployment'
+  | 'gap-analysis'
+  | 'implementation-plan';
+
+// Gap Analysis Types
+export type CompletionStatus = 'complete' | 'partial' | 'gap' | 'not-applicable';
+export type Priority = 'critical' | 'high' | 'medium' | 'low';
+export type DossierCategory = 
+  | 'functional' 
+  | 'architecture' 
+  | 'technical' 
+  | 'nfr' 
+  | 'operations' 
+  | 'testing' 
+  | 'knowledge-transfer' 
+  | 'governance';
+
+export interface CompletionChecklistItem {
+  id: string;
+  category: DossierCategory;
+  subcategory: string;
+  requirement: string;
+  status: CompletionStatus;
+  evidence?: string;
+  gapDescription?: string;
+  remediationPlan?: string;
+  priority: Priority;
+  estimatedEffort?: string;
+  owner?: string;
+}
+
+export interface DossierSummary {
+  category: DossierCategory;
+  title: string;
+  description: string;
+  totalItems: number;
+  completeCount: number;
+  partialCount: number;
+  gapCount: number;
+  completionPercentage: number;
+}
