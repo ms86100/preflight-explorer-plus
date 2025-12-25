@@ -1,100 +1,76 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import mermaid from 'mermaid';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Code, Image, Copy, Check } from 'lucide-react';
+import { Code, Image, Copy, Check, AlertCircle } from 'lucide-react';
 import { diagramsData } from '../data/diagramsData';
 
-// Initialize mermaid with custom config
+// Initialize mermaid
 mermaid.initialize({
   startOnLoad: false,
-  theme: 'base',
-  themeVariables: {
-    primaryColor: '#6366f1',
-    primaryTextColor: '#fff',
-    primaryBorderColor: '#4f46e5',
-    lineColor: '#94a3b8',
-    secondaryColor: '#f1f5f9',
-    tertiaryColor: '#e2e8f0',
-    background: '#ffffff',
-    mainBkg: '#f8fafc',
-    nodeBorder: '#cbd5e1',
-    clusterBkg: '#f1f5f9',
-    titleColor: '#1e293b',
-    actorBorder: '#6366f1',
-    actorBkg: '#f8fafc',
-    actorTextColor: '#1e293b',
-    actorLineColor: '#94a3b8',
-    signalColor: '#1e293b',
-    signalTextColor: '#1e293b',
-    labelBoxBkgColor: '#f1f5f9',
-    labelBoxBorderColor: '#cbd5e1',
-    labelTextColor: '#1e293b',
-    loopTextColor: '#1e293b',
-    noteBorderColor: '#6366f1',
-    noteBkgColor: '#eef2ff',
-    noteTextColor: '#1e293b',
-    activationBorderColor: '#6366f1',
-    activationBkgColor: '#eef2ff',
-    sequenceNumberColor: '#ffffff',
-    sectionBkgColor: '#f1f5f9',
-    altSectionBkgColor: '#ffffff',
-    sectionBkgColor2: '#e2e8f0',
-    taskBorderColor: '#6366f1',
-    taskBkgColor: '#eef2ff',
-    taskTextColor: '#1e293b',
-    taskTextLightColor: '#64748b',
-    taskTextOutsideColor: '#1e293b',
-    gridColor: '#e2e8f0',
-    doneTaskBkgColor: '#dcfce7',
-    doneTaskBorderColor: '#22c55e',
-    critBorderColor: '#ef4444',
-    critBkgColor: '#fee2e2',
-    todayLineColor: '#6366f1',
-    relationColor: '#94a3b8',
-    relationLabelColor: '#64748b',
-  },
+  theme: 'default',
   securityLevel: 'loose',
   flowchart: {
-    htmlLabels: true,
+    htmlLabels: false,
     curve: 'basis',
+  },
+  sequence: {
+    diagramMarginX: 50,
+    diagramMarginY: 10,
   },
 });
 
 interface MermaidDiagramProps {
   code: string;
-  id: string;
+  diagramId: string;
 }
 
-const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, id }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, diagramId }) => {
   const [svg, setSvg] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const uniqueId = useId().replace(/:/g, '');
 
   useEffect(() => {
+    let mounted = true;
+    
     const renderDiagram = async () => {
-      if (!containerRef.current) return;
-      
       setIsLoading(true);
       setError(null);
       
       try {
-        const { svg: renderedSvg } = await mermaid.render(`mermaid-${id}`, code);
-        setSvg(renderedSvg);
+        // Clean the code - remove <br/> tags that cause issues
+        const cleanedCode = code
+          .replace(/<br\/>/g, '\\n')
+          .replace(/<br>/g, '\\n');
+        
+        const id = `mermaid-${diagramId}-${uniqueId}`;
+        const { svg: renderedSvg } = await mermaid.render(id, cleanedCode);
+        
+        if (mounted) {
+          setSvg(renderedSvg);
+          setIsLoading(false);
+        }
       } catch (err) {
         console.error('Mermaid render error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to render diagram');
-      } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setError(err instanceof Error ? err.message : 'Failed to render diagram');
+          setIsLoading(false);
+        }
       }
     };
 
-    renderDiagram();
-  }, [code, id]);
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(renderDiagram, 100);
+    
+    return () => {
+      mounted = false;
+      clearTimeout(timer);
+    };
+  }, [code, diagramId, uniqueId]);
 
   if (isLoading) {
     return (
@@ -109,10 +85,22 @@ const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, id }) => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-[400px] bg-destructive/10 rounded-lg border border-destructive/20">
-        <div className="text-center p-4">
-          <p className="text-sm text-destructive font-medium">Failed to render diagram</p>
-          <p className="text-xs text-muted-foreground mt-1">{error}</p>
+      <div className="flex items-center justify-center h-[300px] bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+        <div className="text-center p-6 max-w-md">
+          <AlertCircle className="h-10 w-10 text-amber-500 mx-auto mb-3" />
+          <p className="text-sm font-medium text-amber-700 dark:text-amber-400">Diagram Preview Unavailable</p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Switch to "Code" view to see the Mermaid source, or use the{' '}
+            <a 
+              href="https://mermaid.live" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Mermaid Live Editor
+            </a>
+            {' '}to render this diagram.
+          </p>
         </div>
       </div>
     );
@@ -120,8 +108,7 @@ const MermaidDiagram: React.FC<MermaidDiagramProps> = ({ code, id }) => {
 
   return (
     <div 
-      ref={containerRef}
-      className="mermaid-container bg-white rounded-lg p-4 overflow-auto"
+      className="mermaid-container bg-white dark:bg-slate-900 rounded-lg p-4 min-h-[300px] flex items-center justify-center overflow-auto"
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );
@@ -154,13 +141,6 @@ export const DiagramsSection: React.FC = () => {
       case 'mindmap': return 'bg-pink-500/10 text-pink-600 border-pink-500/20';
       default: return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
     }
-  };
-
-  const toggleViewMode = (diagramId: string) => {
-    setViewMode(prev => ({
-      ...prev,
-      [diagramId]: prev[diagramId] === 'code' ? 'visual' : 'code'
-    }));
   };
 
   const copyToClipboard = async (code: string, diagramId: string) => {
@@ -205,11 +185,9 @@ export const DiagramsSection: React.FC = () => {
                   <CardTitle className="text-xl">{diagram.title}</CardTitle>
                   <CardDescription className="mt-1">{diagram.description}</CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge className={getTypeColor(diagram.type)} variant="outline">
-                    {diagram.type}
-                  </Badge>
-                </div>
+                <Badge className={getTypeColor(diagram.type)} variant="outline">
+                  {diagram.type}
+                </Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -258,9 +236,9 @@ export const DiagramsSection: React.FC = () => {
               {/* Diagram Content */}
               <div className="rounded-lg border overflow-hidden">
                 {getViewMode(diagram.id) === 'visual' ? (
-                  <ScrollArea className="h-[500px]">
-                    <MermaidDiagram code={diagram.mermaidCode} id={diagram.id} />
-                  </ScrollArea>
+                  <div className="max-h-[500px] overflow-auto">
+                    <MermaidDiagram code={diagram.mermaidCode} diagramId={diagram.id} />
+                  </div>
                 ) : (
                   <div className="bg-muted/50">
                     <div className="p-3 border-b bg-muted/30 flex items-center justify-between">

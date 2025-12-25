@@ -7,24 +7,24 @@ export const diagramsData: DiagramData[] = [
     type: 'architecture',
     description: 'High-level overview of the Vertex PM system architecture showing frontend, backend, and external integrations.',
     mermaidCode: `graph TB
-    subgraph Client["Frontend (React + TypeScript)"]
-        UI[UI Components<br/>shadcn/ui + Tailwind]
-        Features[Feature Modules<br/>23 modules]
-        State[State Management<br/>TanStack Query]
-        Router[React Router<br/>Protected Routes]
+    subgraph Client[Frontend - React TypeScript]
+        UI[UI Components]
+        Features[Feature Modules]
+        State[TanStack Query]
+        Router[React Router]
     end
     
-    subgraph Backend["Backend (Supabase)"]
-        Auth[Authentication<br/>Email/Password + OAuth]
-        DB[(PostgreSQL<br/>80+ tables)]
-        Edge[Edge Functions<br/>Serverless API]
-        Storage[File Storage<br/>Attachments]
-        Realtime[Realtime<br/>Subscriptions]
+    subgraph Backend[Backend - Supabase]
+        Auth[Authentication]
+        DB[(PostgreSQL)]
+        Edge[Edge Functions]
+        Storage[File Storage]
+        Realtime[Realtime]
     end
     
-    subgraph External["External Integrations"]
-        Git[Git Providers<br/>GitHub, GitLab, Bitbucket]
-        LDAP[LDAP/AD<br/>Enterprise Auth]
+    subgraph External[External Integrations]
+        Git[Git Providers]
+        LDAP[LDAP/AD]
     end
     
     UI --> Features
@@ -94,7 +94,7 @@ export const diagramsData: DiagramData[] = [
   },
   {
     id: 'board-interaction',
-    title: 'Board Drag & Drop Flow',
+    title: 'Board Drag and Drop Flow',
     type: 'sequence',
     description: 'Sequence diagram showing the drag-and-drop interaction on Kanban/Scrum boards.',
     mermaidCode: `sequenceDiagram
@@ -177,7 +177,7 @@ export const diagramsData: DiagramData[] = [
     
     M --> N[Complete Sprint]
     N --> O{Incomplete Items?}
-    O -->|Yes| P[Move to Backlog/Next]
+    O -->|Yes| P[Move to Backlog]
     O -->|No| Q[Generate Report]
     P --> Q
     Q --> R[Sprint Retrospective]`
@@ -245,52 +245,51 @@ export const diagramsData: DiagramData[] = [
   },
   {
     id: 'module-dependencies',
-    title: 'Module Dependency Mind Map',
-    type: 'mindmap',
-    description: 'Mind map showing the relationships and dependencies between feature modules.',
-    mermaidCode: `mindmap
-  root((Vertex PM))
-    Core
-      Projects
-        Boards
-        Backlog
-        Sprints
-      Issues
-        Comments
-        Attachments
-        History
-        Links
-      Workflows
-        Statuses
-        Transitions
+    title: 'Module Dependency Graph',
+    type: 'architecture',
+    description: 'Graph showing the relationships and dependencies between feature modules.',
+    mermaidCode: `graph TD
+    subgraph Core[Core Modules]
+        Projects[Projects]
+        Issues[Issues]
+        Workflows[Workflows]
+    end
     
-    Integrations
-      Git
-        Commits
-        Branches
-        Pull Requests
-        Deployments
-      LDAP
-        User Sync
-        Group Mapping
+    subgraph UI[UI Modules]
+        Boards[Boards]
+        Backlog[Backlog]
+        Reports[Reports]
+    end
     
-    Enterprise
-      Access Control
-      Audit Logs
-      Compliance
-      Bulk Operations
+    subgraph Integration[Integration Modules]
+        Git[Git Integration]
+        LDAP[LDAP]
+    end
     
-    Extensions
-      Custom Fields
-      Plugins
-      Automation
-      Guided Ops
+    subgraph Enterprise[Enterprise Modules]
+        Access[Access Control]
+        Audit[Audit Logs]
+        Compliance[Compliance]
+    end
     
-    Reporting
-      Burndown
-      Velocity
-      Analytics
-      Exports`
+    subgraph Extensions[Extension Modules]
+        CustomFields[Custom Fields]
+        Plugins[Plugins]
+        Automation[Automation]
+    end
+    
+    Projects --> Issues
+    Projects --> Boards
+    Projects --> Backlog
+    Issues --> Workflows
+    Issues --> Git
+    Boards --> Issues
+    Backlog --> Issues
+    Reports --> Issues
+    LDAP --> Access
+    Access --> Audit
+    CustomFields --> Issues
+    Automation --> Issues`
   },
   {
     id: 'data-flow',
@@ -298,27 +297,27 @@ export const diagramsData: DiagramData[] = [
     type: 'flow',
     description: 'How data flows through the application from user action to persistence.',
     mermaidCode: `flowchart LR
-    subgraph User["User Layer"]
+    subgraph User[User Layer]
         A[User Action]
     end
     
-    subgraph UI["UI Layer"]
+    subgraph UI[UI Layer]
         B[React Component]
         C[Form Validation]
     end
     
-    subgraph State["State Layer"]
+    subgraph State[State Layer]
         D[TanStack Query]
         E[Optimistic Update]
         F[Cache]
     end
     
-    subgraph API["API Layer"]
+    subgraph API[API Layer]
         G[Supabase Client]
         H[Edge Function]
     end
     
-    subgraph Data["Data Layer"]
+    subgraph Data[Data Layer]
         I[(PostgreSQL)]
         J[RLS Policies]
         K[Triggers]
