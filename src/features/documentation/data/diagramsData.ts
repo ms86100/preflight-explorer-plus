@@ -188,33 +188,56 @@ export const diagramsData: DiagramData[] = [
     type: 'erd',
     description: 'Entity relationship diagram showing the core tables and their relationships.',
     mermaidCode: `erDiagram
-    projects ||--o{ issues : contains
-    projects ||--o{ boards : has
-    projects ||--o{ sprints : has
-    projects ||--o{ versions : has
-    projects ||--o{ components : has
+    PROJECTS {
+        uuid id PK
+        string name
+        string key
+        string description
+    }
+    ISSUES {
+        uuid id PK
+        uuid project_id FK
+        string issue_key
+        string summary
+        uuid status_id FK
+    }
+    BOARDS {
+        uuid id PK
+        uuid project_id FK
+        string name
+        string board_type
+    }
+    SPRINTS {
+        uuid id PK
+        uuid project_id FK
+        string name
+        date start_date
+        date end_date
+    }
+    COMMENTS {
+        uuid id PK
+        uuid issue_id FK
+        uuid author_id FK
+        text body
+    }
+    ISSUE_STATUSES {
+        uuid id PK
+        string name
+        string category
+    }
+    PROFILES {
+        uuid id PK
+        string display_name
+        string email
+    }
     
-    issues ||--o{ comments : has
-    issues ||--o{ attachments : has
-    issues ||--o{ issue_history : logs
-    issues ||--o{ issue_links : links
-    issues }o--|| issue_types : type
-    issues }o--|| issue_statuses : status
-    issues }o--|| priorities : priority
-    issues }o--o| sprints : assigned
-    
-    boards ||--o{ board_columns : has
-    board_columns ||--o{ board_column_statuses : maps
-    
-    sprints }o--|| projects : belongs
-    
-    workflows ||--o{ workflow_transitions : has
-    workflow_transitions }o--|| issue_statuses : from
-    workflow_transitions }o--|| issue_statuses : to
-    
-    profiles ||--o{ issues : reports
-    profiles ||--o{ issues : assigned
-    profiles ||--o{ comments : authors`
+    PROJECTS ||--o{ ISSUES : contains
+    PROJECTS ||--o{ BOARDS : has
+    PROJECTS ||--o{ SPRINTS : has
+    ISSUES ||--o{ COMMENTS : has
+    ISSUES }o--|| ISSUE_STATUSES : status
+    PROFILES ||--o{ ISSUES : reports
+    PROFILES ||--o{ COMMENTS : authors`
   },
   {
     id: 'git-erd',
@@ -222,26 +245,47 @@ export const diagramsData: DiagramData[] = [
     type: 'erd',
     description: 'Entity relationship diagram for Git integration tables.',
     mermaidCode: `erDiagram
-    git_organizations ||--o{ git_repositories : contains
-    git_repositories ||--o{ git_commits : has
-    git_repositories ||--o{ git_branches : has
-    git_repositories ||--o{ git_pull_requests : has
-    git_repositories ||--o{ git_builds : has
-    git_repositories ||--o{ git_deployments : has
+    GIT_ORGANIZATIONS {
+        uuid id PK
+        string name
+        string provider_type
+        string host_url
+    }
+    GIT_REPOSITORIES {
+        uuid id PK
+        uuid organization_id FK
+        string name
+        string slug
+    }
+    GIT_COMMITS {
+        uuid id PK
+        uuid repository_id FK
+        string commit_hash
+        string message
+    }
+    GIT_BRANCHES {
+        uuid id PK
+        uuid repository_id FK
+        string name
+        boolean is_default
+    }
+    GIT_PULL_REQUESTS {
+        uuid id PK
+        uuid repository_id FK
+        string title
+        string status
+    }
+    ISSUES {
+        uuid id PK
+        string issue_key
+    }
     
-    git_commits ||--o{ git_commit_issues : links
-    git_commit_issues }o--|| issues : references
-    
-    git_pull_requests ||--o{ git_pull_request_issues : links
-    git_pull_request_issues }o--|| issues : references
-    
-    git_branches }o--o| issues : tracks
-    
-    git_deployments }o--o| git_builds : from
-    git_deployments ||--o{ git_deployment_issues : links
-    
-    git_organizations ||--o{ git_user_mappings : has
-    git_user_mappings }o--o| profiles : maps`
+    GIT_ORGANIZATIONS ||--o{ GIT_REPOSITORIES : contains
+    GIT_REPOSITORIES ||--o{ GIT_COMMITS : has
+    GIT_REPOSITORIES ||--o{ GIT_BRANCHES : has
+    GIT_REPOSITORIES ||--o{ GIT_PULL_REQUESTS : has
+    GIT_COMMITS }o--o{ ISSUES : references
+    GIT_BRANCHES }o--o| ISSUES : tracks`
   },
   {
     id: 'module-dependencies',
