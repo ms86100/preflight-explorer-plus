@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { DocNavigation } from './DocNavigation';
 import { OverviewSection } from './OverviewSection';
 import { ModulesSection } from './ModulesSection';
-import { DiagramsSection } from './DiagramsSection';
 import { DatabaseSection } from './DatabaseSection';
 import { TechStackSection } from './TechStackSection';
 import { DeploymentSection } from './DeploymentSection';
@@ -26,8 +25,6 @@ export const DocumentationPage: React.FC = () => {
         return <OverviewSection />;
       case 'modules':
         return <ModulesSection />;
-      case 'diagrams':
-        return <DiagramsSection />;
       case 'database':
         return <DatabaseSection />;
       case 'tech-stack':

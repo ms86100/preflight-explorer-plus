@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Search, Folder, Code, Settings, Users, GitBranch, Image, AlertCircle, Printer } from 'lucide-react';
 import { moduleDocumentation } from '../data/moduleDocumentation';
-import { diagramsData } from '../data/diagramsData';
+import { moduleDiagrams } from '../data/moduleDiagrams';
 
 // Initialize mermaid for inline diagrams
 mermaid.initialize({
@@ -98,8 +98,9 @@ export const ModulesSection: React.FC = () => {
       module.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getModuleDiagrams = (diagramIds: string[] = []) => {
-    return diagramsData.filter(d => diagramIds.includes(d.id));
+  const getModuleDiagrams = (moduleId: string) => {
+    const diagrams = moduleDiagrams[moduleId];
+    return diagrams ? [diagrams.sequence, diagrams.erd] : [];
   };
 
   const handlePrintModule = (moduleId: string) => {
@@ -221,7 +222,7 @@ export const ModulesSection: React.FC = () => {
         className="space-y-4"
       >
         {filteredModules.map((module) => {
-          const moduleDiagrams = getModuleDiagrams(module.associatedDiagrams);
+          const diagrams = getModuleDiagrams(module.id);
           
           return (
             <AccordionItem
@@ -238,10 +239,10 @@ export const ModulesSection: React.FC = () => {
                     <h3 className="font-semibold">{module.name}</h3>
                     <p className="text-sm text-muted-foreground truncate">{module.description}</p>
                   </div>
-                  {moduleDiagrams.length > 0 && (
+                  {diagrams.length > 0 && (
                     <Badge variant="outline" className="ml-auto mr-2 gap-1 flex-shrink-0">
                       <GitBranch className="h-3 w-3" />
-                      {moduleDiagrams.length} diagram{moduleDiagrams.length > 1 ? 's' : ''}
+                      {diagrams.length} diagram{diagrams.length > 1 ? 's' : ''}
                     </Badge>
                   )}
                   <Button
@@ -391,23 +392,23 @@ export const ModulesSection: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* 4. Visual Diagrams */}
-                {moduleDiagrams.length > 0 && (
+                {/* 4. Visual Diagrams - Sequence & ERD */}
+                {diagrams.length > 0 && (
                   <Card className="border-primary/20">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-lg flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
                           <Image className="w-4 h-4 text-primary" />
                         </div>
-                        Visual Diagrams
+                        Sequence Diagram & ERD
                       </CardTitle>
                       <CardDescription>
-                        Architecture and flow diagrams related to this module
+                        Sequence diagram and entity relationship diagram for this module
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="grid gap-4">
-                        {moduleDiagrams.map((diagram) => (
+                        {diagrams.map((diagram) => (
                           <div key={diagram.id} className="border rounded-lg overflow-hidden">
                             <div className="p-3 bg-muted/30 border-b flex items-center justify-between">
                               <div>

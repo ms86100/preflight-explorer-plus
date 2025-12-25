@@ -135,28 +135,84 @@ export const OverviewSection: React.FC = () => {
         <CardHeader>
           <CardTitle>Getting Started</CardTitle>
           <CardDescription>
-            Quick navigation guide for this documentation
+            Quick navigation guide and first steps for this documentation
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <h4 className="font-medium">For Developers</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>→ <strong>Modules</strong>: Understand each feature module</li>
-                <li>→ <strong>Database</strong>: Explore the schema and relationships</li>
-                <li>→ <strong>Tech Stack</strong>: Learn the technologies used</li>
-                <li>→ <strong>Deployment</strong>: Set up your development environment</li>
-              </ul>
+        <CardContent className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <h4 className="font-semibold text-blue-600 dark:text-blue-400 mb-3 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  For Developers
+                </h4>
+                <ul className="text-sm text-muted-foreground space-y-2">
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-1">→</span>
+                    <span><strong>Modules</strong>: Browse each feature module with purpose, user flows, API docs, and diagrams</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-1">→</span>
+                    <span><strong>Database</strong>: Explore the complete schema with 80+ tables, relationships, and RLS policies</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-1">→</span>
+                    <span><strong>Tech Stack</strong>: Learn about React, TypeScript, Supabase, and other technologies</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-1">→</span>
+                    <span><strong>Deployment</strong>: Set up your local development environment or deploy to production</span>
+                  </li>
+                </ul>
+              </div>
             </div>
-            <div className="space-y-2">
-              <h4 className="font-medium">For Architects</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>→ <strong>Diagrams</strong>: Visual system architecture</li>
-                <li>→ <strong>Database</strong>: Entity relationships and RLS</li>
-                <li>→ <strong>Tech Stack</strong>: Architecture patterns</li>
-              </ul>
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <h4 className="font-semibold text-purple-600 dark:text-purple-400 mb-3 flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  For Architects
+                </h4>
+                <ul className="text-sm text-muted-foreground space-y-2">
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-500 mt-1">→</span>
+                    <span><strong>Modules</strong>: Each module includes sequence diagrams and ERD for architecture review</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-500 mt-1">→</span>
+                    <span><strong>Database</strong>: Entity relationships, RLS policies, and security patterns</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-500 mt-1">→</span>
+                    <span><strong>Tech Stack</strong>: Architecture patterns, state management, and design decisions</span>
+                  </li>
+                </ul>
+              </div>
             </div>
+          </div>
+          
+          <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+            <h4 className="font-semibold text-green-600 dark:text-green-400 mb-3 flex items-center gap-2">
+              <Puzzle className="w-4 h-4" />
+              Quick Start Steps
+            </h4>
+            <ol className="text-sm text-muted-foreground space-y-2">
+              <li className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-semibold">1</span>
+                <span>Start with the <strong>Modules</strong> section to understand the feature landscape and how components interact</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-semibold">2</span>
+                <span>Review the <strong>Database</strong> section for schema design, relationships, and security policies</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-semibold">3</span>
+                <span>Check <strong>Tech Stack</strong> for technology choices and architectural patterns</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-semibold">4</span>
+                <span>Follow <strong>Deployment</strong> guide to set up your development environment</span>
+              </li>
+            </ol>
           </div>
         </CardContent>
       </Card>

@@ -11,7 +11,6 @@ interface DocNavigationProps {
 const sections: { id: DocSection; label: string; icon: React.ElementType }[] = [
   { id: 'overview', label: 'Overview', icon: Book },
   { id: 'modules', label: 'Modules', icon: Layers },
-  { id: 'diagrams', label: 'Diagrams', icon: GitBranch },
   { id: 'database', label: 'Database', icon: Database },
   { id: 'tech-stack', label: 'Tech Stack', icon: Cpu },
   { id: 'deployment', label: 'Deployment', icon: Rocket },

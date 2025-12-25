@@ -71,7 +71,6 @@ export interface TechStackItem {
 export type DocSection = 
   | 'overview' 
   | 'modules' 
-  | 'diagrams' 
   | 'database' 
   | 'tech-stack' 
   | 'deployment';
