@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { DocSection } from '../types';
-import { Book, Layers, GitBranch, Database, Cpu, Rocket, ClipboardCheck, ListTodo } from 'lucide-react';
+import { Book, Layers, GitBranch, Database, Cpu, Rocket } from 'lucide-react';
 
 interface DocNavigationProps {
   activeSection: DocSection;
@@ -15,8 +15,6 @@ const sections: { id: DocSection; label: string; icon: React.ElementType }[] = [
   { id: 'database', label: 'Database', icon: Database },
   { id: 'tech-stack', label: 'Tech Stack', icon: Cpu },
   { id: 'deployment', label: 'Deployment', icon: Rocket },
-  { id: 'gap-analysis', label: 'Gap Analysis', icon: ClipboardCheck },
-  { id: 'implementation-plan', label: 'Implementation Plan', icon: ListTodo },
 ];
 
 export const DocNavigation: React.FC<DocNavigationProps> = ({

@@ -189,53 +189,50 @@ export const diagramsData: DiagramData[] = [
     description: 'Entity relationship diagram showing the core tables and their relationships.',
     mermaidCode: `erDiagram
     PROJECTS {
-        uuid id PK
+        uuid id
         string name
         string key
-        string description
     }
     ISSUES {
-        uuid id PK
-        uuid project_id FK
+        uuid id
+        uuid project_id
+        uuid status_id
         string issue_key
         string summary
-        uuid status_id FK
+    }
+    ISSUE_STATUSES {
+        uuid id
+        string name
+        string category
     }
     BOARDS {
-        uuid id PK
-        uuid project_id FK
+        uuid id
+        uuid project_id
         string name
         string board_type
     }
     SPRINTS {
-        uuid id PK
-        uuid project_id FK
+        uuid id
+        uuid project_id
         string name
-        date start_date
-        date end_date
     }
     COMMENTS {
-        uuid id PK
-        uuid issue_id FK
-        uuid author_id FK
+        uuid id
+        uuid issue_id
+        uuid author_id
         text body
     }
-    ISSUE_STATUSES {
-        uuid id PK
-        string name
-        string category
-    }
     PROFILES {
-        uuid id PK
+        uuid id
         string display_name
         string email
     }
-    
+
     PROJECTS ||--o{ ISSUES : contains
     PROJECTS ||--o{ BOARDS : has
     PROJECTS ||--o{ SPRINTS : has
     ISSUES ||--o{ COMMENTS : has
-    ISSUES }o--|| ISSUE_STATUSES : status
+    ISSUE_STATUSES ||--o{ ISSUES : categorizes
     PROFILES ||--o{ ISSUES : reports
     PROFILES ||--o{ COMMENTS : authors`
   },
@@ -246,46 +243,57 @@ export const diagramsData: DiagramData[] = [
     description: 'Entity relationship diagram for Git integration tables.',
     mermaidCode: `erDiagram
     GIT_ORGANIZATIONS {
-        uuid id PK
+        uuid id
         string name
         string provider_type
-        string host_url
     }
     GIT_REPOSITORIES {
-        uuid id PK
-        uuid organization_id FK
+        uuid id
+        uuid organization_id
         string name
         string slug
     }
     GIT_COMMITS {
-        uuid id PK
-        uuid repository_id FK
+        uuid id
+        uuid repository_id
         string commit_hash
-        string message
     }
     GIT_BRANCHES {
-        uuid id PK
-        uuid repository_id FK
+        uuid id
+        uuid repository_id
         string name
-        boolean is_default
     }
     GIT_PULL_REQUESTS {
-        uuid id PK
-        uuid repository_id FK
+        uuid id
+        uuid repository_id
         string title
         string status
     }
-    ISSUES {
-        uuid id PK
+    GIT_COMMIT_ISSUES {
+        uuid id
+        uuid commit_id
+        uuid issue_id
         string issue_key
     }
-    
+    GIT_PULL_REQUEST_ISSUES {
+        uuid id
+        uuid pull_request_id
+        uuid issue_id
+        string issue_key
+    }
+    ISSUES {
+        uuid id
+        string issue_key
+    }
+
     GIT_ORGANIZATIONS ||--o{ GIT_REPOSITORIES : contains
     GIT_REPOSITORIES ||--o{ GIT_COMMITS : has
     GIT_REPOSITORIES ||--o{ GIT_BRANCHES : has
     GIT_REPOSITORIES ||--o{ GIT_PULL_REQUESTS : has
-    GIT_COMMITS }o--o{ ISSUES : references
-    GIT_BRANCHES }o--o| ISSUES : tracks`
+    GIT_COMMITS ||--o{ GIT_COMMIT_ISSUES : links
+    ISSUES ||--o{ GIT_COMMIT_ISSUES : referenced
+    GIT_PULL_REQUESTS ||--o{ GIT_PULL_REQUEST_ISSUES : links
+    ISSUES ||--o{ GIT_PULL_REQUEST_ISSUES : referenced`
   },
   {
     id: 'module-dependencies',

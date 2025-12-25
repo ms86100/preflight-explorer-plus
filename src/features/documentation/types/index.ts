@@ -74,9 +74,8 @@ export type DocSection =
   | 'diagrams' 
   | 'database' 
   | 'tech-stack' 
-  | 'deployment'
-  | 'gap-analysis'
-  | 'implementation-plan';
+  | 'deployment';
+
 
 // Gap Analysis Types
 export type CompletionStatus = 'complete' | 'partial' | 'gap' | 'not-applicable';
