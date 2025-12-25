@@ -83,10 +83,10 @@ export const deploymentGuide = {
     title: 'Production Deployment',
     options: [
       {
-        name: 'Lovable Hosting',
-        description: 'Recommended for simplest deployment. Click "Publish" in Lovable editor.',
+        name: 'Managed Cloud',
+        description: 'Recommended for simplest deployment. One-click publish from the editor.',
         steps: [
-          'Make all code changes in Lovable',
+          'Make all code changes in the editor',
           'Click "Publish" button in top-right',
           'Configure custom domain in Settings',
           'SSL is automatically provisioned'

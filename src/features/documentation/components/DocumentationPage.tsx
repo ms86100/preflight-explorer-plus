@@ -6,6 +6,8 @@ import { DiagramsSection } from './DiagramsSection';
 import { DatabaseSection } from './DatabaseSection';
 import { TechStackSection } from './TechStackSection';
 import { DeploymentSection } from './DeploymentSection';
+import { GapAnalysisSection } from './GapAnalysisSection';
+import { ImplementationPlanSection } from './ImplementationPlanSection';
 import { DocSection } from '../types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -34,6 +36,10 @@ export const DocumentationPage: React.FC = () => {
         return <TechStackSection />;
       case 'deployment':
         return <DeploymentSection />;
+      case 'gap-analysis':
+        return <GapAnalysisSection />;
+      case 'implementation-plan':
+        return <ImplementationPlanSection />;
       default:
         return <OverviewSection />;
     }
