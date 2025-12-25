@@ -23,7 +23,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['User must be authenticated', 'User must have project creation permissions'],
     postconditions: ['Project appears in project list', 'Default board is created', 'Default statuses are applied'],
-    edgeCases: ['Duplicate project key validation', 'Project key format validation (uppercase, no spaces)', 'Maximum project name length']
+    edgeCases: ['Duplicate project key validation', 'Project key format validation (uppercase, no spaces)', 'Maximum project name length'],
+    associatedDiagrams: ['system-architecture', 'core-erd']
   },
   {
     id: 'issues',
@@ -47,7 +48,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Project must exist', 'User must have issue creation permission', 'Required fields must be filled'],
     postconditions: ['Issue key is generated', 'Issue history is initialized', 'Notifications are sent to watchers'],
-    edgeCases: ['Issue key collision handling', 'Circular parent-child prevention', 'Epic link validation', 'Time tracking overflow']
+    edgeCases: ['Issue key collision handling', 'Circular parent-child prevention', 'Epic link validation', 'Time tracking overflow'],
+    associatedDiagrams: ['issue-lifecycle', 'core-erd', 'data-flow']
   },
   {
     id: 'boards',
@@ -71,7 +73,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Board must be configured', 'User must have board access', 'Workflow must allow transition'],
     postconditions: ['Issue status is updated', 'Board column counts update', 'Activity is logged'],
-    edgeCases: ['WIP limit exceeded warning', 'Invalid transition blocking', 'Concurrent drag operations', 'Large board performance']
+    edgeCases: ['WIP limit exceeded warning', 'Invalid transition blocking', 'Concurrent drag operations', 'Large board performance'],
+    associatedDiagrams: ['board-interaction', 'system-architecture']
   },
   {
     id: 'backlog',
@@ -95,7 +98,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Project must use Scrum methodology', 'Backlog must have issues', 'Sprint dates must be valid'],
     postconditions: ['Sprint velocity is calculated', 'Incomplete items are handled', 'Sprint report is generated'],
-    edgeCases: ['Overlapping sprint dates', 'Empty sprint completion', 'Mid-sprint scope changes', 'Sprint goal modification']
+    edgeCases: ['Overlapping sprint dates', 'Empty sprint completion', 'Mid-sprint scope changes', 'Sprint goal modification'],
+    associatedDiagrams: ['sprint-planning', 'core-erd']
   },
   {
     id: 'workflows',
@@ -119,7 +123,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Admin permissions required', 'Valid status configuration', 'No circular transitions'],
     postconditions: ['Workflow is validated', 'Existing issues can still transition', 'Scheme is updated'],
-    edgeCases: ['Orphaned status handling', 'Breaking change detection', 'Workflow migration', 'Concurrent edits']
+    edgeCases: ['Orphaned status handling', 'Breaking change detection', 'Workflow migration', 'Concurrent edits'],
+    associatedDiagrams: ['issue-lifecycle', 'module-dependencies']
   },
   {
     id: 'git-integration',
@@ -143,7 +148,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Git provider account required', 'OAuth app configured', 'Repository access granted'],
     postconditions: ['Commits are linked to issues', 'Branches appear on issue panel', 'Smart commits are processed'],
-    edgeCases: ['OAuth token expiration', 'Webhook delivery failures', 'Repository rename handling', 'User mapping conflicts']
+    edgeCases: ['OAuth token expiration', 'Webhook delivery failures', 'Repository rename handling', 'User mapping conflicts'],
+    associatedDiagrams: ['git-integration-flow', 'git-erd']
   },
   {
     id: 'reports',
@@ -166,7 +172,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Sufficient data for visualization', 'Report access permission', 'Valid date range'],
     postconditions: ['Report is rendered', 'Data is cached for performance', 'Export is generated'],
-    edgeCases: ['No data scenarios', 'Large dataset performance', 'Date timezone handling', 'Incomplete sprint data']
+    edgeCases: ['No data scenarios', 'Large dataset performance', 'Date timezone handling', 'Incomplete sprint data'],
+    associatedDiagrams: ['data-flow', 'module-dependencies']
   },
   {
     id: 'custom-fields',
@@ -190,7 +197,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Admin permission for configuration', 'Valid field type selection', 'Context assignment'],
     postconditions: ['Field is available on forms', 'Existing issues can be updated', 'Search includes field'],
-    edgeCases: ['Field type change restrictions', 'Required field enforcement', 'Default value application', 'Field deletion with data']
+    edgeCases: ['Field type change restrictions', 'Required field enforcement', 'Default value application', 'Field deletion with data'],
+    associatedDiagrams: ['core-erd', 'data-flow']
   },
   {
     id: 'teams',
@@ -214,7 +222,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Admin permission required', 'Users must exist to add', 'Unique team name'],
     postconditions: ['Team is created', 'Members are associated', 'Team is available for assignment'],
-    edgeCases: ['User removal from team with active assignments', 'Team deletion with history', 'Circular team lead assignment']
+    edgeCases: ['User removal from team with active assignments', 'Team deletion with history', 'Circular team lead assignment'],
+    associatedDiagrams: ['core-erd']
   },
   {
     id: 'notifications',
@@ -238,7 +247,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['User is subscribed to activity', 'Notification type is enabled'],
     postconditions: ['Notification is delivered', 'Unread count is updated', 'Activity is logged'],
-    edgeCases: ['High-volume notification batching', 'Deleted item notifications', 'Permission changes affecting subscriptions']
+    edgeCases: ['High-volume notification batching', 'Deleted item notifications', 'Permission changes affecting subscriptions'],
+    associatedDiagrams: ['data-flow']
   },
   {
     id: 'comments',
@@ -262,7 +272,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Issue access required', 'Comment permission granted'],
     postconditions: ['Comment is saved', 'Mentions are extracted', 'Notifications sent'],
-    edgeCases: ['Editing mentions after post', 'Deleted user mentions', 'Long comment handling', 'Concurrent edits']
+    edgeCases: ['Editing mentions after post', 'Deleted user mentions', 'Long comment handling', 'Concurrent edits'],
+    associatedDiagrams: ['core-erd']
   },
   {
     id: 'automation',
@@ -286,7 +297,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Admin permission required', 'Valid trigger/action combination'],
     postconditions: ['Rule is saved', 'Trigger is registered', 'Actions execute on match'],
-    edgeCases: ['Rule loop prevention', 'Failed action handling', 'Rate limiting', 'Permission context for actions']
+    edgeCases: ['Rule loop prevention', 'Failed action handling', 'Rate limiting', 'Permission context for actions'],
+    associatedDiagrams: ['module-dependencies']
   },
   {
     id: 'migration',
@@ -311,7 +323,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Admin permission required', 'Valid file format', 'Required fields mapped'],
     postconditions: ['Data is imported', 'Errors are logged', 'History is recorded'],
-    edgeCases: ['Duplicate detection', 'Reference resolution', 'Large file handling', 'Partial failure recovery']
+    edgeCases: ['Duplicate detection', 'Reference resolution', 'Large file handling', 'Partial failure recovery'],
+    associatedDiagrams: ['data-flow']
   },
   {
     id: 'plugins',
@@ -335,7 +348,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Admin permission for management', 'Plugin compatibility verified'],
     postconditions: ['Plugin state is updated', 'Features are toggled', 'Dependencies are checked'],
-    edgeCases: ['Plugin dependency conflicts', 'Version compatibility', 'Data migration on disable']
+    edgeCases: ['Plugin dependency conflicts', 'Version compatibility', 'Data migration on disable'],
+    associatedDiagrams: ['module-dependencies', 'system-architecture']
   },
   {
     id: 'ldap',
@@ -359,7 +373,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['LDAP server accessible', 'Valid bind credentials', 'Network connectivity'],
     postconditions: ['Users are synced', 'Groups are mapped', 'Authentication is enabled'],
-    edgeCases: ['Connection timeouts', 'Certificate validation', 'User conflict resolution', 'Sync failures']
+    edgeCases: ['Connection timeouts', 'Certificate validation', 'User conflict resolution', 'Sync failures'],
+    associatedDiagrams: ['user-authentication-flow', 'system-architecture']
   },
   {
     id: 'enterprise',
@@ -382,7 +397,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Enterprise license active', 'Admin permissions required'],
     postconditions: ['Settings are applied', 'Audit trail is maintained', 'Bulk changes are logged'],
-    edgeCases: ['Bulk operation rollback', 'Permission inheritance conflicts', 'Audit log retention']
+    edgeCases: ['Bulk operation rollback', 'Permission inheritance conflicts', 'Audit log retention'],
+    associatedDiagrams: ['system-architecture', 'module-dependencies']
   },
   {
     id: 'compliance',
@@ -405,7 +421,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Compliance features enabled', 'Classification levels defined'],
     postconditions: ['Data is classified', 'Export restrictions enforced', 'Audit trail maintained'],
-    edgeCases: ['Classification inheritance', 'Bulk reclassification', 'Export approval workflow']
+    edgeCases: ['Classification inheritance', 'Bulk reclassification', 'Export approval workflow'],
+    associatedDiagrams: ['data-flow']
   },
   {
     id: 'document-composer',
@@ -429,7 +446,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Issues selected', 'Template available', 'Export permission granted'],
     postconditions: ['Document is generated', 'Export is logged', 'File is available for download'],
-    edgeCases: ['Large document generation', 'Image embedding', 'Classification watermarks', 'Template variable resolution']
+    edgeCases: ['Large document generation', 'Image embedding', 'Classification watermarks', 'Template variable resolution'],
+    associatedDiagrams: ['data-flow']
   },
   {
     id: 'structured-data',
@@ -453,7 +471,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Schema defined', 'Context assigned', 'Validation rules valid'],
     postconditions: ['Data block created', 'Data validated', 'Instance saved'],
-    edgeCases: ['Schema version migration', 'Column type changes', 'Required column addition', 'Large matrix performance']
+    edgeCases: ['Schema version migration', 'Column type changes', 'Required column addition', 'Large matrix performance'],
+    associatedDiagrams: ['core-erd']
   },
   {
     id: 'guided-operations',
@@ -477,7 +496,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Operation defined', 'User has execution permission', 'Prerequisites met'],
     postconditions: ['Operation completed', 'Results logged', 'Rollback available if supported'],
-    edgeCases: ['Step failure recovery', 'Timeout handling', 'Concurrent execution prevention', 'Approval workflow']
+    edgeCases: ['Step failure recovery', 'Timeout handling', 'Concurrent execution prevention', 'Approval workflow'],
+    associatedDiagrams: ['data-flow']
   },
   {
     id: 'search',
@@ -501,7 +521,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Issue access permissions', 'Valid search criteria'],
     postconditions: ['Results returned', 'Search is logged', 'Saved filter stored'],
-    edgeCases: ['Empty results handling', 'Large result set pagination', 'Complex query performance', 'Permission filtering']
+    edgeCases: ['Empty results handling', 'Large result set pagination', 'Complex query performance', 'Permission filtering'],
+    associatedDiagrams: ['data-flow']
   },
   {
     id: 'statuses',
@@ -525,7 +546,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Admin permission required', 'Unique status name'],
     postconditions: ['Status created', 'Available in workflow editor', 'Color is applied'],
-    edgeCases: ['Status in use deletion prevention', 'Category change impact', 'Status migration']
+    edgeCases: ['Status in use deletion prevention', 'Category change impact', 'Status migration'],
+    associatedDiagrams: ['issue-lifecycle']
   },
   {
     id: 'versions',
@@ -549,7 +571,8 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Project exists', 'Unique version name within project'],
     postconditions: ['Version created', 'Issues can be assigned', 'Progress is calculated'],
-    edgeCases: ['Version date conflicts', 'Released version modification', 'Merge versions']
+    edgeCases: ['Version date conflicts', 'Released version modification', 'Merge versions'],
+    associatedDiagrams: ['core-erd']
   },
   {
     id: 'components',
@@ -572,6 +595,7 @@ export const moduleDocumentation: ModuleDoc[] = [
     },
     preconditions: ['Project exists', 'Unique component name within project'],
     postconditions: ['Component created', 'Issues can be tagged', 'Lead is assigned'],
-    edgeCases: ['Component deletion with issues', 'Lead user removal', 'Component merge']
+    edgeCases: ['Component deletion with issues', 'Lead user removal', 'Component merge'],
+    associatedDiagrams: ['core-erd']
   }
 ];
