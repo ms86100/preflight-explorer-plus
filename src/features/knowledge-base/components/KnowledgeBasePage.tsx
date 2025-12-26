@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout';
 import { SpacesList } from '../components/SpacesList';
+import { PageEditor } from './editor/PageEditor';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCreateSpace } from '../hooks/useKnowledgeBase';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useCreateSpace, useCreatePage, useUpdatePage } from '../hooks/useKnowledgeBase';
 import { toast } from 'sonner';
-import type { SpaceWithStats, SpaceType, CreateSpaceInput } from '../types';
+import type { SpaceWithStats, SpaceType, CreateSpaceInput, ContentBlock, PageStatus } from '../types';
 
 const spaceTypes: Array<{ value: SpaceType; label: string }> = [
   { value: 'team', label: 'Team Space' },
@@ -19,6 +21,8 @@ const spaceTypes: Array<{ value: SpaceType; label: string }> = [
 ];
 
 export function KnowledgeBasePage() {
+  const [activeTab, setActiveTab] = useState<'spaces' | 'editor'>('spaces');
+  const [selectedSpace, setSelectedSpace] = useState<SpaceWithStats | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [formData, setFormData] = useState<CreateSpaceInput>({
     key: '',
@@ -28,10 +32,37 @@ export function KnowledgeBasePage() {
   });
   
   const createSpace = useCreateSpace();
+  const createPage = useCreatePage();
+  const updatePage = useUpdatePage();
 
   const handleSpaceSelect = (space: SpaceWithStats) => {
-    toast.info(`Opening space: ${space.name}`);
-    // TODO: Navigate to space view
+    setSelectedSpace(space);
+    setActiveTab('editor');
+    toast.success(`Opening space: ${space.name}`);
+  };
+
+  const handleEditorSave = async (title: string, content: ContentBlock[], status: PageStatus) => {
+    if (!selectedSpace) {
+      toast.error('No space selected');
+      return;
+    }
+    
+    try {
+      await createPage.mutateAsync({
+        space_id: selectedSpace.id,
+        title,
+        content,
+        status,
+      });
+      toast.success('Page saved successfully');
+    } catch {
+      // Error handled by mutation
+    }
+  };
+
+  const handleEditorCancel = () => {
+    setActiveTab('spaces');
+    setSelectedSpace(null);
   };
 
   const handleCreateSpace = () => {
@@ -57,18 +88,43 @@ export function KnowledgeBasePage() {
 
   return (
     <AppLayout>
-      <div className="container mx-auto py-6 px-4 max-w-7xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Knowledge Base</h1>
-          <p className="text-muted-foreground">
-            Create, organize, and share documentation with your team
-          </p>
+      <div className="flex flex-col h-[calc(100vh-4rem)]">
+        <div className="px-4 py-4 border-b border-border">
+          <div className="flex items-center justify-between max-w-7xl mx-auto">
+            <div>
+              <h1 className="text-2xl font-bold">Knowledge Base</h1>
+              <p className="text-muted-foreground text-sm">
+                Create, organize, and share documentation
+              </p>
+            </div>
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'spaces' | 'editor')}>
+              <TabsList>
+                <TabsTrigger value="spaces">Spaces</TabsTrigger>
+                <TabsTrigger value="editor" disabled={!selectedSpace}>
+                  Editor {selectedSpace && `(${selectedSpace.key})`}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
 
-        <SpacesList 
-          onSpaceSelect={handleSpaceSelect}
-          onCreateSpace={handleCreateSpace}
-        />
+        <div className="flex-1 overflow-hidden">
+          {activeTab === 'spaces' ? (
+            <div className="container mx-auto py-6 px-4 max-w-7xl overflow-y-auto h-full">
+              <SpacesList 
+                onSpaceSelect={handleSpaceSelect}
+                onCreateSpace={handleCreateSpace}
+              />
+            </div>
+          ) : (
+            <PageEditor
+              isNew
+              onSave={handleEditorSave}
+              onCancel={handleEditorCancel}
+              isSaving={createPage.isPending}
+            />
+          )}
+        </div>
       </div>
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
