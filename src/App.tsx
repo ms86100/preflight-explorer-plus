@@ -29,6 +29,7 @@ import ReleasesPage from "./pages/ReleasesPage";
 import ComponentsPage from "./pages/ComponentsPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DocsPage from "./pages/DocsPage";
+import KnowledgeBasePage from "./pages/KnowledgeBasePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -331,6 +332,16 @@ function AppRoutes() {
 
       {/* Documentation */}
       <Route path="/docs" element={<DocsPage />} />
+
+      {/* Knowledge Base */}
+      <Route
+        path="/wiki"
+        element={
+          <ProtectedRoute>
+            <KnowledgeBasePage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
