@@ -385,8 +385,7 @@ export const boardService = {
     preserveWipLimits = true
   ): Promise<{ columnsCreated: number; columnsRemoved: number }> {
     // 1. Get the project's workflow scheme
-    const { data: schemeData } = await supabase
-      .from('project_workflow_schemes')
+    const { data: schemeData } = await (supabase.from as any)('project_workflow_schemes')
       .select('scheme_id')
       .eq('project_id', projectId)
       .maybeSingle();
@@ -396,8 +395,7 @@ export const boardService = {
     }
 
     // 2. Get workflow mappings for this scheme (try default first, then any)
-    let { data: mappings } = await supabase
-      .from('workflow_scheme_mappings')
+    let { data: mappings } = await (supabase.from as any)('workflow_scheme_mappings')
       .select('workflow_id')
       .eq('scheme_id', schemeData.scheme_id)
       .is('issue_type_id', null) // Try default mapping first
@@ -405,8 +403,7 @@ export const boardService = {
 
     // If no default mapping, get any workflow from the scheme
     if (!mappings?.workflow_id) {
-      const { data: anyMapping } = await supabase
-        .from('workflow_scheme_mappings')
+      const { data: anyMapping } = await (supabase.from as any)('workflow_scheme_mappings')
         .select('workflow_id')
         .eq('scheme_id', schemeData.scheme_id)
         .limit(1)
@@ -420,8 +417,7 @@ export const boardService = {
     }
 
     // 3. Get workflow steps with status information
-    const { data: steps } = await supabase
-      .from('workflow_steps')
+    const { data: steps } = await (supabase.from as any)('workflow_steps')
       .select(`
         id,
         status_id,
@@ -437,9 +433,9 @@ export const boardService = {
 
     // Build an ordered list of unique workflow statuses (in workflow order)
     const workflowStatuses = steps
-      .map((s) => s.status as { id: string; name: string; color: string | null; category: string | null } | null)
+      .map((s: any) => s.status as { id: string; name: string; color: string | null; category: string | null } | null)
       .filter(Boolean)
-      .filter((s, idx, arr) => arr.findIndex((x) => x?.id === s?.id) === idx) as {
+      .filter((s: any, idx: number, arr: any[]) => arr.findIndex((x: any) => x?.id === s?.id) === idx) as {
         id: string;
         name: string;
         color: string | null;
@@ -447,8 +443,7 @@ export const boardService = {
       }[];
 
     // Also include statuses currently used by issues in the project so issues don't disappear after regeneration
-    const { data: issueStatusRows, error: issueStatusError } = await supabase
-      .from('issues')
+    const { data: issueStatusRows, error: issueStatusError } = await (supabase.from as any)('issues')
       .select('status_id')
       .eq('project_id', projectId)
       .not('status_id', 'is', null);
@@ -462,8 +457,7 @@ export const boardService = {
 
     let extraStatuses: { id: string; name: string; color: string | null; category: string | null }[] = [];
     if (extraStatusIds.length > 0) {
-      const { data: extra, error: extraError } = await supabase
-        .from('issue_statuses')
+      const { data: extra, error: extraError } = await (supabase.from as any)('issue_statuses')
         .select('id, name, color, category')
         .in('id', extraStatusIds)
         .order('position');
@@ -491,13 +485,11 @@ export const boardService = {
     // 5. Delete existing columns and their mappings
     if (existingColumns) {
       for (const col of existingColumns) {
-        await supabase
-          .from('board_column_statuses')
+        await (supabase.from as any)('board_column_statuses')
           .delete()
           .eq('column_id', col.id);
         
-        await supabase
-          .from('board_columns')
+        await (supabase.from as any)('board_columns')
           .delete()
           .eq('id', col.id);
       }
@@ -515,8 +507,7 @@ export const boardService = {
       const columnName = status.name;
       const wipLimits = existingWipLimits.get(columnName.toLowerCase());
 
-      const { data: column } = await supabase
-        .from('board_columns')
+      const { data: column } = await (supabase.from as any)('board_columns')
         .insert({
           board_id: boardId,
           name: columnName,
@@ -529,7 +520,7 @@ export const boardService = {
 
       if (column) {
         // Map the status to this column
-        await supabase.from('board_column_statuses').insert({
+        await (supabase.from as any)('board_column_statuses').insert({
           column_id: column.id,
           status_id: status.id,
         });
@@ -556,8 +547,7 @@ export const boardService = {
     removeOrphans = false
   ): Promise<{ added: number; removed: number }> {
     // Get the project's workflow scheme
-    const { data: schemeData } = await supabase
-      .from('project_workflow_schemes')
+    const { data: schemeData } = await (supabase.from as any)('project_workflow_schemes')
       .select('scheme_id')
       .eq('project_id', projectId)
       .maybeSingle();
@@ -567,8 +557,7 @@ export const boardService = {
     }
 
     // Get default workflow from scheme (or fallback to any)
-    let { data: mappings } = await supabase
-      .from('workflow_scheme_mappings')
+    let { data: mappings } = await (supabase.from as any)('workflow_scheme_mappings')
       .select('workflow_id')
       .eq('scheme_id', schemeData.scheme_id)
       .is('issue_type_id', null)
@@ -576,8 +565,7 @@ export const boardService = {
 
     // Fallback to any workflow if no default
     if (!mappings?.workflow_id) {
-      const { data: anyMapping } = await supabase
-        .from('workflow_scheme_mappings')
+      const { data: anyMapping } = await (supabase.from as any)('workflow_scheme_mappings')
         .select('workflow_id')
         .eq('scheme_id', schemeData.scheme_id)
         .limit(1)
@@ -590,8 +578,7 @@ export const boardService = {
     }
 
     // Get workflow steps
-    const { data: steps } = await supabase
-      .from('workflow_steps')
+    const { data: steps } = await (supabase.from as any)('workflow_steps')
       .select(`
         id,
         status_id,
@@ -621,19 +608,18 @@ export const boardService = {
     }
 
     // Get workflow status IDs
-    const workflowStatusIds = new Set(steps.map(s => s.status_id));
+    const workflowStatusIds = new Set((steps as any[]).map((s: any) => s.status_id));
 
     // Add columns for statuses in workflow but not mapped
     let added = 0;
     const maxPosition = existingColumns?.length || 0;
 
-    for (const step of steps) {
+    for (const step of steps as any[]) {
       if (!mappedStatusIds.has(step.status_id)) {
         const status = step.status as { id: string; name: string; color: string | null; category: string | null } | null;
         if (!status) continue;
 
-        const { data: column } = await supabase
-          .from('board_columns')
+        const { data: column } = await (supabase.from as any)('board_columns')
           .insert({
             board_id: boardId,
             name: status.name,
@@ -643,7 +629,7 @@ export const boardService = {
           .single();
 
         if (column) {
-          await supabase.from('board_column_statuses').insert({
+          await (supabase.from as any)('board_column_statuses').insert({
             column_id: column.id,
             status_id: status.id,
           });
@@ -662,13 +648,11 @@ export const boardService = {
         );
 
         if (!hasWorkflowStatus) {
-          await supabase
-            .from('board_column_statuses')
+          await (supabase.from as any)('board_column_statuses')
             .delete()
             .eq('column_id', col.id);
           
-          await supabase
-            .from('board_columns')
+          await (supabase.from as any)('board_columns')
             .delete()
             .eq('id', col.id);
           
@@ -685,8 +669,7 @@ export const boardService = {
    * Useful for validating if a status is part of the project's workflow.
    */
   async getProjectWorkflowStatusIds(projectId: string): Promise<Set<string>> {
-    const { data: schemeData } = await supabase
-      .from('project_workflow_schemes')
+    const { data: schemeData } = await (supabase.from as any)('project_workflow_schemes')
       .select('scheme_id')
       .eq('project_id', projectId)
       .maybeSingle();
@@ -695,8 +678,7 @@ export const boardService = {
       return new Set();
     }
 
-    const { data: mappings } = await supabase
-      .from('workflow_scheme_mappings')
+    const { data: mappings } = await (supabase.from as any)('workflow_scheme_mappings')
       .select('workflow_id')
       .eq('scheme_id', schemeData.scheme_id)
       .is('issue_type_id', null)
@@ -706,12 +688,11 @@ export const boardService = {
       return new Set();
     }
 
-    const { data: steps } = await supabase
-      .from('workflow_steps')
+    const { data: steps } = await (supabase.from as any)('workflow_steps')
       .select('status_id')
       .eq('workflow_id', mappings.workflow_id);
 
-    return new Set(steps?.map(s => s.status_id) || []);
+    return new Set((steps as any[])?.map((s: any) => s.status_id) || []);
   },
 };
 
@@ -730,8 +711,7 @@ export const sprintService = {
    * @throws {Error} If the database query fails
    */
   async getByBoard(boardId: string) {
-    const { data, error } = await supabase
-      .from('sprints')
+    const { data, error } = await (supabase.from as any)('sprints')
       .select('*')
       .eq('board_id', boardId)
       .order('created_at', { ascending: false });
@@ -748,8 +728,7 @@ export const sprintService = {
    * @throws {Error} If the database query fails
    */
   async getActive(boardId: string) {
-    const { data, error } = await supabase
-      .from('sprints')
+    const { data, error } = await (supabase.from as any)('sprints')
       .select('*')
       .eq('board_id', boardId)
       .eq('state', 'active')
@@ -772,8 +751,7 @@ export const sprintService = {
    * @throws {Error} If creation fails
    */
   async create(sprint: { board_id: string; name: string; goal?: string; start_date?: string; end_date?: string }) {
-    const { data, error } = await supabase
-      .from('sprints')
+    const { data, error } = await (supabase.from as any)('sprints')
       .insert(sprint)
       .select()
       .single();
@@ -792,8 +770,7 @@ export const sprintService = {
    * @throws {Error} If update fails
    */
   async start(id: string, startDate: string, endDate: string) {
-    const { data, error } = await supabase
-      .from('sprints')
+    const { data, error } = await (supabase.from as any)('sprints')
       .update({ state: 'active', start_date: startDate, end_date: endDate })
       .eq('id', id)
       .select()
@@ -811,8 +788,7 @@ export const sprintService = {
    * @throws {Error} If update fails
    */
   async complete(id: string) {
-    const { data, error } = await supabase
-      .from('sprints')
+    const { data, error } = await (supabase.from as any)('sprints')
       .update({ state: 'closed', completed_date: new Date().toISOString() })
       .eq('id', id)
       .select()
@@ -831,8 +807,7 @@ export const sprintService = {
    * @throws {Error} If update fails
    */
   async update(id: string, updates: { name?: string; goal?: string; start_date?: string; end_date?: string }) {
-    const { data, error } = await supabase
-      .from('sprints')
+    const { data, error } = await (supabase.from as any)('sprints')
       .update(updates)
       .eq('id', id)
       .select()
@@ -850,13 +825,11 @@ export const sprintService = {
    */
   async delete(id: string) {
     // First remove all issues from the sprint
-    await supabase
-      .from('sprint_issues')
+    await (supabase.from as any)('sprint_issues')
       .delete()
       .eq('sprint_id', id);
 
-    const { error } = await supabase
-      .from('sprints')
+    const { error } = await (supabase.from as any)('sprints')
       .delete()
       .eq('id', id);
 
@@ -870,8 +843,7 @@ export const sprintService = {
    * @throws {Error} If operation fails
    */
   async moveAllIssuesToBacklog(sprintId: string) {
-    const { error } = await supabase
-      .from('sprint_issues')
+    const { error } = await (supabase.from as any)('sprint_issues')
       .delete()
       .eq('sprint_id', sprintId);
 
@@ -886,8 +858,7 @@ export const sprintService = {
    * @throws {Error} If operation fails
    */
   async addIssue(sprintId: string, issueId: string) {
-    const { error } = await supabase
-      .from('sprint_issues')
+    const { error } = await (supabase.from as any)('sprint_issues')
       .insert({ sprint_id: sprintId, issue_id: issueId });
 
     if (error) throw error;
@@ -901,8 +872,7 @@ export const sprintService = {
    * @throws {Error} If operation fails
    */
   async removeIssue(sprintId: string, issueId: string) {
-    const { error } = await supabase
-      .from('sprint_issues')
+    const { error } = await (supabase.from as any)('sprint_issues')
       .delete()
       .eq('sprint_id', sprintId)
       .eq('issue_id', issueId);
@@ -920,8 +890,7 @@ export const sprintService = {
   async getIssues(sprintId: string) {
     if (!sprintId) return [];
     
-    const { data, error } = await supabase
-      .from('sprint_issues')
+    const { data, error } = await (supabase.from as any)('sprint_issues')
       .select(`
         issue:issues(
           id, issue_key, summary, story_points, classification, status_id, assignee_id,
@@ -934,26 +903,25 @@ export const sprintService = {
 
     if (error) throw error;
     
-    const issues = data?.map(d => d.issue).filter(Boolean) || [];
+    const issues = (data as any[])?.map((d: any) => d.issue).filter(Boolean) || [];
     
     // Fetch profiles using secure RPC (non-sensitive fields only)
-    const assigneeIds = [...new Set(issues.map(i => i?.assignee_id).filter(Boolean))] as string[];
+    const assigneeIds = [...new Set(issues.map((i: any) => i?.assignee_id).filter(Boolean))] as string[];
     if (assigneeIds.length > 0) {
-      const { data: profiles } = await supabase
-        .rpc('get_public_profiles', { _user_ids: assigneeIds });
+      const { data: profiles } = await (supabase.rpc as any)('get_public_profiles', { _user_ids: assigneeIds });
       
       // Map to expected shape (id, display_name, avatar_url)
-      const profileMap = new Map(profiles?.map(p => [p.id, {
+      const profileMap = new Map((profiles as any[])?.map((p: any) => [p.id, {
         id: p.id,
         display_name: p.display_name,
         avatar_url: p.avatar_url,
       }]) || []);
-      return issues.map(issue => ({
+      return issues.map((issue: any) => ({
         ...issue,
         assignee: issue?.assignee_id ? profileMap.get(issue.assignee_id) || null : null,
       }));
     }
     
-    return issues.map(issue => ({ ...issue, assignee: null }));
+    return issues.map((issue: any) => ({ ...issue, assignee: null }));
   },
 };
