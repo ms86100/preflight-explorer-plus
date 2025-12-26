@@ -67,8 +67,7 @@ export function DataExportControls() {
   const { data: exportRequests, isLoading } = useQuery({
     queryKey: ['export-requests'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('export_audit_logs')
+      const { data, error } = await (supabase.from as any)('export_audit_logs')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
@@ -79,8 +78,7 @@ export function DataExportControls() {
 
   const createExportRequest = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase
-        .from('export_audit_logs')
+      const { data, error } = await (supabase.from as any)('export_audit_logs')
         .insert({
           user_id: user?.id,
           export_type: exportType,
@@ -91,9 +89,9 @@ export function DataExportControls() {
         .select()
         .single();
       if (error) throw error;
-      return data;
+      return data as ExportRequest;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: ExportRequest) => {
       queryClient.invalidateQueries({ queryKey: ['export-requests'] });
       setIsDialogOpen(false);
       if (data.status === 'completed') {

@@ -20,8 +20,7 @@ export function useProjectComponents(projectId: string | undefined) {
     queryFn: async () => {
       if (!projectId) return [];
       
-      const { data, error } = await supabase
-        .from('components')
+      const { data, error } = await (supabase.from as any)('components')
         .select('*')
         .eq('project_id', projectId)
         .order('name');
@@ -29,30 +28,28 @@ export function useProjectComponents(projectId: string | undefined) {
       if (error) throw error;
       
       // Fetch leads from user_directory
-      const leadIds = data.filter(c => c.lead_id).map(c => c.lead_id);
+      const leadIds = (data as any[]).filter((c: any) => c.lead_id).map((c: any) => c.lead_id);
       let profileMap = new Map<string, { display_name: string | null; avatar_url: string | null }>();
       
       if (leadIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('user_directory')
+        const { data: profiles } = await (supabase.from as any)('user_directory')
           .select('id, display_name, avatar_url')
           .in('id', leadIds);
-        profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+        profileMap = new Map((profiles as any[])?.map((p: any) => [p.id, p]) || []);
       }
       
       // Fetch issue counts per component
-      const componentIds = data.map(c => c.id);
-      const { data: issueCounts } = await supabase
-        .from('issue_components')
+      const componentIds = (data as any[]).map((c: any) => c.id);
+      const { data: issueCounts } = await (supabase.from as any)('issue_components')
         .select('component_id')
         .in('component_id', componentIds);
       
       const countMap = new Map<string, number>();
-      issueCounts?.forEach(ic => {
+      (issueCounts as any[] || []).forEach((ic: any) => {
         countMap.set(ic.component_id, (countMap.get(ic.component_id) || 0) + 1);
       });
       
-      return data.map(c => ({
+      return (data as any[]).map((c: any) => ({
         ...c,
         lead: c.lead_id ? profileMap.get(c.lead_id) || null : null,
         issue_count: countMap.get(c.id) || 0,
@@ -68,14 +65,13 @@ export function useIssueComponents(issueId: string | undefined) {
     queryFn: async () => {
       if (!issueId) return [];
       
-      const { data, error } = await supabase
-        .from('issue_components')
+      const { data, error } = await (supabase.from as any)('issue_components')
         .select('component_id, components(id, name)')
         .eq('issue_id', issueId);
       
       if (error) throw error;
       
-      return data.map(ic => ic.components).filter(Boolean) as { id: string; name: string }[];
+      return (data as any[]).map((ic: any) => ic.components).filter(Boolean) as { id: string; name: string }[];
     },
     enabled: !!issueId,
   });
@@ -87,7 +83,7 @@ export function useUpdateIssueComponents() {
   return useMutation({
     mutationFn: async ({ issueId, componentIds }: { issueId: string; componentIds: string[] }) => {
       // Delete existing
-      await supabase.from('issue_components').delete().eq('issue_id', issueId);
+      await (supabase.from as any)('issue_components').delete().eq('issue_id', issueId);
       
       // Insert new
       if (componentIds.length > 0) {
@@ -95,7 +91,7 @@ export function useUpdateIssueComponents() {
           issue_id: issueId,
           component_id: componentId,
         }));
-        const { error } = await supabase.from('issue_components').insert(inserts);
+        const { error } = await (supabase.from as any)('issue_components').insert(inserts);
         if (error) throw error;
       }
     },

@@ -46,25 +46,23 @@ export function ComplianceDashboard() {
       const weekAgo = subDays(today, 7);
 
       // Get projects by classification
-      const { data: projects } = await supabase
-        .from('projects')
+      const { data: projects } = await (supabase.from as any)('projects')
         .select('classification');
       
       const projectsByClassification: Record<string, number> = {};
-      projects?.forEach(p => {
+      (projects as any[] || []).forEach((p: any) => {
         const level = p.classification || 'restricted';
         projectsByClassification[level] = (projectsByClassification[level] || 0) + 1;
       });
 
       // Get issues by classification
-      const { data: issues } = await supabase
-        .from('issues')
+      const { data: issues } = await (supabase.from as any)('issues')
         .select('classification, created_at, resolved_at');
       
       const issuesByClassification: Record<string, number> = {};
       let issuesCreatedToday = 0;
       let issuesResolvedToday = 0;
-      issues?.forEach(i => {
+      (issues as any[] || []).forEach((i: any) => {
         const level = i.classification || 'restricted';
         issuesByClassification[level] = (issuesByClassification[level] || 0) + 1;
         if (i.created_at && new Date(i.created_at) >= today) issuesCreatedToday++;
@@ -72,37 +70,32 @@ export function ComplianceDashboard() {
       });
 
       // Get pending exports
-      const { count: pendingExports } = await supabase
-        .from('export_audit_logs')
+      const { count: pendingExports } = await (supabase.from as any)('export_audit_logs')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending');
 
       // Get today's audit logs
-      const { count: auditLogsToday } = await supabase
-        .from('audit_logs')
+      const { count: auditLogsToday } = await (supabase.from as any)('audit_logs')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', today.toISOString());
 
       // Get week's audit logs
-      const { count: auditLogsWeek } = await supabase
-        .from('audit_logs')
+      const { count: auditLogsWeek } = await (supabase.from as any)('audit_logs')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', weekAgo.toISOString());
 
       // Get recent audit logs
-      const { data: recentAuditLogs } = await supabase
-        .from('audit_logs')
+      const { data: recentAuditLogs } = await (supabase.from as any)('audit_logs')
         .select('id, action, entity_type, created_at')
         .order('created_at', { ascending: false })
         .limit(5);
 
       // Get users and their clearance levels
-      const { data: profiles } = await supabase
-        .from('profiles')
+      const { data: profiles } = await (supabase.from as any)('profiles')
         .select('clearance_level');
       
       const usersWithClearance: Record<string, number> = {};
-      profiles?.forEach(p => {
+      (profiles as any[] || []).forEach((p: any) => {
         const level = p.clearance_level || 'restricted';
         usersWithClearance[level] = (usersWithClearance[level] || 0) + 1;
       });
@@ -111,16 +104,16 @@ export function ComplianceDashboard() {
       const activeSprintsCount = 0; // Will be fetched separately if needed
 
       return {
-        totalProjects: projects?.length || 0,
+        totalProjects: (projects as any[])?.length || 0,
         projectsByClassification,
-        totalIssues: issues?.length || 0,
+        totalIssues: (issues as any[])?.length || 0,
         issuesByClassification,
         pendingExports: pendingExports || 0,
         auditLogsToday: auditLogsToday || 0,
         auditLogsWeek: auditLogsWeek || 0,
         usersWithClearance,
-        totalUsers: profiles?.length || 0,
-        recentAuditLogs: recentAuditLogs || [],
+        totalUsers: (profiles as any[])?.length || 0,
+        recentAuditLogs: (recentAuditLogs as any[]) || [],
         issuesCreatedToday,
         issuesResolvedToday,
         activeSprintsCount,
