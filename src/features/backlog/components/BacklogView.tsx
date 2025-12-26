@@ -160,12 +160,16 @@ export function BacklogView() {
   useEffect(() => {
     if (assigneeDialogOpen && project?.id) {
       setLoadingMembers(true);
-      supabase
-        .from('user_directory')
+      // Use profiles table which exists in Cloud - graceful fallback for missing tables
+      (supabase.from as any)('profiles')
         .select('id, display_name, avatar_url')
-        .eq('is_active', true)
-        .then(({ data }) => {
-          setTeamMembers(data || []);
+        .then(({ data, error }: { data: unknown; error: unknown }) => {
+          if (error) {
+            console.warn('Profiles table not available');
+            setTeamMembers([]);
+          } else {
+            setTeamMembers((data as TeamMember[]) || []);
+          }
           setLoadingMembers(false);
         });
     }

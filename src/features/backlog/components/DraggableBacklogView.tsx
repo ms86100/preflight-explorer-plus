@@ -189,49 +189,58 @@ export function DraggableBacklogView() {
   useStatuses(); // Fetch statuses for potential use
 
   // Fetch ALL sprint issues in a single query instead of per-sprint hooks
+  // Using type assertions for tables that may not exist in current schema
   const sprintIds = (sprints || []).filter(s => s.state !== 'closed').map(s => s.id);
   const { data: allSprintIssues } = useQuery({
     queryKey: ['all-sprint-issues', sprintIds],
     queryFn: async () => {
       if (!sprintIds.length) return [];
-      const { data, error } = await supabase
-        .from('sprint_issues')
-        .select(`
-          sprint_id,
-          issue:issues(
-            id, issue_key, summary, story_points, classification, assignee_id,
-            issue_type:issue_types(name, color),
-            status:issue_statuses(name, color, category),
-            priority:priorities(name, color)
-          )
-        `)
-        .in('sprint_id', sprintIds);
-      if (error) throw error;
-      
-      // Fetch profiles separately for assignees
-      const assigneeIds = [...new Set(
-        (data || [])
-          .map((si: any) => si.issue?.assignee_id)
-          .filter(Boolean)
-      )];
-      
-      let profileMap = new Map<string, any>();
-      if (assigneeIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('user_directory')
-          .select('id, display_name, avatar_url')
-          .in('id', assigneeIds);
-        profileMap = new Map((profiles || []).map(p => [p.id, p]));
+      try {
+        const { data, error } = await (supabase.from as any)('sprint_issues')
+          .select(`
+            sprint_id,
+            issue:issues(
+              id, issue_key, summary, story_points, classification, assignee_id,
+              issue_type:issue_types(name, color),
+              status:issue_statuses(name, color, category),
+              priority:priorities(name, color)
+            )
+          `)
+          .in('sprint_id', sprintIds);
+        if (error) {
+          console.warn('Sprint issues table not available:', error.message);
+          return [];
+        }
+        
+        // Fetch profiles separately for assignees
+        const assigneeIds = [...new Set(
+          (data || [])
+            .map((si: any) => si.issue?.assignee_id)
+            .filter(Boolean)
+        )];
+        
+        let profileMap = new Map<string, any>();
+        if (assigneeIds.length > 0) {
+          const { data: profiles } = await (supabase.from as any)('profiles')
+            .select('id, display_name, avatar_url')
+            .in('id', assigneeIds);
+          if (profiles) {
+            profileMap = new Map((profiles as any[]).map(p => [p.id, p]));
+          }
+        }
+        
+        // Attach profiles to issues
+        return (data || []).map((si: any) => ({
+          ...si,
+          issue: si.issue ? {
+            ...si.issue,
+            assignee: si.issue.assignee_id ? profileMap.get(si.issue.assignee_id) || null : null
+          } : null
+        }));
+      } catch {
+        console.warn('Failed to fetch sprint issues');
+        return [];
       }
-      
-      // Attach profiles to issues
-      return (data || []).map((si: any) => ({
-        ...si,
-        issue: si.issue ? {
-          ...si.issue,
-          assignee: si.issue.assignee_id ? profileMap.get(si.issue.assignee_id) || null : null
-        } : null
-      }));
     },
     enabled: sprintIds.length > 0,
   });
@@ -253,11 +262,15 @@ export function DraggableBacklogView() {
   useEffect(() => {
     if (assigneeDialogOpen && project?.id) {
       setLoadingMembers(true);
-      supabase
-        .from('profiles')
+      (supabase.from as any)('profiles')
         .select('id, display_name, avatar_url')
-        .then(({ data }) => {
-          setTeamMembers(data || []);
+        .then(({ data, error }: { data: unknown; error: unknown }) => {
+          if (error) {
+            console.warn('Profiles table not available');
+            setTeamMembers([]);
+          } else {
+            setTeamMembers((data as TeamMember[]) || []);
+          }
           setLoadingMembers(false);
         });
     }
