@@ -45,7 +45,7 @@ interface AuditLog {
   readonly action: string;
   readonly old_values: Record<string, unknown> | null;
   readonly new_values: Record<string, unknown> | null;
-  readonly classification_context: string | null;
+  readonly classification_context?: string | null;
   readonly created_at: string;
 }
 
@@ -136,7 +136,10 @@ export function AuditLogsViewer() {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as AuditLog[];
+      return (data || []).map((d: any) => ({
+        ...d,
+        classification_context: d.classification_context ?? null,
+      })) as AuditLog[];
     },
   });
 

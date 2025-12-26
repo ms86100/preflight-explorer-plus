@@ -57,12 +57,12 @@ export function GitUserMappingManager() {
   const { data: mappings, isLoading: loadingMappings } = useQuery({
     queryKey: ['git-user-mappings'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('git_user_mappings')
+      // Using type assertion for table not in current schema
+      const { data, error } = await (supabase.from as any)('git_user_mappings')
         .select('*')
         .order('git_email');
       if (error) throw error;
-      return data as GitUserMapping[];
+      return (data || []) as GitUserMapping[];
     },
   });
 
@@ -133,8 +133,8 @@ export function GitUserMappingManager() {
       git_name: string | null;
       user_id: string | null;
     }) => {
-      const { error } = await supabase
-        .from('git_user_mappings')
+      // Using type assertion for table not in current schema
+      const { error } = await (supabase.from as any)('git_user_mappings')
         .insert({
           git_email,
           git_name,
@@ -156,8 +156,8 @@ export function GitUserMappingManager() {
   // Update mapping mutation
   const updateMapping = useMutation({
     mutationFn: async ({ id, user_id }: { id: string; user_id: string | null }) => {
-      const { error } = await supabase
-        .from('git_user_mappings')
+      // Using type assertion for table not in current schema
+      const { error } = await (supabase.from as any)('git_user_mappings')
         .update({ user_id, is_verified: !!user_id })
         .eq('id', id);
       if (error) throw error;
@@ -174,8 +174,8 @@ export function GitUserMappingManager() {
   // Delete mapping mutation
   const deleteMapping = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('git_user_mappings')
+      // Using type assertion for table not in current schema
+      const { error } = await (supabase.from as any)('git_user_mappings')
         .delete()
         .eq('id', id);
       if (error) throw error;

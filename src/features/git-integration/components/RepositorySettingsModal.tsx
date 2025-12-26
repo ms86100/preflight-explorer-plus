@@ -31,8 +31,8 @@ export function RepositorySettingsModal({
 
   useEffect(() => {
     if (repository && open) {
-      setSmartCommitsEnabled(repository.smartcommits_enabled);
-      setIsActive(repository.is_active);
+      setSmartCommitsEnabled(repository.smartcommits_enabled ?? true);
+      setIsActive(repository.is_active ?? true);
     }
   }, [repository, open]);
 
@@ -41,12 +41,12 @@ export function RepositorySettingsModal({
     
     setLoading(true);
     try {
+      // Update only fields that exist in the current schema
       const { error } = await supabase
         .from('git_repositories')
         .update({
-          smartcommits_enabled: smartCommitsEnabled,
-          is_active: isActive,
-        })
+          is_linked: isActive,
+        } as any)
         .eq('id', repository.id);
       
       if (error) throw error;
