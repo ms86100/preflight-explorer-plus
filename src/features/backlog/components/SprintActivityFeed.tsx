@@ -77,54 +77,63 @@ function useSprintHistory(boardId: string, actionFilter?: string) {
   return useQuery({
     queryKey: ['sprint-history', boardId, actionFilter],
     queryFn: async () => {
-      // First get all sprints for this board
-      const { data: sprints, error: sprintsError } = await supabase
-        .from('sprints')
-        .select('id, name')
-        .eq('board_id', boardId);
+      try {
+        // First get all sprints for this board
+        const { data: sprints, error: sprintsError } = await (supabase.from as any)('sprints')
+          .select('id, name')
+          .eq('board_id', boardId);
 
-      if (sprintsError) throw sprintsError;
-      if (!sprints?.length) return [];
-
-      const sprintIds = sprints.map((s) => s.id);
-      const sprintMap = new Map(sprints.map((s) => [s.id, s]));
-
-      // Get history for all sprints
-      let query = supabase
-        .from('sprint_history')
-        .select('*')
-        .in('sprint_id', sprintIds)
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (actionFilter && actionFilter !== 'all') {
-        query = query.eq('action', actionFilter);
-      }
-
-      const { data: history, error: historyError } = await query;
-
-      if (historyError) throw historyError;
-
-      // Get unique actor IDs
-      const actorIds = [...new Set((history || []).map((h) => h.actor_id).filter(Boolean))] as string[];
-
-      // Fetch actor profiles
-      let actorMap = new Map<string, { display_name: string; avatar_url: string | null }>();
-      if (actorIds.length > 0) {
-        const { data: profiles } = await supabase.rpc('get_public_profiles', {
-          _user_ids: actorIds,
-        });
-        if (profiles) {
-          actorMap = new Map(profiles.map((p: { id: string; display_name: string; avatar_url: string | null }) => [p.id, p]));
+        if (sprintsError) {
+          console.warn('Sprints table not available:', sprintsError.message);
+          return [];
         }
-      }
+        if (!sprints?.length) return [];
 
-      // Enrich history entries
-      return (history || []).map((entry) => ({
-        ...entry,
-        sprint: sprintMap.get(entry.sprint_id),
-        actor: entry.actor_id ? actorMap.get(entry.actor_id) : undefined,
-      })) as SprintHistoryEntry[];
+        const sprintIds = (sprints as any[]).map((s) => s.id);
+        const sprintMap = new Map((sprints as any[]).map((s) => [s.id, s]));
+
+        // Get history for all sprints
+        let query = (supabase.from as any)('sprint_history')
+          .select('*')
+          .in('sprint_id', sprintIds)
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (actionFilter && actionFilter !== 'all') {
+          query = query.eq('action', actionFilter);
+        }
+
+        const { data: history, error: historyError } = await query;
+
+        if (historyError) {
+          console.warn('Sprint history table not available');
+          return [];
+        }
+
+        // Get unique actor IDs
+        const actorIds = [...new Set((history || []).map((h: any) => h.actor_id).filter(Boolean))] as string[];
+
+        // Fetch actor profiles
+        let actorMap = new Map<string, { display_name: string; avatar_url: string | null }>();
+        if (actorIds.length > 0) {
+          const { data: profiles } = await (supabase.from as any)('profiles')
+            .select('id, display_name, avatar_url')
+            .in('id', actorIds);
+          if (profiles) {
+            actorMap = new Map((profiles as any[]).map((p) => [p.id, p]));
+          }
+        }
+
+        // Enrich history entries
+        return (history || []).map((entry: any) => ({
+          ...entry,
+          sprint: sprintMap.get(entry.sprint_id),
+          actor: entry.actor_id ? actorMap.get(entry.actor_id) : undefined,
+        })) as SprintHistoryEntry[];
+      } catch (error) {
+        console.warn('Failed to fetch sprint history:', error);
+        return [];
+      }
     },
     enabled: !!boardId,
     refetchInterval: 30000, // Refresh every 30 seconds

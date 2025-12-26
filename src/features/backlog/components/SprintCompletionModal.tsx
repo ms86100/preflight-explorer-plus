@@ -43,9 +43,8 @@ export function SprintCompletionModal({
   const handleComplete = async () => {
     setIsSubmitting(true);
     try {
-      // Get incomplete issues
-      const { data: sprintIssues } = await supabase
-        .from('sprint_issues')
+      // Get incomplete issues - using type assertion for tables not in current schema
+      const { data: sprintIssues } = await (supabase.from as any)('sprint_issues')
         .select(`
           issue_id,
           issue:issues!inner(
@@ -66,21 +65,18 @@ export function SprintCompletionModal({
           // Move incomplete issues to next sprint
           for (const issueId of incompleteIssueIds) {
             // Remove from current sprint
-            await supabase
-              .from('sprint_issues')
+            await (supabase.from as any)('sprint_issues')
               .delete()
               .eq('sprint_id', sprintId)
               .eq('issue_id', issueId);
 
             // Add to next sprint
-            await supabase
-              .from('sprint_issues')
+            await (supabase.from as any)('sprint_issues')
               .insert({ sprint_id: nextSprintId, issue_id: issueId });
           }
         } else {
           // Move to backlog (just remove from sprint)
-          await supabase
-            .from('sprint_issues')
+          await (supabase.from as any)('sprint_issues')
             .delete()
             .eq('sprint_id', sprintId)
             .in('issue_id', incompleteIssueIds);
@@ -88,8 +84,7 @@ export function SprintCompletionModal({
       }
 
       // Close the sprint
-      await supabase
-        .from('sprints')
+      await (supabase.from as any)('sprints')
         .update({ 
           state: 'closed', 
           completed_date: new Date().toISOString() 
