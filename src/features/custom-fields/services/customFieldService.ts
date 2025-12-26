@@ -42,6 +42,11 @@ export interface CustomFieldValue {
   value_number: number | null;
   value_date: string | null;
   value_json: unknown | null;
+  // DB column aliases for compatibility
+  string_value?: string | null;
+  number_value?: number | null;
+  date_value?: string | null;
+  json_value?: unknown | null;
   created_at: string;
   updated_at: string;
   field?: CustomFieldDefinition;
@@ -207,8 +212,20 @@ export async function getIssueCustomFieldValues(issueId: string): Promise<Custom
   
   if (error) throw error;
   
-  return (data || []).map(val => ({
-    ...val,
+  return (data || []).map((val: any) => ({
+    id: val.id,
+    issue_id: val.issue_id,
+    field_id: val.field_id,
+    value_text: val.string_value ?? null,
+    value_number: val.number_value ?? null,
+    value_date: val.date_value ?? null,
+    value_json: val.json_value ?? null,
+    string_value: val.string_value,
+    number_value: val.number_value,
+    date_value: val.date_value,
+    json_value: val.json_value,
+    created_at: val.created_at,
+    updated_at: val.updated_at,
     field: val.field ? {
       ...val.field,
       field_type: val.field.field_type as FieldType,
@@ -229,8 +246,12 @@ export async function setCustomFieldValue(data: {
   const { data: value, error } = await supabase
     .from('custom_field_values')
     .upsert({
-      ...data,
-      value_json: data.value_json as Json,
+      issue_id: data.issue_id,
+      field_id: data.field_id,
+      string_value: data.value_text ?? null,
+      number_value: data.value_number ?? null,
+      date_value: data.value_date ?? null,
+      json_value: data.value_json as Json ?? null,
     }, {
       onConflict: 'issue_id,field_id',
     })
@@ -238,7 +259,23 @@ export async function setCustomFieldValue(data: {
     .single();
   
   if (error) throw error;
-  return value;
+  
+  const val = value as any;
+  return {
+    id: val.id,
+    issue_id: val.issue_id,
+    field_id: val.field_id,
+    value_text: val.string_value ?? null,
+    value_number: val.number_value ?? null,
+    value_date: val.date_value ?? null,
+    value_json: val.json_value ?? null,
+    string_value: val.string_value,
+    number_value: val.number_value,
+    date_value: val.date_value,
+    json_value: val.json_value,
+    created_at: val.created_at,
+    updated_at: val.updated_at,
+  };
 }
 
 export async function deleteCustomFieldValue(issueId: string, fieldId: string): Promise<void> {

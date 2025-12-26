@@ -54,14 +54,13 @@ export function AccessControlManager() {
 
       if (profileError) throw profileError;
 
-      // Get user roles
-      const { data: roles, error: roleError } = await supabase
-        .from('user_roles')
+      // Get user roles - using type assertion for table not in current schema
+      const { data: roles, error: roleError } = await (supabase.from as any)('user_roles')
         .select('user_id, role');
 
       if (roleError) throw roleError;
 
-      const roleMap = new Map(roles?.map(r => [r.user_id, r.role]));
+      const roleMap = new Map((roles as any[] || []).map((r: any) => [r.user_id, r.role]));
 
       return profiles?.map(p => ({
         ...p,
@@ -73,22 +72,19 @@ export function AccessControlManager() {
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: 'admin' | 'moderator' | 'user' | null }) => {
       if (role === null) {
-        // Remove all roles for this user
-        const { error } = await supabase
-          .from('user_roles')
+        // Remove all roles for this user - using type assertion for table not in current schema
+        const { error } = await (supabase.from as any)('user_roles')
           .delete()
           .eq('user_id', userId);
         if (error) throw error;
       } else {
         // First delete existing roles, then insert new one
-        await supabase
-          .from('user_roles')
+        await (supabase.from as any)('user_roles')
           .delete()
           .eq('user_id', userId);
         
-        const { error } = await supabase
-          .from('user_roles')
-          .insert([{ user_id: userId, role: role as 'admin' | 'developer' | 'project_admin' | 'viewer' }]);
+        const { error } = await (supabase.from as any)('user_roles')
+          .insert([{ user_id: userId, role }]);
         if (error) throw error;
       }
     },

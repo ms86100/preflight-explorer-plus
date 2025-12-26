@@ -265,7 +265,7 @@ export async function downloadExport(exportJob: ExportJob): Promise<void> {
   // Fetch the export with options containing the file content
   const { data, error } = await supabase
     .from('document_exports')
-    .select('options, name, format')
+    .select('*')
     .eq('id', exportJob.id)
     .single();
 
@@ -273,7 +273,8 @@ export async function downloadExport(exportJob: ExportJob): Promise<void> {
     throw new Error('Export not found');
   }
 
-  const options = data.options as { content?: string; mimeType?: string; originalFormat?: string } | null;
+  const record = data as any;
+  const options = record.options as { content?: string; mimeType?: string; originalFormat?: string } | null;
   
   if (!options?.content) {
     throw new Error('Export file not available');
@@ -284,7 +285,7 @@ export async function downloadExport(exportJob: ExportJob): Promise<void> {
   const mimeType = options.mimeType || 'application/octet-stream';
   
   // Determine file extension
-  const format = options.originalFormat || data.format;
+  const format = options.originalFormat || record.format;
   const extMap: Record<string, string> = {
     pdf: 'json', // Fallback since we can't generate real PDFs
     xlsx: 'csv',
@@ -300,7 +301,7 @@ export async function downloadExport(exportJob: ExportJob): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${data.name || 'export'}.${ext}`;
+  a.download = `${record.name || 'export'}.${ext}`;
   document.body.appendChild(a);
   a.click();
   a.remove();

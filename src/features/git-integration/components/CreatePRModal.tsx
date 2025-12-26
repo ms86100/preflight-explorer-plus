@@ -99,20 +99,18 @@ export function CreatePRModal({
       // Save PR to database
       const { data: prData, error: prError } = await supabase.from('git_pull_requests').insert({
         repository_id: repository.id,
-        remote_id: result.pr_id || result.mr_id || 'unknown',
         title: data.title,
-        description: data.description,
         source_branch: data.source_branch,
-        destination_branch: data.target_branch,
+        target_branch: data.target_branch,
         status: 'open',
-        web_url: result.web_url,
-      }).select().single();
+        url: result.web_url,
+      } as any).select().single();
 
       if (prError) throw prError;
 
-      // Link PR to issue
-      await supabase.from('git_pull_request_issues').insert({
-        pull_request_id: prData.id,
+      // Link PR to issue - using type assertion for table not in current schema
+      await (supabase.from as any)('git_pull_request_issues').insert({
+        pull_request_id: (prData as any).id,
         issue_id: issueId,
         issue_key: issueKey,
       });

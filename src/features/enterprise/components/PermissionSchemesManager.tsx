@@ -54,23 +54,23 @@ export function PermissionSchemesManager() {
   const { data: schemes, isLoading: schemesLoading } = useQuery({
     queryKey: ['permission-schemes'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('permission_schemes')
+      // Using type assertion for table not in current schema
+      const { data, error } = await (supabase.from as any)('permission_schemes')
         .select('*')
         .order('name');
       if (error) throw error;
-      return data as PermissionScheme[];
+      return (data || []) as PermissionScheme[];
     },
   });
 
   const { data: grants } = useQuery({
     queryKey: ['permission-grants'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('permission_scheme_grants')
+      // Using type assertion for table not in current schema
+      const { data, error } = await (supabase.from as any)('permission_scheme_grants')
         .select('*');
       if (error) throw error;
-      return data as PermissionGrant[];
+      return (data || []) as PermissionGrant[];
     },
   });
 
