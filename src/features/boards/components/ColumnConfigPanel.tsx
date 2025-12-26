@@ -88,11 +88,11 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
       }));
 
       setColumns(transformedColumns.sort((a, b) => a.position - b.position));
-      setAllStatuses(statusesData || []);
+      setAllStatuses((statusesData as ColumnStatus[]) || []);
 
       // Load workflow transitions if we have a project
       if (projectId) {
-        await loadWorkflowTransitions(projectId, statusesData || []);
+        await loadWorkflowTransitions(projectId, (statusesData as ColumnStatus[]) || []);
       }
     } catch (error) {
       console.error('Failed to load column configuration:', error);
@@ -104,9 +104,8 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
 
   const loadWorkflowTransitions = async (projId: string, statuses: ColumnStatus[]) => {
     try {
-      // Get project's workflow scheme
-      const { data: schemeData } = await supabase
-        .from('project_workflow_schemes')
+      // Get project's workflow scheme - using type assertion for tables not in current schema
+      const { data: schemeData } = await (supabase.from as any)('project_workflow_schemes')
         .select('scheme_id')
         .eq('project_id', projId)
         .maybeSingle();
@@ -114,8 +113,7 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
       if (!schemeData?.scheme_id) return;
 
       // Get workflow mappings for this scheme (default mapping)
-      const { data: mappings } = await supabase
-        .from('workflow_scheme_mappings')
+      const { data: mappings } = await (supabase.from as any)('workflow_scheme_mappings')
         .select('workflow_id')
         .eq('scheme_id', schemeData.scheme_id)
         .is('issue_type_id', null)
@@ -124,8 +122,7 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
       if (!mappings?.workflow_id) return;
 
       // Get workflow name
-      const { data: workflow } = await supabase
-        .from('workflows')
+      const { data: workflow } = await (supabase.from as any)('workflows')
         .select('name')
         .eq('id', mappings.workflow_id)
         .single();
@@ -135,13 +132,11 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
       }
 
       // Get all steps and transitions from the workflow
-      const { data: steps } = await supabase
-        .from('workflow_steps')
+      const { data: steps } = await (supabase.from as any)('workflow_steps')
         .select('id, status_id, workflow_id')
         .eq('workflow_id', mappings.workflow_id);
 
-      const { data: transitions } = await supabase
-        .from('workflow_transitions')
+      const { data: transitions } = await (supabase.from as any)('workflow_transitions')
         .select('from_step_id, to_step_id')
         .eq('workflow_id', mappings.workflow_id);
 
@@ -149,10 +144,10 @@ export function ColumnConfigPanel({ boardId, projectId, onColumnsChanged }: Colu
 
       // Map step IDs to status IDs
       const stepToStatus = new Map<string, string>();
-      steps.forEach(s => stepToStatus.set(s.id, s.status_id));
+      (steps as any[]).forEach(s => stepToStatus.set(s.id, s.status_id));
 
       // Convert transitions to status-to-status mappings
-      const statusTransitions: WorkflowTransition[] = transitions
+      const statusTransitions: WorkflowTransition[] = (transitions as any[])
         .map(t => ({
           from_status_id: stepToStatus.get(t.from_step_id) || '',
           to_status_id: stepToStatus.get(t.to_step_id) || '',

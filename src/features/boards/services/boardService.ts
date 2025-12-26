@@ -118,14 +118,13 @@ export const boardService = {
    * ```
    */
   async getByProject(projectId: string) {
-    const { data, error } = await supabase
-      .from('boards')
+    const { data, error } = await (supabase.from as any)('boards')
       .select('*')
       .eq('project_id', projectId)
       .order('created_at');
 
     if (error) throw error;
-    return data as BoardRow[];
+    return (data as unknown) as BoardRow[];
   },
 
   /**
@@ -136,14 +135,13 @@ export const boardService = {
    * @throws {Error} If the board is not found or query fails
    */
   async getById(id: string) {
-    const { data, error } = await supabase
-      .from('boards')
+    const { data, error } = await (supabase.from as any)('boards')
       .select('*')
       .eq('id', id)
       .single();
 
     if (error) throw error;
-    return data as BoardRow;
+    return (data as unknown) as BoardRow;
   },
 
   /**
@@ -162,8 +160,7 @@ export const boardService = {
    * ```
    */
   async getColumns(boardId: string) {
-    const { data, error } = await supabase
-      .from('board_columns')
+    const { data, error } = await (supabase.from as any)('board_columns')
       .select(`
         *,
         column_statuses:board_column_statuses(
@@ -181,8 +178,7 @@ export const boardService = {
    * Creates a new board column and auto-maps a matching status if found.
    */
   async createColumn(boardId: string, name: string, position: number, maxIssues?: number) {
-    const { data, error } = await supabase
-      .from('board_columns')
+    const { data, error } = await (supabase.from as any)('board_columns')
       .insert({
         board_id: boardId,
         name,
@@ -194,22 +190,21 @@ export const boardService = {
 
     if (error) throw error;
     
-    const column = data as BoardColumnRow;
+    const column = (data as unknown) as BoardColumnRow;
     
     // Try to auto-map a status with matching name (case-insensitive)
-    const { data: statuses } = await supabase
-      .from('issue_statuses')
+    const { data: statuses } = await (supabase.from as any)('issue_statuses')
       .select('id, name')
       .order('position');
     
     if (statuses && statuses.length > 0) {
       const normalizedColumnName = name.toLowerCase().trim();
-      const matchingStatus = statuses.find(
+      const matchingStatus = (statuses as any[]).find(
         s => s.name.toLowerCase().trim() === normalizedColumnName
       );
       
       if (matchingStatus) {
-        await supabase.from('board_column_statuses').insert({
+        await (supabase.from as any)('board_column_statuses').insert({
           column_id: column.id,
           status_id: matchingStatus.id,
         });
@@ -223,15 +218,14 @@ export const boardService = {
    * Updates a board column.
    */
   async updateColumn(columnId: string, updates: { name?: string; position?: number; max_issues?: number | null; min_issues?: number | null }) {
-    const { data, error } = await supabase
-      .from('board_columns')
+    const { data, error } = await (supabase.from as any)('board_columns')
       .update(updates)
       .eq('id', columnId)
       .select()
       .single();
 
     if (error) throw error;
-    return data as BoardColumnRow;
+    return (data as unknown) as BoardColumnRow;
   },
 
   /**
@@ -239,13 +233,11 @@ export const boardService = {
    */
   async deleteColumn(columnId: string) {
     // First delete status mappings
-    await supabase
-      .from('board_column_statuses')
+    await (supabase.from as any)('board_column_statuses')
       .delete()
       .eq('column_id', columnId);
 
-    const { error } = await supabase
-      .from('board_columns')
+    const { error } = await (supabase.from as any)('board_columns')
       .delete()
       .eq('id', columnId);
 
@@ -256,8 +248,7 @@ export const boardService = {
    * Adds a status to a column.
    */
   async addStatusToColumn(columnId: string, statusId: string) {
-    const { error } = await supabase
-      .from('board_column_statuses')
+    const { error } = await (supabase.from as any)('board_column_statuses')
       .insert({ column_id: columnId, status_id: statusId });
 
     if (error) throw error;
@@ -267,8 +258,7 @@ export const boardService = {
    * Removes a status from a column.
    */
   async removeStatusFromColumn(columnId: string, statusId: string) {
-    const { error } = await supabase
-      .from('board_column_statuses')
+    const { error } = await (supabase.from as any)('board_column_statuses')
       .delete()
       .eq('column_id', columnId)
       .eq('status_id', statusId);
@@ -280,8 +270,7 @@ export const boardService = {
    * Gets all statuses (for mapping UI).
    */
   async getAllStatuses() {
-    const { data, error } = await supabase
-      .from('issue_statuses')
+    const { data, error } = await (supabase.from as any)('issue_statuses')
       .select('id, name, color, category')
       .order('position');
 
@@ -294,8 +283,7 @@ export const boardService = {
    */
   async reorderColumns(columns: { id: string; position: number }[]) {
     for (const col of columns) {
-      await supabase
-        .from('board_columns')
+      await (supabase.from as any)('board_columns')
         .update({ position: col.position })
         .eq('id', col.id);
     }
@@ -307,17 +295,16 @@ export const boardService = {
    */
   async createDefaultColumns(boardId: string, template: 'scrum' | 'kanban' | 'basic' = 'scrum') {
     // Get all statuses
-    const { data: statuses } = await supabase
-      .from('issue_statuses')
+    const { data: statuses } = await (supabase.from as any)('issue_statuses')
       .select('id, name, category')
       .order('position');
 
     if (!statuses) return;
 
     // Group by category for column setup
-    const todoStatuses = statuses.filter(s => s.category === 'todo');
-    const inProgressStatuses = statuses.filter(s => s.category === 'in_progress');
-    const doneStatuses = statuses.filter(s => s.category === 'done');
+    const todoStatuses = (statuses as any[]).filter(s => s.category === 'todo');
+    const inProgressStatuses = (statuses as any[]).filter(s => s.category === 'in_progress');
+    const doneStatuses = (statuses as any[]).filter(s => s.category === 'done');
 
     // Template-specific column configurations (like Jira Data Center)
     let columns: Array<{
@@ -361,8 +348,7 @@ export const boardService = {
     }
 
     for (const col of columns) {
-      const { data: column } = await supabase
-        .from('board_columns')
+      const { data: column } = await (supabase.from as any)('board_columns')
         .insert({
           board_id: boardId,
           name: col.name,
@@ -374,7 +360,7 @@ export const boardService = {
         .single();
 
       if (column && col.statuses) {
-        await supabase.from('board_column_statuses').insert(
+        await (supabase.from as any)('board_column_statuses').insert(
           col.statuses.map(s => ({
             column_id: column.id,
             status_id: s.id,
