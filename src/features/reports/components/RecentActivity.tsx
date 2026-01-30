@@ -27,6 +27,9 @@ interface ActivityItem {
   details?: string;
 }
 
+// Type bypass for queries with columns not in generated types
+const db = supabase as any;
+
 export function RecentActivity({ projectId }: RecentActivityProps) {
   const { data: activities, isLoading } = useQuery({
     queryKey: ['recent-activity', projectId],
@@ -58,45 +61,45 @@ export function RecentActivity({ projectId }: RecentActivityProps) {
       });
 
       // Get recently resolved issues
-      const { data: resolvedIssues } = await supabase
+      const { data: resolvedIssues } = await db
         .from('issues')
         .select(`
           id, 
           issue_key, 
           summary, 
-          resolved_at
+          resolution_date
         `)
         .eq('project_id', projectId)
-        .not('resolved_at', 'is', null)
-        .order('resolved_at', { ascending: false })
+        .not('resolution_date', 'is', null)
+        .order('resolution_date', { ascending: false })
         .limit(10);
 
-      resolvedIssues?.forEach(issue => {
+      resolvedIssues?.forEach((issue: any) => {
         result.push({
           id: `completed-${issue.id}`,
           type: 'completed',
           issueKey: issue.issue_key,
           summary: issue.summary,
-          timestamp: issue.resolved_at!,
+          timestamp: issue.resolution_date!,
         });
       });
 
       // Get recent history (transitions, updates)
-      const { data: history } = await supabase
+      const { data: history } = await db
         .from('issue_history')
         .select(`
           id,
           field_name,
           old_value,
           new_value,
-          changed_at,
+          created_at,
           issue:issues!inner(id, issue_key, summary, project_id)
         `)
         .eq('issue.project_id', projectId)
-        .order('changed_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(20);
 
-      history?.forEach(h => {
+      history?.forEach((h: any) => {
         const issue = h.issue as { issue_key: string; summary: string } | null;
         if (!issue) return;
 
@@ -106,7 +109,7 @@ export function RecentActivity({ projectId }: RecentActivityProps) {
             type: 'transition',
             issueKey: issue.issue_key,
             summary: issue.summary,
-            timestamp: h.changed_at,
+            timestamp: h.created_at,
             details: `${h.old_value || 'Unknown'} → ${h.new_value || 'Unknown'}`,
           });
         } else {
@@ -115,7 +118,7 @@ export function RecentActivity({ projectId }: RecentActivityProps) {
             type: 'updated',
             issueKey: issue.issue_key,
             summary: issue.summary,
-            timestamp: h.changed_at,
+            timestamp: h.created_at,
             details: `${h.field_name} updated`,
           });
         }

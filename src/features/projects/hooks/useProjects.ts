@@ -41,8 +41,8 @@ export function useCreateProject() {
       // Also prefetch the specific project and its boards to ensure data is available
       await Promise.all([
         queryClient.prefetchQuery({
-          queryKey: ['project', data.pkey],
-          queryFn: () => projectService.getByKey(data.pkey),
+          queryKey: ['project', data.key],
+          queryFn: () => projectService.getByKey(data.key),
         }),
         queryClient.prefetchQuery({
           queryKey: ['boards', 'project', data.id],
@@ -79,7 +79,7 @@ export function useUpdateProject() {
       projectService.update(id, updates),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['project', data.pkey] });
+      queryClient.invalidateQueries({ queryKey: ['project', data.key] });
       toast.success('Project updated successfully!');
     },
     onError: () => {

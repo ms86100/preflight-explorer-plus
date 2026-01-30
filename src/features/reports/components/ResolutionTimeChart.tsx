@@ -15,15 +15,18 @@ interface ResolutionBucket {
   readonly percentage: number;
 }
 
+// Type bypass for queries with columns not in generated types
+const db = supabase as any;
+
 export function ResolutionTimeChart({ projectId }: ResolutionTimeChartProps) {
   const { data: chartData, isLoading } = useQuery({
     queryKey: ['resolution-time', projectId],
     queryFn: async (): Promise<ResolutionBucket[]> => {
-      const { data: issues } = await supabase
+      const { data: issues } = await db
         .from('issues')
-        .select('id, created_at, resolved_at')
+        .select('id, created_at, resolution_date')
         .eq('project_id', projectId)
-        .not('resolved_at', 'is', null);
+        .not('resolution_date', 'is', null);
 
       if (!issues?.length) return [];
 
@@ -36,8 +39,8 @@ export function ResolutionTimeChart({ projectId }: ResolutionTimeChartProps) {
         '> 1 month': 0,
       };
 
-      issues.forEach(issue => {
-        const days = differenceInDays(new Date(issue.resolved_at ?? ''), new Date(issue.created_at ?? ''));
+      issues.forEach((issue: any) => {
+        const days = differenceInDays(new Date(issue.resolution_date ?? ''), new Date(issue.created_at ?? ''));
         
         if (days < 1) buckets['< 1 day']++;
         else if (days <= 3) buckets['1-3 days']++;
@@ -65,6 +68,15 @@ export function ResolutionTimeChart({ projectId }: ResolutionTimeChartProps) {
     'hsl(0 84% 60%)',
     'hsl(0 70% 50%)',
   ];
+
+  const bucketIndexMap: Record<string, number> = {
+    '< 1 day': 0,
+    '1-3 days': 1,
+    '4-7 days': 2,
+    '1-2 weeks': 3,
+    '2-4 weeks': 4,
+    '> 1 month': 5,
+  };
 
   if (isLoading) {
     return (
@@ -125,7 +137,10 @@ export function ResolutionTimeChart({ projectId }: ResolutionTimeChartProps) {
                 />
                 <Bar dataKey="count" name="Issues">
                   {chartData?.map((entry) => (
-                    <Cell key={entry.range} fill={COLORS[Object.keys({ '< 1 day': 0, '1-3 days': 1, '4-7 days': 2, '1-2 weeks': 3, '2-4 weeks': 4, '> 1 month': 5 })[entry.range] as unknown as number % COLORS.length] || COLORS[0]} />
+                    <Cell 
+                      key={entry.range} 
+                      fill={COLORS[bucketIndexMap[entry.range] % COLORS.length] || COLORS[0]} 
+                    />
                   ))}
                 </Bar>
               </BarChart>

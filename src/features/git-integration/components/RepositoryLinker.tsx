@@ -181,7 +181,7 @@ export function RepositoryLinker() {
   const getProjectName = (projectId: string | null) => {
     if (!projectId) return 'Unlinked';
     const project = projects?.find(p => p.id === projectId);
-    return project ? `${project.pkey} - ${project.name}` : 'Unknown';
+    return project ? `${project.key} - ${project.name}` : 'Unknown';
   };
 
   const getOrgName = (orgId: string | null) => {
@@ -277,7 +277,7 @@ export function RepositoryLinker() {
                           <SelectContent>
                             {projects?.map((project) => (
                               <SelectItem key={project.id} value={project.id}>
-                                {project.pkey} - {project.name}
+                                {project.key} - {project.name}
                               </SelectItem>
                             ))}
                           </SelectContent>

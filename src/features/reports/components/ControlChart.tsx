@@ -15,23 +15,26 @@ interface DataPoint {
   readonly issueKey: string;
 }
 
+// Type bypass for queries with columns not in generated types
+const db = supabase as any;
+
 export function ControlChart({ projectId }: ControlChartProps) {
   const { data, isLoading } = useQuery({
     queryKey: ['control-chart', projectId],
     queryFn: async () => {
-      const { data: issues } = await supabase
+      const { data: issues } = await db
         .from('issues')
-        .select('issue_key, created_at, resolved_at')
+        .select('issue_key, created_at, resolution_date')
         .eq('project_id', projectId)
-        .not('resolved_at', 'is', null)
-        .gte('resolved_at', subDays(new Date(), 60).toISOString())
-        .order('resolved_at', { ascending: true });
+        .not('resolution_date', 'is', null)
+        .gte('resolution_date', subDays(new Date(), 60).toISOString())
+        .order('resolution_date', { ascending: true });
 
       if (!issues?.length) return { points: [], avg: 0, stdDev: 0 };
 
-      const points: DataPoint[] = issues.map(issue => {
-        const created = new Date(issue.created_at ?? issue.resolved_at ?? '');
-        const resolved = new Date(issue.resolved_at ?? '');
+      const points: DataPoint[] = issues.map((issue: any) => {
+        const created = new Date(issue.created_at ?? issue.resolution_date ?? '');
+        const resolved = new Date(issue.resolution_date ?? '');
         const days = differenceInDays(resolved, created);
         
         return {

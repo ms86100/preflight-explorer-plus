@@ -22,18 +22,21 @@ interface ContributorStats {
   readonly completionRate: number;
 }
 
+// Type bypass for queries with columns not in generated types
+const db = supabase as any;
+
 export function ContributorPerformance({ projectId }: ContributorPerformanceProps) {
   const { data: contributors, isLoading } = useQuery({
     queryKey: ['contributor-performance', projectId],
     queryFn: async (): Promise<ContributorStats[]> => {
-      const { data: issues } = await supabase
+      const { data: issues } = await db
         .from('issues')
         .select(`
           id,
           assignee_id,
           story_points,
           created_at,
-          resolved_at,
+          resolution_date,
           status:issue_statuses(category)
         `)
         .eq('project_id', projectId)
@@ -56,7 +59,7 @@ export function ContributorPerformance({ projectId }: ContributorPerformanceProp
         resolvedCount: number;
       }>();
 
-      issues.forEach(issue => {
+      issues.forEach((issue: any) => {
         const assigneeId = issue.assignee_id!;
         const status = issue.status as { category: string } | null;
         const category = status?.category || 'todo';
@@ -73,12 +76,12 @@ export function ContributorPerformance({ projectId }: ContributorPerformanceProp
           });
         }
 
-        const stats = statsMap.get(assigneeId);
+        const stats = statsMap.get(assigneeId)!;
         
         if (category === 'done') {
           stats.completed++;
-          if (issue.resolved_at && issue.created_at) {
-            const days = (new Date(issue.resolved_at).getTime() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24);
+          if (issue.resolution_date && issue.created_at) {
+            const days = (new Date(issue.resolution_date).getTime() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24);
             stats.totalResolutionDays += days;
             stats.resolvedCount++;
           }

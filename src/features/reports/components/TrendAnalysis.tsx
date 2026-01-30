@@ -16,6 +16,9 @@ interface DailyData {
   net: number;
 }
 
+// Type bypass for queries with columns not in generated types
+const db = supabase as any;
+
 export function TrendAnalysis({ projectId }: TrendAnalysisProps) {
   const { data: chartData, isLoading } = useQuery({
     queryKey: ['trend-analysis', projectId],
@@ -26,17 +29,17 @@ export function TrendAnalysis({ projectId }: TrendAnalysisProps) {
       // Get all issues created in last 30 days
       const { data: issues } = await supabase
         .from('issues')
-        .select('id, created_at, resolved_at')
+        .select('id, created_at')
         .eq('project_id', projectId)
         .gte('created_at', startDate.toISOString());
 
       // Get all issues resolved in last 30 days (might have been created earlier)
-      const { data: resolvedIssues } = await supabase
+      const { data: resolvedIssues } = await db
         .from('issues')
-        .select('id, resolved_at')
+        .select('id, resolution_date')
         .eq('project_id', projectId)
-        .not('resolved_at', 'is', null)
-        .gte('resolved_at', startDate.toISOString());
+        .not('resolution_date', 'is', null)
+        .gte('resolution_date', startDate.toISOString());
 
       // Create date buckets
       const days = eachDayOfInterval({ start: startDate, end: endDate });
@@ -57,8 +60,8 @@ export function TrendAnalysis({ projectId }: TrendAnalysisProps) {
       });
 
       // Count completed per day
-      resolvedIssues?.forEach(issue => {
-        const resolvedDate = format(startOfDay(new Date(issue.resolved_at!)), 'MMM d');
+      resolvedIssues?.forEach((issue: any) => {
+        const resolvedDate = format(startOfDay(new Date(issue.resolution_date!)), 'MMM d');
         const dayIndex = dailyData.findIndex(d => d.date === resolvedDate);
         if (dayIndex >= 0) {
           dailyData[dayIndex].completed++;

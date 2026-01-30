@@ -34,6 +34,9 @@ interface ProjectMetrics {
   wipCurrent: number;
 }
 
+// Type bypass for queries with columns not in generated types
+const db = supabase as any;
+
 export function ExecutiveSummary({ projectId }: ExecutiveSummaryProps) {
   const { data: metrics, isLoading } = useQuery({
     queryKey: ['executive-summary', projectId],
@@ -42,13 +45,13 @@ export function ExecutiveSummary({ projectId }: ExecutiveSummaryProps) {
       const weekAgo = subDays(now, 7);
 
       // Get all issues with related data
-      const { data: issues } = await supabase
+      const { data: issues } = await db
         .from('issues')
         .select(`
           id,
           created_at,
           due_date,
-          resolved_at,
+          resolution_date,
           story_points,
           status:issue_statuses(id, name, category),
           priority:priorities(id, name)
@@ -74,15 +77,15 @@ export function ExecutiveSummary({ projectId }: ExecutiveSummaryProps) {
       }
 
       const totalIssues = issues.length;
-      const completedIssues = issues.filter(i => 
+      const completedIssues = issues.filter((i: any) => 
         (i.status as { category: string })?.category === 'done'
       ).length;
-      const inProgressIssues = issues.filter(i => 
+      const inProgressIssues = issues.filter((i: any) => 
         (i.status as { category: string })?.category === 'in_progress'
       ).length;
       
       // Check for high-priority non-done issues (simulating blocked)
-      const blockedIssues = issues.filter(i => {
+      const blockedIssues = issues.filter((i: any) => {
         const status = i.status as { category: string } | null;
         const priority = i.priority as { name: string } | null;
         return status?.category !== 'done' && 
@@ -90,7 +93,7 @@ export function ExecutiveSummary({ projectId }: ExecutiveSummaryProps) {
       }).length;
 
       // Overdue issues
-      const overdue = issues.filter(i => {
+      const overdue = issues.filter((i: any) => {
         const status = i.status as { category: string } | null;
         return i.due_date && 
                new Date(i.due_date) < now && 
@@ -98,18 +101,18 @@ export function ExecutiveSummary({ projectId }: ExecutiveSummaryProps) {
       }).length;
 
       // This week's activity
-      const createdThisWeek = issues.filter(i => 
+      const createdThisWeek = issues.filter((i: any) => 
         new Date(i.created_at as string) >= weekAgo
       ).length;
-      const completedThisWeek = issues.filter(i => 
-        i.resolved_at && new Date(i.resolved_at) >= weekAgo
+      const completedThisWeek = issues.filter((i: any) => 
+        i.resolution_date && new Date(i.resolution_date) >= weekAgo
       ).length;
 
       // Average completion time (for resolved issues)
-      const resolvedIssues = issues.filter(i => i.resolved_at && i.created_at);
+      const resolvedIssues = issues.filter((i: any) => i.resolution_date && i.created_at);
       const avgCompletionTime = resolvedIssues.length > 0
-        ? resolvedIssues.reduce((sum, i) => {
-            const days = differenceInDays(new Date(i.resolved_at as string), new Date(i.created_at as string));
+        ? resolvedIssues.reduce((sum: number, i: any) => {
+            const days = differenceInDays(new Date(i.resolution_date as string), new Date(i.created_at as string));
             return sum + days;
           }, 0) / resolvedIssues.length
         : 0;
@@ -127,8 +130,8 @@ export function ExecutiveSummary({ projectId }: ExecutiveSummaryProps) {
 
       // Throughput (issues completed per week over last 4 weeks)
       const fourWeeksAgo = subDays(now, 28);
-      const completedLast4Weeks = issues.filter(i => 
-        i.resolved_at && new Date(i.resolved_at) >= fourWeeksAgo
+      const completedLast4Weeks = issues.filter((i: any) => 
+        i.resolution_date && new Date(i.resolution_date) >= fourWeeksAgo
       ).length;
       const throughput = completedLast4Weeks / 4;
 
