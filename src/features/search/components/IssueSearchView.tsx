@@ -76,7 +76,7 @@ export function IssueSearchView() {
   const { data: statuses } = useStatuses();
 
   // Get issues from selected project or all projects
-  const selectedProject = projects?.find(p => p.pkey === filters.project);
+  const selectedProject = projects?.find(p => p.key === filters.project);
   const { data: issues, isLoading } = useIssuesByProject(selectedProject?.id || '');
 
   const createRequested = new URLSearchParams(location.search).get('create') === '1';
@@ -102,7 +102,7 @@ export function IssueSearchView() {
     }
 
     if (projects?.length === 1) {
-      setFilters((prev) => ({ ...prev, project: projects[0].pkey }));
+      setFilters((prev) => ({ ...prev, project: projects[0].key }));
       setIsCreateIssueOpen(true);
       return;
     }
@@ -253,7 +253,7 @@ export function IssueSearchView() {
                 </SelectTrigger>
                 <SelectContent>
                   {projects?.map(project => (
-                    <SelectItem key={project.id} value={project.pkey}>
+                    <SelectItem key={project.id} value={project.key}>
                       {project.name}
                     </SelectItem>
                   ))}

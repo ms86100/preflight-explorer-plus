@@ -500,7 +500,6 @@ function AddMemberDialog({
     const { data: profileUsers } = await supabase
       .from('profiles')
       .select('id, display_name, email')
-      .eq('is_active', true)
       .order('display_name');
     
     // Combine both sources

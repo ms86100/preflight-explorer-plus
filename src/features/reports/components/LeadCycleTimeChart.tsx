@@ -15,47 +15,50 @@ interface TimeData {
   readonly cycleTime: number;
 }
 
+// Type bypass for queries with columns not in generated types
+const db = supabase as any;
+
 export function LeadCycleTimeChart({ projectId }: LeadCycleTimeChartProps) {
   const { data: chartData, isLoading } = useQuery({
     queryKey: ['lead-cycle-time', projectId],
     queryFn: async () => {
       // Get resolved issues with their history
-      const { data: issues } = await supabase
+      const { data: issues } = await db
         .from('issues')
         .select(`
           id, 
           created_at, 
-          resolved_at,
-          issue_history(field_name, new_value, changed_at)
+          resolution_date,
+          issue_history(field_name, new_value, created_at)
         `)
         .eq('project_id', projectId)
-        .not('resolved_at', 'is', null)
-        .gte('resolved_at', subDays(new Date(), 90).toISOString())
-        .order('resolved_at', { ascending: true });
+        .not('resolution_date', 'is', null)
+        .gte('resolution_date', subDays(new Date(), 90).toISOString())
+        .order('resolution_date', { ascending: true });
 
       if (!issues?.length) return [];
 
       // Group by week
       const weeklyData = new Map<string, { leadTimes: number[]; cycleTimes: number[] }>();
 
-      issues.forEach(issue => {
-        if (!issue.resolved_at) return;
+      issues.forEach((issue: any) => {
+        if (!issue.resolution_date) return;
 
-        const resolvedDate = new Date(issue.resolved_at);
-        const createdDate = new Date(issue.created_at || issue.resolved_at);
+        const resolvedDate = new Date(issue.resolution_date);
+        const createdDate = new Date(issue.created_at || issue.resolution_date);
         const weekKey = format(resolvedDate, 'MMM d');
 
         // Lead time = created to resolved
         const leadTime = differenceInDays(resolvedDate, createdDate);
 
         // Cycle time = first "In Progress" to resolved
-        const history = issue.issue_history as Array<{ field_name: string; new_value: string; changed_at: string }> | null;
+        const history = issue.issue_history as Array<{ field_name: string; new_value: string; created_at: string }> | null;
         const inProgressEvent = history?.find(h => 
           h.field_name === 'status' && h.new_value?.toLowerCase().includes('progress')
         );
         
         const cycleStart = inProgressEvent 
-          ? new Date(inProgressEvent.changed_at)
+          ? new Date(inProgressEvent.created_at)
           : createdDate;
         const cycleTime = differenceInDays(resolvedDate, cycleStart);
 

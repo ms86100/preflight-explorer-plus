@@ -37,7 +37,7 @@ interface IssueStatus {
   name: string;
   category: 'todo' | 'in_progress' | 'done';
   color: string | null;
-  position: number | null;
+  sequence: number | null;
   description: string | null;
 }
 
@@ -90,7 +90,7 @@ export function StatusManager() {
     const { data, error } = await supabase
       .from('issue_statuses')
       .select('*')
-      .order('position');
+      .order('sequence');
     
     if (error) {
       toast.error('Failed to load statuses');

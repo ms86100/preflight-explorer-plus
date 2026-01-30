@@ -178,7 +178,7 @@ export const teamService = {
     
     // Fetch profiles using secure RPC
     const { data: profiles } = await supabase
-      .rpc('get_public_profiles', { user_ids: userIds });
+      .rpc('get_public_profiles', { user_ids: userIds as string[] });
     
     return (profiles || []).map((p: any) => ({
       id: p.id,

@@ -2,12 +2,15 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import type { DataBlockSchema, DataBlockInstance, ColumnDefinition, DataRow } from '../types';
 
+// Type bypass for tables not in generated types
+const db = supabase as any;
+
 // =============================================
 // SCHEMA OPERATIONS
 // =============================================
 
 export async function getSchemas(): Promise<DataBlockSchema[]> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('data_block_schemas')
     .select('*')
     .order('created_at', { ascending: false });
@@ -18,7 +21,7 @@ export async function getSchemas(): Promise<DataBlockSchema[]> {
 }
 
 export async function getSchema(id: string): Promise<DataBlockSchema | null> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('data_block_schemas')
     .select('*')
     .eq('id', id)
@@ -41,7 +44,7 @@ export async function createSchema(schema: {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('Not authenticated');
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('data_block_schemas')
     .insert([{
       name: schema.name,
@@ -76,7 +79,7 @@ export async function updateSchema(id: string, updates: {
   if (updates.is_active !== undefined) updateData.is_active = updates.is_active;
   if (updates.version !== undefined) updateData.version = updates.version;
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('data_block_schemas')
     .update(updateData)
     .eq('id', id)
@@ -88,7 +91,7 @@ export async function updateSchema(id: string, updates: {
 }
 
 export async function deleteSchema(id: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await db
     .from('data_block_schemas')
     .delete()
     .eq('id', id);
@@ -101,7 +104,7 @@ export async function deleteSchema(id: string): Promise<void> {
 // =============================================
 
 export async function getInstances(schemaId?: string): Promise<DataBlockInstance[]> {
-  let query = supabase
+  let query = db
     .from('data_block_instances')
     .select('*, schema:data_block_schemas(name)')
     .order('created_at', { ascending: false });
@@ -114,11 +117,11 @@ export async function getInstances(schemaId?: string): Promise<DataBlockInstance
 
   if (error) throw error;
   
-  return (data || []).map(mapDbToInstance);
+  return (data || []).map((d: any) => mapDbToInstance(d));
 }
 
 export async function getInstance(id: string): Promise<DataBlockInstance | null> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('data_block_instances')
     .select('*, schema:data_block_schemas(name)')
     .eq('id', id)
@@ -142,7 +145,7 @@ export async function createInstance(instance: {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('Not authenticated');
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('data_block_instances')
     .insert([{
       schema_id: instance.schemaId,
@@ -170,7 +173,7 @@ export async function updateInstance(id: string, updates: {
   if (updates.name !== undefined) updateData.name = updates.name;
   if (updates.rows !== undefined) updateData.rows = updates.rows;
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('data_block_instances')
     .update(updateData)
     .eq('id', id)
@@ -182,7 +185,7 @@ export async function updateInstance(id: string, updates: {
 }
 
 export async function deleteInstance(id: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await db
     .from('data_block_instances')
     .delete()
     .eq('id', id);

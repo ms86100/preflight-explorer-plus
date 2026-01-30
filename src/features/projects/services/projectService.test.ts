@@ -9,43 +9,35 @@ import { projectService, type ProjectInsert, type ProjectRow } from './projectSe
 const mockProjects: ProjectRow[] = [
   {
     id: 'proj-1',
-    pkey: 'DEMO',
+    key: 'DEMO',
     name: 'Demo Project',
     description: 'A demo project',
     project_type: 'software',
-    template: 'scrum',
-    category_id: null,
+    category: null,
     lead_id: 'user-1',
-    default_assignee_id: null,
     avatar_url: null,
     url: null,
-    issue_counter: 10,
     is_archived: false,
-    classification: 'restricted',
-    program_id: null,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
+    created_by: 'user-1',
   },
 ];
 
 const mockCreatedProject: ProjectRow = {
   id: 'proj-new',
-  pkey: 'NEW',
+  key: 'NEW',
   name: 'New Project',
   description: null,
   project_type: 'software',
-  template: 'scrum',
-  category_id: null,
+  category: null,
   lead_id: 'user-1',
-  default_assignee_id: null,
   avatar_url: null,
   url: null,
-  issue_counter: 0,
   is_archived: false,
-  classification: 'restricted',
-  program_id: null,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
+  created_by: 'user-1',
 };
 
 // Mock factory functions moved to module scope (S2004)
@@ -131,7 +123,7 @@ describe('projectService', () => {
       const result = await projectService.getByKey('DEMO');
       
       expect(result).toBeDefined();
-      expect(result.pkey).toBe('DEMO');
+      expect(result.key).toBe('DEMO');
     });
   });
 
@@ -147,24 +139,23 @@ describe('projectService', () => {
 describe('ProjectInsert interface', () => {
   it('should accept valid project data', () => {
     const validProject: ProjectInsert = {
-      pkey: 'TEST',
+      key: 'TEST',
       name: 'Test Project',
       description: 'A test project',
       project_type: 'software',
-      template: 'scrum',
     };
     
-    expect(validProject.pkey).toBe('TEST');
+    expect(validProject.key).toBe('TEST');
     expect(validProject.name).toBe('Test Project');
   });
 
-  it('should require only pkey and name', () => {
+  it('should require only key and name', () => {
     const minimalProject: ProjectInsert = {
-      pkey: 'MIN',
+      key: 'MIN',
       name: 'Minimal Project',
     };
     
-    expect(minimalProject.pkey).toBe('MIN');
+    expect(minimalProject.key).toBe('MIN');
     expect(minimalProject.description).toBeUndefined();
   });
 });
@@ -174,7 +165,7 @@ describe('ProjectRow interface', () => {
     const project: ProjectRow = mockProjects[0];
     
     expect(project.id).toBeDefined();
-    expect(project.pkey).toBeDefined();
+    expect(project.key).toBeDefined();
     expect(project.name).toBeDefined();
     expect(project.created_at).toBeDefined();
     expect(project.updated_at).toBeDefined();
