@@ -10,11 +10,15 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Link as LinkIcon, Plus, Trash2, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 
+// Type bypass for tables not fully in generated types
+const db = supabase as any;
+
 interface LinkedIssue {
   readonly id: string;
   readonly source_issue_id: string;
   readonly target_issue_id: string;
-  readonly link_type: string;
+  readonly link_type_id: string;
+  readonly link_type_name: string;
   readonly created_at: string;
   readonly target_issue?: {
     readonly id: string;
@@ -30,35 +34,47 @@ interface LinkedIssue {
   };
 }
 
+interface LinkType {
+  id: string;
+  name: string;
+  inward_description: string;
+  outward_description: string;
+}
+
 interface LinkedIssuesSectionProps {
   readonly issueId: string;
   readonly projectId: string;
 }
 
-const LINK_TYPES = [
-  { value: 'blocks', label: 'blocks', inverse: 'is blocked by' },
-  { value: 'is_blocked_by', label: 'is blocked by', inverse: 'blocks' },
-  { value: 'relates_to', label: 'relates to', inverse: 'relates to' },
-  { value: 'duplicates', label: 'duplicates', inverse: 'is duplicated by' },
-  { value: 'is_duplicated_by', label: 'is duplicated by', inverse: 'duplicates' },
-  { value: 'clones', label: 'clones', inverse: 'is cloned by' },
-  { value: 'is_cloned_by', label: 'is cloned by', inverse: 'clones' },
-];
-
 export function LinkedIssuesSection({ issueId, projectId }: LinkedIssuesSectionProps) {
   const { user } = useAuth();
   const [linkedIssues, setLinkedIssues] = useState<LinkedIssue[]>([]);
+  const [linkTypes, setLinkTypes] = useState<LinkType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
-  const [linkType, setLinkType] = useState('relates_to');
+  const [selectedLinkTypeId, setSelectedLinkTypeId] = useState<string>('');
 
   useEffect(() => {
+    fetchLinkTypes();
     fetchLinkedIssues();
   }, [issueId]);
+
+  const fetchLinkTypes = async () => {
+    const { data, error } = await supabase
+      .from('issue_link_types')
+      .select('*');
+    
+    if (!error && data) {
+      setLinkTypes(data);
+      if (data.length > 0 && !selectedLinkTypeId) {
+        setSelectedLinkTypeId(data[0].id);
+      }
+    }
+  };
 
   const fetchLinkedIssues = async () => {
     setIsLoading(true);
@@ -67,7 +83,7 @@ export function LinkedIssuesSection({ issueId, projectId }: LinkedIssuesSectionP
       const { data: outgoing, error: outError } = await supabase
         .from('issue_links')
         .select(`
-          *,
+          id, source_issue_id, target_issue_id, link_type_id, created_at,
           target_issue:issues!issue_links_target_issue_id_fkey(
             id, issue_key, summary,
             status:issue_statuses(name, color)
@@ -81,7 +97,7 @@ export function LinkedIssuesSection({ issueId, projectId }: LinkedIssuesSectionP
       const { data: incoming, error: inError } = await supabase
         .from('issue_links')
         .select(`
-          *,
+          id, source_issue_id, target_issue_id, link_type_id, created_at,
           source_issue:issues!issue_links_source_issue_id_fkey(
             id, issue_key, summary,
             status:issue_statuses(name, color)
@@ -91,7 +107,23 @@ export function LinkedIssuesSection({ issueId, projectId }: LinkedIssuesSectionP
 
       if (inError) throw inError;
 
-      setLinkedIssues([...(outgoing || []), ...(incoming || [])]);
+      // Map link_type_id to name
+      const allLinks = [...(outgoing || []), ...(incoming || [])];
+      const mappedLinks: LinkedIssue[] = allLinks.map(link => {
+        const linkType = linkTypes.find(lt => lt.id === link.link_type_id);
+        return {
+          id: link.id,
+          source_issue_id: link.source_issue_id,
+          target_issue_id: link.target_issue_id,
+          link_type_id: link.link_type_id,
+          link_type_name: linkType?.name || 'Related',
+          created_at: link.created_at,
+          target_issue: (link as any).target_issue,
+          source_issue: (link as any).source_issue,
+        };
+      });
+
+      setLinkedIssues(mappedLinks);
     } catch {
       toast.error('Failed to load linked issues');
     } finally {
@@ -130,14 +162,14 @@ export function LinkedIssuesSection({ issueId, projectId }: LinkedIssuesSectionP
   }, [searchQuery]);
 
   const handleAddLink = async () => {
-    if (!selectedIssue || !user?.id) return;
+    if (!selectedIssue || !user?.id || !selectedLinkTypeId) return;
 
     setIsAdding(true);
     try {
-      const { error } = await supabase.from('issue_links').insert({
+      const { error } = await db.from('issue_links').insert({
         source_issue_id: issueId,
         target_issue_id: selectedIssue,
-        link_type: linkType,
+        link_type_id: selectedLinkTypeId,
         created_by: user.id,
       });
 
@@ -152,7 +184,6 @@ export function LinkedIssuesSection({ issueId, projectId }: LinkedIssuesSectionP
         setShowAddDialog(false);
         setSearchQuery('');
         setSelectedIssue(null);
-        setLinkType('relates_to');
         fetchLinkedIssues();
       }
     } catch (error) {
@@ -176,11 +207,13 @@ export function LinkedIssuesSection({ issueId, projectId }: LinkedIssuesSectionP
   };
 
   const getLinkLabel = (link: LinkedIssue) => {
-    const linkInfo = LINK_TYPES.find((t) => t.value === link.link_type);
+    const linkType = linkTypes.find(lt => lt.id === link.link_type_id);
+    if (!linkType) return link.link_type_name;
+    
     if (link.source_issue_id === issueId) {
-      return linkInfo?.label || link.link_type;
+      return linkType.outward_description;
     } else {
-      return linkInfo?.inverse || link.link_type;
+      return linkType.inward_description;
     }
   };
 
@@ -205,14 +238,14 @@ export function LinkedIssuesSection({ issueId, projectId }: LinkedIssuesSectionP
           <div className="space-y-4 pt-4">
             <div className="space-y-2">
               <Label htmlFor="link-type">Link Type</Label>
-              <Select value={linkType} onValueChange={setLinkType}>
+              <Select value={selectedLinkTypeId} onValueChange={setSelectedLinkTypeId}>
                 <SelectTrigger id="link-type">
-                  <SelectValue />
+                  <SelectValue placeholder="Select link type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {LINK_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
+                  {linkTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id}>
+                      {type.outward_description}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -249,7 +282,7 @@ export function LinkedIssuesSection({ issueId, projectId }: LinkedIssuesSectionP
 
             <Button
               onClick={handleAddLink}
-              disabled={!selectedIssue || isAdding}
+              disabled={!selectedIssue || isAdding || !selectedLinkTypeId}
               className="w-full"
             >
               {isAdding ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <LinkIcon className="h-4 w-4 mr-1" />}

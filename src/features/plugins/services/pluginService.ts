@@ -2,8 +2,11 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import type { Plugin } from '../types';
 
+// Type bypass for tables not in generated types
+const db = supabase as any;
+
 export async function getPlugins(): Promise<Plugin[]> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('plugins')
     .select('*')
     .order('is_system', { ascending: false })
@@ -14,7 +17,7 @@ export async function getPlugins(): Promise<Plugin[]> {
 }
 
 export async function getPlugin(key: string): Promise<Plugin | null> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('plugins')
     .select('*')
     .eq('key', key)
@@ -25,7 +28,7 @@ export async function getPlugin(key: string): Promise<Plugin | null> {
 }
 
 export async function getEnabledPlugins(): Promise<Plugin[]> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('plugins')
     .select('*')
     .eq('is_enabled', true)
@@ -36,7 +39,7 @@ export async function getEnabledPlugins(): Promise<Plugin[]> {
 }
 
 export async function togglePlugin(id: string, enabled: boolean): Promise<Plugin> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('plugins')
     .update({ is_enabled: enabled, updated_at: new Date().toISOString() })
     .eq('id', id)
@@ -48,7 +51,7 @@ export async function togglePlugin(id: string, enabled: boolean): Promise<Plugin
 }
 
 export async function updatePluginConfig(id: string, config: Record<string, unknown>): Promise<Plugin> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('plugins')
     .update({ config: config as Json, updated_at: new Date().toISOString() })
     .eq('id', id)
@@ -60,7 +63,7 @@ export async function updatePluginConfig(id: string, config: Record<string, unkn
 }
 
 export async function createPlugin(plugin: Omit<Plugin, 'id' | 'created_at' | 'updated_at'>): Promise<Plugin> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('plugins')
     .insert({
       key: plugin.key,

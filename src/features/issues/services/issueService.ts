@@ -71,11 +71,11 @@ export interface IssueRow {
   issue_number: number;
   summary: string;
   description: string | null;
-  issue_type_id: string;
-  status_id: string;
+  issue_type_id: string | null;
+  status_id: string | null;
   priority_id: string | null;
   resolution_id: string | null;
-  reporter_id: string;
+  reporter_id: string | null;
   assignee_id: string | null;
   parent_id: string | null;
   epic_id: string | null;
@@ -85,30 +85,61 @@ export interface IssueRow {
   time_spent: number | null;
   story_points: number | null;
   environment: string | null;
-  lexorank: string | null;
-  classification: string;
-  resolved_at: string | null;
+  labels: string[] | null;
+  votes: number | null;
+  watchers: number | null;
+  resolution_date: string | null;
   created_at: string;
   updated_at: string;
+  created_by: string | null;
 }
 
 /**
  * Issue data with related entities populated.
  * 
  * @interface IssueWithRelations
- * @extends IssueRow
+ * @extends Omit<IssueRow, 'classification'>
  */
-export interface IssueWithRelations extends IssueRow {
+export interface IssueWithRelations {
+  id: string;
+  project_id: string;
+  issue_key: string;
+  issue_number: number;
+  summary: string;
+  description: string | null;
+  issue_type_id: string | null;
+  status_id: string | null;
+  priority_id: string | null;
+  resolution_id: string | null;
+  reporter_id: string | null;
+  assignee_id: string | null;
+  parent_id: string | null;
+  epic_id: string | null;
+  due_date: string | null;
+  original_estimate: number | null;
+  remaining_estimate: number | null;
+  time_spent: number | null;
+  story_points: number | null;
+  environment: string | null;
+  labels: string[] | null;
+  votes: number | null;
+  watchers: number | null;
+  resolution_date: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  // Virtual field for UI compatibility
+  classification?: string;
   /** Populated issue type data */
-  issue_type: { id: string; name: string; color: string; category: string } | null;
+  issue_type: { id: string; name: string; color: string | null; is_subtask?: boolean | null } | null;
   /** Populated status data */
-  status: { id: string; name: string; color: string; category: string } | null;
+  status: { id: string; name: string; color: string | null; category: string | null } | null;
   /** Populated priority data */
-  priority: { id: string; name: string; color: string } | null;
+  priority: { id: string; name: string; color: string | null } | null;
   /** Populated reporter user data */
-  reporter: { id: string; display_name: string; avatar_url: string | null } | null;
+  reporter: { id: string; display_name: string | null; avatar_url: string | null } | null;
   /** Populated assignee user data */
-  assignee: { id: string; display_name: string; avatar_url: string | null } | null;
+  assignee: { id: string; display_name: string | null; avatar_url: string | null } | null;
   /** Populated epic data (if linked) */
   epic: { id: string; issue_key: string; summary: string } | null;
 }
@@ -180,10 +211,11 @@ export const issueService = {
     let query = supabase
       .from('issues')
       .select(`
-        id, issue_key, issue_number, summary, description, story_points, classification,
+        id, issue_key, issue_number, summary, description, story_points,
         status_id, priority_id, issue_type_id, assignee_id, reporter_id, project_id,
         due_date, original_estimate, remaining_estimate, time_spent, created_at, updated_at,
-        issue_type:issue_types(id, name, color, category),
+        labels, votes, watchers, resolution_date, resolution_id, parent_id, epic_id, environment, created_by,
+        issue_type:issue_types(id, name, color, is_subtask),
         status:issue_statuses(id, name, color, category),
         priority:priorities(id, name, color)
       `, { count: 'exact' })
@@ -203,19 +235,21 @@ export const issueService = {
     if (error) throw error;
 
     // Fetch profiles using secure RPC (non-sensitive fields only)
-    const userIds = [...new Set(issues?.flatMap(i => [i.reporter_id, i.assignee_id].filter(Boolean)) || [])] as string[];
+    const rows = issues as any[] || [];
+    const userIds = [...new Set(rows.flatMap(i => [i.reporter_id, i.assignee_id].filter(Boolean)))] as string[];
     const { data: profiles } = await supabase
-      .rpc('get_public_profiles', { _user_ids: userIds.length > 0 ? userIds : ['00000000-0000-0000-0000-000000000000'] });
+      .rpc('get_public_profiles', { user_ids: userIds.length > 0 ? userIds : ['00000000-0000-0000-0000-000000000000'] });
 
     // Map to expected shape (id, display_name, avatar_url)
-    const profileMap = new Map(profiles?.map(p => [p.id, {
+    const profileMap = new Map((profiles as any[] || []).map(p => [p.id, {
       id: p.id,
       display_name: p.display_name,
       avatar_url: p.avatar_url,
-    }]) || []);
+    }]));
 
-    const issuesWithRelations = (issues || []).map(issue => ({
+    const issuesWithRelations = rows.map(issue => ({
       ...issue,
+      classification: 'restricted', // Default value for UI compatibility
       reporter: issue.reporter_id ? profileMap.get(issue.reporter_id) || null : null,
       assignee: issue.assignee_id ? profileMap.get(issue.assignee_id) || null : null,
       epic: null,
@@ -248,10 +282,11 @@ export const issueService = {
     const { data: issue, error } = await supabase
       .from('issues')
       .select(`
-        id, issue_key, issue_number, summary, description, story_points, classification,
+        id, issue_key, issue_number, summary, description, story_points,
         status_id, priority_id, issue_type_id, assignee_id, reporter_id, project_id,
         due_date, original_estimate, remaining_estimate, time_spent, created_at, updated_at,
-        issue_type:issue_types(id, name, color, category),
+        labels, votes, watchers, resolution_date, resolution_id, parent_id, epic_id, environment, created_by,
+        issue_type:issue_types(id, name, color, is_subtask),
         status:issue_statuses(id, name, color, category),
         priority:priorities(id, name, color)
       `)
@@ -259,21 +294,24 @@ export const issueService = {
       .maybeSingle();
 
     if (error) throw error;
-    if (!issue) return null as unknown as IssueWithRelations;
+    if (!issue) return null;
+    
+    const row = issue as any;
     
     // Fetch user data from user_directory
-    const userIds = [issue.reporter_id, issue.assignee_id].filter(Boolean);
+    const userIds = [row.reporter_id, row.assignee_id].filter(Boolean);
     const { data: profiles } = await supabase
       .from('user_directory')
       .select('id, display_name, avatar_url')
       .in('id', userIds.length > 0 ? userIds : ['00000000-0000-0000-0000-000000000000']);
 
-    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    const profileMap = new Map((profiles || []).map(p => [p.id, p]));
     
     return {
-      ...issue,
-      reporter: issue.reporter_id ? profileMap.get(issue.reporter_id) || null : null,
-      assignee: issue.assignee_id ? profileMap.get(issue.assignee_id) || null : null,
+      ...row,
+      classification: 'restricted',
+      reporter: row.reporter_id ? profileMap.get(row.reporter_id) || null : null,
+      assignee: row.assignee_id ? profileMap.get(row.assignee_id) || null : null,
       epic: null,
     } as IssueWithRelations;
   },
@@ -289,10 +327,11 @@ export const issueService = {
     const { data: issue, error } = await supabase
       .from('issues')
       .select(`
-        id, issue_key, issue_number, summary, description, story_points, classification,
+        id, issue_key, issue_number, summary, description, story_points,
         status_id, priority_id, issue_type_id, assignee_id, reporter_id, project_id,
         due_date, original_estimate, remaining_estimate, time_spent, created_at, updated_at,
-        issue_type:issue_types(id, name, color, category),
+        labels, votes, watchers, resolution_date, resolution_id, parent_id, epic_id, environment, created_by,
+        issue_type:issue_types(id, name, color, is_subtask),
         status:issue_statuses(id, name, color, category),
         priority:priorities(id, name, color)
       `)
@@ -300,21 +339,24 @@ export const issueService = {
       .maybeSingle();
 
     if (error) throw error;
-    if (!issue) return null as unknown as IssueWithRelations;
+    if (!issue) return null;
+    
+    const row = issue as any;
     
     // Fetch user data from user_directory
-    const userIds = [issue.reporter_id, issue.assignee_id].filter(Boolean);
+    const userIds = [row.reporter_id, row.assignee_id].filter(Boolean);
     const { data: profiles } = await supabase
       .from('user_directory')
       .select('id, display_name, avatar_url')
       .in('id', userIds.length > 0 ? userIds : ['00000000-0000-0000-0000-000000000000']);
 
-    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    const profileMap = new Map((profiles || []).map(p => [p.id, p]));
     
     return {
-      ...issue,
-      reporter: issue.reporter_id ? profileMap.get(issue.reporter_id) || null : null,
-      assignee: issue.assignee_id ? profileMap.get(issue.assignee_id) || null : null,
+      ...row,
+      classification: 'restricted',
+      reporter: row.reporter_id ? profileMap.get(row.reporter_id) || null : null,
+      assignee: row.assignee_id ? profileMap.get(row.assignee_id) || null : null,
       epic: null,
     } as IssueWithRelations;
   },
@@ -354,7 +396,6 @@ export const issueService = {
       epic_id: issue.epic_id,
       due_date: issue.due_date,
       story_points: issue.story_points,
-      classification: issue.classification || 'restricted',
       reporter_id: reporterId,
       issue_key: 'TEMP-0', // Will be replaced by trigger
       issue_number: 0, // Will be replaced by trigger
@@ -367,7 +408,7 @@ export const issueService = {
       .single();
 
     if (error) throw error;
-    return data as IssueRow;
+    return data as unknown as IssueRow;
   },
 
   /**
@@ -387,7 +428,7 @@ export const issueService = {
       .single();
 
     if (error) throw error;
-    return data as IssueRow;
+    return data as unknown as IssueRow;
   },
 
   /**
@@ -408,7 +449,7 @@ export const issueService = {
       .single();
 
     if (error) throw error;
-    return data as IssueRow;
+    return data as unknown as IssueRow;
   },
 
   /**
@@ -439,7 +480,7 @@ export const issueService = {
  */
 export const referenceDataService = {
   /**
-   * Fetches all issue types ordered by position.
+   * Fetches all issue types ordered by sequence.
    * 
    * @returns Array of issue types
    * @throws {Error} If database query fails
@@ -448,14 +489,14 @@ export const referenceDataService = {
     const { data, error } = await supabase
       .from('issue_types')
       .select('*')
-      .order('position');
+      .order('sequence');
     if (error) throw error;
     return data;
   },
 
   /**
-   * Fetches all priority levels ordered by position.
-   * Lower position indicates higher priority.
+   * Fetches all priority levels ordered by sequence.
+   * Lower sequence indicates higher priority.
    * 
    * @returns Array of priorities
    * @throws {Error} If database query fails
@@ -464,13 +505,13 @@ export const referenceDataService = {
     const { data, error } = await supabase
       .from('priorities')
       .select('*')
-      .order('position');
+      .order('sequence');
     if (error) throw error;
     return data;
   },
 
   /**
-   * Fetches all issue statuses ordered by position.
+   * Fetches all issue statuses ordered by sequence.
    * 
    * @returns Array of statuses
    * @throws {Error} If database query fails
@@ -479,14 +520,14 @@ export const referenceDataService = {
     const { data, error } = await supabase
       .from('issue_statuses')
       .select('*')
-      .order('position');
+      .order('sequence');
     if (error) throw error;
     return data;
   },
 
   /**
    * Creates a new issue status.
-   * Position is automatically set to the next available value.
+   * Sequence is automatically set to the next available value.
    * 
    * @param status - Status data to create
    * @returns The created status
@@ -508,14 +549,14 @@ export const referenceDataService = {
     color?: string;
     description?: string;
   }) {
-    // Get the next position
+    // Get the next sequence
     const { data: existing } = await supabase
       .from('issue_statuses')
-      .select('position')
-      .order('position', { ascending: false })
+      .select('sequence')
+      .order('sequence', { ascending: false })
       .limit(1);
     
-    const nextPosition = (existing?.[0]?.position ?? 0) + 1;
+    const nextSequence = ((existing?.[0] as any)?.sequence ?? 0) + 1;
     
     const { data, error } = await supabase
       .from('issue_statuses')
@@ -524,7 +565,7 @@ export const referenceDataService = {
         category: status.category,
         color: status.color || '#6B7280',
         description: status.description || null,
-        position: nextPosition,
+        sequence: nextSequence,
       })
       .select()
       .single();
@@ -534,7 +575,7 @@ export const referenceDataService = {
   },
 
   /**
-   * Fetches all resolution types ordered by position.
+   * Fetches all resolution types ordered by sequence.
    * 
    * @returns Array of resolutions
    * @throws {Error} If database query fails
@@ -543,7 +584,7 @@ export const referenceDataService = {
     const { data, error } = await supabase
       .from('resolutions')
       .select('*')
-      .order('position');
+      .order('sequence');
     if (error) throw error;
     return data;
   },

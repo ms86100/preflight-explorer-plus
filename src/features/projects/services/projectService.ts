@@ -146,14 +146,13 @@ export const projectService = {
     // Apply filters
     if (filters.search) query = query.ilike('name', `%${filters.search}%`);
     if (filters.projectType) query = query.eq('project_type', filters.projectType);
-    if (filters.classification) query = query.eq('classification', filters.classification);
 
     const { data, error, count } = await query
       .order('updated_at', { ascending: false })
       .range(from, to);
 
     if (error) throw error;
-    return buildPaginatedResult(data as ProjectRow[], count || 0, page, pageSize);
+    return buildPaginatedResult((data || []) as unknown as ProjectRow[], count || 0, page, pageSize);
   },
 
   /**
@@ -179,11 +178,11 @@ export const projectService = {
     const { data, error } = await supabase
       .from('projects')
       .select('*')
-      .eq('pkey', pkey)
+      .eq('key', pkey)
       .single();
 
     if (error) throw error;
-    return data as ProjectRow;
+    return data as unknown as ProjectRow;
   },
 
   /**

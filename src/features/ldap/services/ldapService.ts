@@ -1,8 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { LdapConfiguration, LdapGroupMapping, LdapSyncLog, SyncResult } from '../types';
 
+// Type bypass for tables not in generated types
+const db = supabase as any;
+
 export async function fetchLdapConfigurations(): Promise<LdapConfiguration[]> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ldap_configurations')
     .select('*')
     .order('created_at', { ascending: false });
@@ -12,7 +15,7 @@ export async function fetchLdapConfigurations(): Promise<LdapConfiguration[]> {
 }
 
 export async function fetchLdapConfiguration(id: string): Promise<LdapConfiguration | null> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ldap_configurations')
     .select('*')
     .eq('id', id)
@@ -26,7 +29,7 @@ export async function createLdapConfiguration(config: Partial<LdapConfiguration>
   if (!config.name || !config.server_url || !config.base_dn) {
     throw new Error('Required fields missing: name, server_url, base_dn');
   }
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ldap_configurations')
     .insert({
       name: config.name,
@@ -55,7 +58,7 @@ export async function createLdapConfiguration(config: Partial<LdapConfiguration>
 }
 
 export async function updateLdapConfiguration(id: string, updates: Partial<LdapConfiguration>): Promise<LdapConfiguration> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ldap_configurations')
     .update(updates)
     .eq('id', id)
@@ -67,7 +70,7 @@ export async function updateLdapConfiguration(id: string, updates: Partial<LdapC
 }
 
 export async function deleteLdapConfiguration(id: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await db
     .from('ldap_configurations')
     .delete()
     .eq('id', id);
@@ -76,7 +79,7 @@ export async function deleteLdapConfiguration(id: string): Promise<void> {
 }
 
 export async function fetchGroupMappings(configId: string): Promise<LdapGroupMapping[]> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ldap_group_mappings')
     .select('*')
     .eq('ldap_config_id', configId)
@@ -90,7 +93,7 @@ export async function createGroupMapping(mapping: Partial<LdapGroupMapping>): Pr
   if (!mapping.ldap_config_id || !mapping.ldap_group_dn || !mapping.ldap_group_name || !mapping.target_type) {
     throw new Error('Required fields missing: ldap_config_id, ldap_group_dn, ldap_group_name, target_type');
   }
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ldap_group_mappings')
     .insert({
       ldap_config_id: mapping.ldap_config_id,
@@ -110,7 +113,7 @@ export async function createGroupMapping(mapping: Partial<LdapGroupMapping>): Pr
 }
 
 export async function updateGroupMapping(id: string, updates: Partial<LdapGroupMapping>): Promise<LdapGroupMapping> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ldap_group_mappings')
     .update(updates)
     .eq('id', id)
@@ -122,7 +125,7 @@ export async function updateGroupMapping(id: string, updates: Partial<LdapGroupM
 }
 
 export async function deleteGroupMapping(id: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await db
     .from('ldap_group_mappings')
     .delete()
     .eq('id', id);
@@ -131,7 +134,7 @@ export async function deleteGroupMapping(id: string): Promise<void> {
 }
 
 export async function fetchSyncLogs(configId: string, limit = 20): Promise<LdapSyncLog[]> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ldap_sync_logs')
     .select('*')
     .eq('ldap_config_id', configId)
@@ -181,7 +184,7 @@ export async function getSyncStatus(configId: string): Promise<{
 }
 
 export async function fetchGroups(): Promise<{ id: string; name: string }[]> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('groups')
     .select('id, name')
     .eq('is_active', true)
@@ -192,7 +195,7 @@ export async function fetchGroups(): Promise<{ id: string; name: string }[]> {
 }
 
 export async function fetchProjectRoles(): Promise<{ id: string; name: string }[]> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('project_roles')
     .select('id, name')
     .order('name');

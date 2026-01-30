@@ -149,10 +149,10 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
     if (authorIds.length > 0) {
       // Use secure RPC to fetch public profiles (non-sensitive fields only)
       const { data: profiles, error: profilesError } = await supabase
-        .rpc('get_public_profiles', { _user_ids: authorIds });
+        .rpc('get_public_profiles', { user_ids: authorIds });
 
       if (!profilesError) {
-        profileMap = new Map((profiles || []).map(p => [p.id, { display_name: p.display_name, avatar_url: p.avatar_url }]));
+        profileMap = new Map(((profiles as any[]) || []).map(p => [p.id, { display_name: p.display_name, avatar_url: p.avatar_url }]));
       }
     }
 
@@ -209,12 +209,13 @@ export function IssueDetailModal({ issueId, open, onOpenChange }: IssueDetailMod
       
       // Insert mentions and send notifications
       if (mentionedUserIds.length > 0 && commentData) {
-        // Store mentions
+        // Store mentions (using type bypass for table not in generated types)
+        const db = supabase as any;
         const mentionInserts = mentionedUserIds.map(userId => ({
           comment_id: commentData.id,
           mentioned_user_id: userId,
         }));
-        await supabase.from('comment_mentions').insert(mentionInserts);
+        await db.from('comment_mentions').insert(mentionInserts);
         
         // Send notifications to mentioned users (excluding self)
         const usersToNotify = mentionedUserIds.filter(id => id !== user.id);

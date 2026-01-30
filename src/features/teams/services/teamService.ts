@@ -1,9 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { ProjectTeam, ProjectTeamMember } from '../types';
 
+// Type bypass for tables not in generated types
+const db = supabase as any;
+
 export const teamService = {
   async getTeamsByProject(projectId: string): Promise<ProjectTeam[]> {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('project_teams')
       .select('*')
       .eq('project_id', projectId)
@@ -14,7 +17,7 @@ export const teamService = {
   },
 
   async getTeamMembers(teamId: string): Promise<ProjectTeamMember[]> {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('project_team_members')
       .select('id, team_id, user_id, role, added_at, added_by')
       .eq('team_id', teamId);
@@ -22,19 +25,19 @@ export const teamService = {
     if (error) throw error;
     
     // Fetch profiles using secure RPC (non-sensitive fields only)
-    const userIds = (data || []).map(m => m.user_id);
+    const userIds = (data || []).map((m: any) => m.user_id);
     if (userIds.length === 0) return [];
     
     const { data: profiles } = await supabase
-      .rpc('get_public_profiles', { _user_ids: userIds });
+      .rpc('get_public_profiles', { user_ids: userIds });
     
-    const profileMap = new Map((profiles || []).map(p => [p.id, {
+    const profileMap = new Map((profiles || []).map((p: any) => [p.id, {
       display_name: p.display_name,
       avatar_url: p.avatar_url,
       email: null as string | null, // Email not exposed via public API for security
     }]));
     
-    return (data || []).map(m => ({
+    return (data || []).map((m: any) => ({
       ...m,
       role: m.role as 'lead' | 'member',
       profile: profileMap.get(m.user_id) || undefined,
@@ -47,7 +50,7 @@ export const teamService = {
     description: string | undefined,
     userId: string
   ): Promise<ProjectTeam> {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('project_teams')
       .insert({
         project_id: projectId,
@@ -66,7 +69,7 @@ export const teamService = {
     teamId: string,
     updates: { name?: string; description?: string }
   ): Promise<ProjectTeam> {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('project_teams')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', teamId)
@@ -78,7 +81,7 @@ export const teamService = {
   },
 
   async deleteTeam(teamId: string): Promise<void> {
-    const { error } = await supabase
+    const { error } = await db
       .from('project_teams')
       .delete()
       .eq('id', teamId);
@@ -92,7 +95,7 @@ export const teamService = {
     role: 'lead' | 'member',
     addedBy: string
   ): Promise<ProjectTeamMember> {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('project_team_members')
       .insert({
         team_id: teamId,
@@ -108,7 +111,7 @@ export const teamService = {
   },
 
   async updateMemberRole(memberId: string, role: 'lead' | 'member'): Promise<void> {
-    const { error } = await supabase
+    const { error } = await db
       .from('project_team_members')
       .update({ role })
       .eq('id', memberId);
@@ -117,7 +120,7 @@ export const teamService = {
   },
 
   async removeTeamMember(memberId: string): Promise<void> {
-    const { error } = await supabase
+    const { error } = await db
       .from('project_team_members')
       .delete()
       .eq('id', memberId);
@@ -127,15 +130,18 @@ export const teamService = {
 
   async getAllProjectMembers(projectId: string): Promise<{ id: string; display_name: string; avatar_url: string | null; email: string | null }[]> {
     // Get all unique members from all teams in the project
-    const { data: teams } = await supabase
+    const { data: teams } = await db
       .from('project_teams')
       .select('id')
       .eq('project_id', projectId);
     
     if (!teams || teams.length === 0) {
-      // Fallback: get active profiles using secure RPC (non-sensitive fields only)
+      // Fallback: get active profiles from user_directory
       const { data: profiles } = await supabase
-        .rpc('search_public_profiles', { _search_term: null, _limit: 50 });
+        .from('user_directory')
+        .select('id, display_name, avatar_url')
+        .eq('is_active', true)
+        .limit(50);
       
       return (profiles || []).map(p => ({
         id: p.id,
@@ -145,19 +151,22 @@ export const teamService = {
       }));
     }
     
-    const teamIds = teams.map(t => t.id);
+    const teamIds = teams.map((t: any) => t.id);
     
-    const { data: members } = await supabase
+    const { data: members } = await db
       .from('project_team_members')
       .select('user_id')
       .in('team_id', teamIds);
     
-    const userIds = [...new Set((members || []).map(m => m.user_id))];
+    const userIds = [...new Set((members || []).map((m: any) => m.user_id))];
     
     if (userIds.length === 0) {
-      // Fallback: get active profiles using secure RPC
+      // Fallback: get active profiles from user_directory
       const { data: profiles } = await supabase
-        .rpc('search_public_profiles', { _search_term: null, _limit: 50 });
+        .from('user_directory')
+        .select('id, display_name, avatar_url')
+        .eq('is_active', true)
+        .limit(50);
       
       return (profiles || []).map(p => ({
         id: p.id,
@@ -169,9 +178,9 @@ export const teamService = {
     
     // Fetch profiles using secure RPC
     const { data: profiles } = await supabase
-      .rpc('get_public_profiles', { _user_ids: userIds });
+      .rpc('get_public_profiles', { user_ids: userIds });
     
-    return (profiles || []).map(p => ({
+    return (profiles || []).map((p: any) => ({
       id: p.id,
       display_name: p.display_name || 'Unknown',
       avatar_url: p.avatar_url,

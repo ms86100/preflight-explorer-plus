@@ -54,11 +54,13 @@ const mockCreatedIssue: IssueRow = {
   time_spent: null,
   story_points: null,
   environment: null,
-  lexorank: null,
-  classification: 'restricted',
-  resolved_at: null,
+  labels: null,
+  votes: null,
+  watchers: null,
+  resolution_date: null,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
+  created_by: 'user-1',
 };
 
 // ============================================================================
