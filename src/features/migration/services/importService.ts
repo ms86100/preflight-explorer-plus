@@ -48,7 +48,8 @@ export async function createImportJob(
     throw new Error('Not authenticated');
   }
 
-  const { data, error } = await supabase
+  const db = supabase as any;
+  const { data, error } = await db
     .from('import_jobs')
     .insert({
       user_id: user.id,
@@ -129,7 +130,8 @@ export async function getImportStatus(
 }
 
 export async function getImportHistory(): Promise<ImportJob[]> {
-  const { data, error } = await supabase
+  const db = supabase as any;
+  const { data, error } = await db
     .from('import_jobs')
     .select('*')
     .order('created_at', { ascending: false })

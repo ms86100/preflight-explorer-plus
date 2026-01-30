@@ -2,12 +2,15 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import type { GuidedOperation, OperationStep, OperationExecution } from '../types';
 
+// Type bypass for tables not yet in generated types
+const db = supabase as any;
+
 // =============================================
 // OPERATION DEFINITIONS
 // =============================================
 
 export async function getOperations(): Promise<GuidedOperation[]> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('guided_operations')
     .select('*')
     .eq('is_active', true)
@@ -19,7 +22,7 @@ export async function getOperations(): Promise<GuidedOperation[]> {
 }
 
 export async function getOperation(id: string): Promise<GuidedOperation | null> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('guided_operations')
     .select('*')
     .eq('id', id)
@@ -43,7 +46,7 @@ export async function createOperation(operation: {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('Not authenticated');
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('guided_operations')
     .insert([{
       name: operation.name,
@@ -79,7 +82,7 @@ export async function updateOperation(id: string, updates: {
   if (updates.is_active !== undefined) updateData.is_active = updates.is_active;
   if (updates.requires_approval !== undefined) updateData.requires_approval = updates.requires_approval;
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('guided_operations')
     .update(updateData)
     .eq('id', id)
@@ -91,7 +94,7 @@ export async function updateOperation(id: string, updates: {
 }
 
 export async function deleteOperation(id: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await db
     .from('guided_operations')
     .delete()
     .eq('id', id);
@@ -104,7 +107,7 @@ export async function deleteOperation(id: string): Promise<void> {
 // =============================================
 
 export async function getExecutions(operationId?: string): Promise<OperationExecution[]> {
-  let query = supabase
+  let query = db
     .from('guided_operation_executions')
     .select('*, operation:guided_operations(name)')
     .order('started_at', { ascending: false });
@@ -124,7 +127,7 @@ export async function startExecution(operationId: string): Promise<OperationExec
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error('Not authenticated');
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('guided_operation_executions')
     .insert({
       operation_id: operationId,
@@ -158,7 +161,7 @@ export async function updateExecution(id: string, updates: {
   }
   if (updates.result !== undefined) updateData.result = updates.result;
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('guided_operation_executions')
     .update(updateData)
     .eq('id', id)
@@ -177,31 +180,31 @@ export async function cancelExecution(id: string): Promise<void> {
 // MAPPERS
 // =============================================
 
-function mapDbToOperation(db: Record<string, unknown>): GuidedOperation {
+function mapDbToOperation(row: Record<string, unknown>): GuidedOperation {
   return {
-    id: db.id as string,
-    name: db.name as string,
-    description: db.description as string | undefined,
-    category: db.category as string,
-    steps: db.steps as OperationStep[],
-    is_active: db.is_active as boolean,
-    requires_approval: db.requires_approval as boolean,
-    created_at: db.created_at as string,
-    updated_at: db.updated_at as string,
+    id: row.id as string,
+    name: row.name as string,
+    description: row.description as string | undefined,
+    category: row.category as string,
+    steps: row.steps as OperationStep[],
+    is_active: row.is_active as boolean,
+    requires_approval: row.requires_approval as boolean,
+    created_at: row.created_at as string,
+    updated_at: row.updated_at as string,
   };
 }
 
-function mapDbToExecution(db: Record<string, unknown>): OperationExecution {
-  const operation = db.operation as { name: string } | null;
+function mapDbToExecution(row: Record<string, unknown>): OperationExecution {
+  const operation = row.operation as { name: string } | null;
   return {
-    id: db.id as string,
-    operation_id: db.operation_id as string,
+    id: row.id as string,
+    operation_id: row.operation_id as string,
     operation_name: operation?.name,
-    status: db.status as OperationExecution['status'],
-    current_step: db.current_step as number,
-    step_data: db.step_data as Record<string, unknown>,
-    started_at: db.started_at as string,
-    completed_at: db.completed_at as string | undefined,
-    result: db.result as Record<string, unknown> | undefined,
+    status: row.status as OperationExecution['status'],
+    current_step: row.current_step as number,
+    step_data: row.step_data as Record<string, unknown>,
+    started_at: row.started_at as string,
+    completed_at: row.completed_at as string | undefined,
+    result: row.result as Record<string, unknown> | undefined,
   };
 }

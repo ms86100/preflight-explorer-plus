@@ -23,8 +23,8 @@ interface HistoryEntry {
   readonly field_name: string;
   readonly old_value: string | null;
   readonly new_value: string | null;
-  readonly changed_by: string;
-  readonly changed_at: string;
+  readonly author_id: string;
+  readonly created_at: string;
   readonly changer?: {
     readonly display_name: string | null;
     readonly avatar_url: string | null;
@@ -71,30 +71,35 @@ export function IssueHistorySection({ issueId }: IssueHistorySectionProps) {
           field_name,
           old_value,
           new_value,
-          changed_by,
-          changed_at
+          author_id,
+          created_at
         `)
         .eq('issue_id', issueId)
-        .order('changed_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       
       // Fetch user data from user_directory
-      const changerIds = [...new Set(data?.map(h => h.changed_by).filter(Boolean) || [])];
+      const authorIds = [...new Set(data?.map(h => h.author_id).filter(Boolean) || [])];
       let changerMap = new Map<string, { display_name: string | null; avatar_url: string | null }>();
       
-      if (changerIds.length > 0) {
+      if (authorIds.length > 0) {
         const { data: changers } = await supabase
           .from('user_directory')
           .select('id, display_name, avatar_url')
-          .in('id', changerIds);
+          .in('id', authorIds);
         changerMap = new Map((changers || []).map(c => [c.id, { display_name: c.display_name, avatar_url: c.avatar_url }]));
       }
       
       return (data || []).map(h => ({
-        ...h,
-        changer: h.changed_by ? changerMap.get(h.changed_by) || null : null
-      })) as unknown as HistoryEntry[];
+        id: h.id,
+        field_name: h.field_name,
+        old_value: h.old_value,
+        new_value: h.new_value,
+        author_id: h.author_id || '',
+        created_at: h.created_at,
+        changer: h.author_id ? changerMap.get(h.author_id) || null : null
+      })) as HistoryEntry[];
     },
     enabled: !!issueId,
   });
@@ -118,7 +123,7 @@ export function IssueHistorySection({ issueId }: IssueHistorySectionProps) {
 
   // Group history by date
   const groupedHistory = history.reduce((acc, entry) => {
-    const date = format(new Date(entry.changed_at), 'yyyy-MM-dd');
+    const date = format(new Date(entry.created_at), 'yyyy-MM-dd');
     if (!acc[date]) {
       acc[date] = [];
     }
@@ -153,7 +158,7 @@ export function IssueHistorySection({ issueId }: IssueHistorySectionProps) {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium">{changerName}</span>
                         <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(entry.changed_at), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
                         </span>
                       </div>
                       <div className="mt-1 flex items-center gap-2 flex-wrap text-sm">

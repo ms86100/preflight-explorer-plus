@@ -2286,6 +2286,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       versions: {
         Row: {
           created_at: string
@@ -2630,6 +2651,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       search_public_profiles: {
         Args: { search_term: string }
         Returns: {
@@ -2641,6 +2669,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       content_status: "draft" | "published" | "archived"
       hub_permission_level: "view" | "edit" | "admin"
       knowledge_hub_status: "active" | "archived" | "deleted"
@@ -2773,6 +2802,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       content_status: ["draft", "published", "archived"],
       hub_permission_level: ["view", "edit", "admin"],
       knowledge_hub_status: ["active", "archived", "deleted"],
